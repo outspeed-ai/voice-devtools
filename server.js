@@ -7,6 +7,13 @@ const app = express();
 const port = process.env.PORT || 3000;
 const apiKey = process.env.OPENAI_API_KEY;
 
+const BASE_URL = process.env.VITE_BASE_URL;
+if (!BASE_URL) {
+  throw new Error("VITE_BASE_URL is not set in the environment variables");
+}
+
+console.log(`BASE_URL is '${BASE_URL}'`);
+
 // Configure Vite middleware for React client
 const vite = await createViteServer({
   server: { middlewareMode: true },
@@ -18,7 +25,7 @@ app.use(vite.middlewares);
 app.get("/token", async (req, res) => {
   try {
     // const url = "https://api.openai.com/v1/realtime/sessions";
-    const url = "http://localhost:8000/v1/realtime/sessions";
+    const url = `${BASE_URL}/v1/realtime/sessions`;
     const response = await fetch(url, {
       method: "POST",
       headers: {
@@ -31,7 +38,14 @@ app.get("/token", async (req, res) => {
       }),
     });
 
+    if (!response.ok) {
+      const error = await response.text();
+      console.error("Token generation error:", error);
+      throw new Error(error);
+    }
+
     const data = await response.json();
+
     res.json(data);
   } catch (error) {
     console.error("Token generation error:", error);
