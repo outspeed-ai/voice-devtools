@@ -96,10 +96,13 @@ export default function App() {
       setDataChannel(dc);
 
       /****** WITHOUT WEBSOCKET start ******/
-      // const url = `https://${BASE_URL.hostname}/v1/realtime?model=${MODEL}`;
+      // const noWsOffer = await pc.createOffer();
+      // await pc.setLocalDescription(noWsOffer);
+
+      // const url = `https://${BASE_URL.host}/v1/realtime?model=${MODEL}`;
       // const sdpResponse = await fetch(url, {
       //   method: "POST",
-      //   body: offer.sdp,
+      //   body: noWsOffer.sdp,
       //   headers: {
       //     Authorization: `Bearer ${ephemeralKey}`,
       //     "Content-Type": "application/sdp",
@@ -116,7 +119,7 @@ export default function App() {
 
       // signalling SDPs and ICE candidates via WebSocket
       const ws = new WebSocket(
-        `wss://${BASE_URL.hostname}/v1/realtime/ws?session_id=${ephemeralKey}`,
+        `wss://${BASE_URL.host}/v1/realtime/ws?session_id=${ephemeralKey}`,
       );
 
       const wsConnectedPromise = new Promise((resolve, reject) => {
