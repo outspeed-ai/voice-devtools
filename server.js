@@ -34,7 +34,7 @@ app.get("/token", async (req, res) => {
       },
       body: JSON.stringify({
         model: "MiniCPM-o-2_6",
-        voice: "verse",
+        voice: "male",
       }),
     });
 
