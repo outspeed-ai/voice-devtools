@@ -4,7 +4,7 @@ import { useState } from "react";
 function Event({ event, timestamp }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const isClient = event.event_id && !event.event_id.startsWith("event_");
+  const isClient = !event.server_sent;
 
   return (
     <div className="flex flex-col gap-2 p-2 rounded-md bg-gray-50">
@@ -13,9 +13,9 @@ function Event({ event, timestamp }) {
         onClick={() => setIsExpanded(!isExpanded)}
       >
         {isClient ? (
-          <ArrowDown className="text-blue-400" />
+          <ArrowUp className="text-blue-400" />
         ) : (
-          <ArrowUp className="text-green-400" />
+          <ArrowDown className="text-green-400" />
         )}
         <div className="text-sm text-gray-500">
           {isClient ? "client:" : "server:"}
