@@ -3,141 +3,10 @@ import axios from "axios";
 import { Link, useSearchParams } from "react-router-dom";
 
 import { API_BASE_URL } from "../../constants";
+import { Alert, Badge, Button, Card } from "../ui";
+import { utils } from "../ui";
 
-// Simple Button component
-const Button = ({
-  children,
-  onClick,
-  variant = "primary",
-  disabled = false,
-  icon,
-}) => {
-  const baseClasses =
-    "flex items-center justify-center gap-2 px-4 py-2 rounded-md font-medium transition-colors";
-  const variantClasses = {
-    primary: "bg-blue-600 text-white hover:bg-blue-700",
-    outline: "border border-gray-300 text-gray-700 hover:bg-gray-50",
-  };
-
-  return (
-    <button
-      className={`${baseClasses} ${variantClasses[variant]} ${
-        disabled ? "opacity-50 cursor-not-allowed" : ""
-      }`}
-      onClick={onClick}
-      disabled={disabled}
-    >
-      {icon && <span>{icon}</span>}
-      {children}
-    </button>
-  );
-};
-
-// Card component
-const Card = ({ title, children, className = "" }) => (
-  <div
-    className={`bg-white shadow rounded-lg overflow-hidden mb-6 ${className}`}
-  >
-    {title && (
-      <div className="px-6 py-4 border-b border-gray-200">
-        <h3 className="text-lg font-medium text-gray-900">{title}</h3>
-      </div>
-    )}
-    <div className="px-6 py-4">{children}</div>
-  </div>
-);
-
-// Alert component
-const Alert = ({ type = "info", children }) => {
-  const typeClasses = {
-    info: "bg-blue-50 text-blue-700 border-blue-200",
-    error: "bg-red-50 text-red-700 border-red-200",
-    warning: "bg-yellow-50 text-yellow-700 border-yellow-200",
-    success: "bg-green-50 text-green-700 border-green-200",
-  };
-
-  return (
-    <div className={`p-4 mb-4 rounded-md border ${typeClasses[type]}`}>
-      {children}
-    </div>
-  );
-};
-
-// Badge/Chip component
-const Badge = ({ label, type = "default" }) => {
-  const typeClasses = {
-    default: "bg-gray-100 text-gray-800",
-    success: "bg-green-100 text-green-800",
-    warning: "bg-yellow-100 text-yellow-800",
-    error: "bg-red-100 text-red-800",
-  };
-
-  return (
-    <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${typeClasses[type]}`}
-    >
-      {label}
-    </span>
-  );
-};
-
-const formatTimestamp = (timestamp) => {
-  if (!timestamp) {
-    return "N/A";
-  }
-
-  // If it's an ISO string, convert to a readable format
-  try {
-    if (typeof timestamp === "string") {
-      const date = new Date(timestamp);
-      return date.toLocaleString();
-    } else {
-      const date = new Date(timestamp * 1000);
-      return date.toLocaleString();
-    }
-  } catch (e) {
-    return timestamp;
-  }
-};
-
-const Session = ({ session }) => {
-  if (!session) {
-    return <p>No session data available.</p>;
-  }
-
-  return (
-    <Card title="Session Details">
-      <p>
-        <strong>Session ID:</strong> {session.id}
-      </p>
-      <p>
-        <strong>Created At:</strong>{" "}
-        {new Date(session.created * 1000).toLocaleString()}
-      </p>
-      <p>
-        <strong>Model:</strong> {session.model}
-      </p>
-      <p>
-        <strong>Modalities:</strong> {session.modalities.join(", ")}
-      </p>
-      <p>
-        <strong>Instructions:</strong> {session.instructions}
-      </p>
-      <p>
-        <strong>Voice:</strong> {session.voice}
-      </p>
-      <p>
-        <strong>Temperature:</strong> {session.temperature}
-      </p>
-      <p>
-        <strong>Input Audio Format:</strong> {session.input_audio_format}
-      </p>
-      <p>
-        <strong>Output Audio Format:</strong> {session.output_audio_format}
-      </p>
-    </Card>
-  );
-};
+const formatTimestamp = utils.formatTimestamp;
 
 const MetricsDashboard = () => {
   const [searchParams] = useSearchParams();
@@ -292,7 +161,12 @@ const MetricsDashboard = () => {
 
                 {/* View details button */}
                 <div className="mt-6 flex justify-end">
-                  <Link to={`/metrics/${metric._id}`}>
+                  <Link
+                    to={{
+                      pathname: `/metrics/${metric._id}`,
+                      search: `session_id=${sessionId}`,
+                    }}
+                  >
                     <Button variant="outline">
                       View Details
                       <svg

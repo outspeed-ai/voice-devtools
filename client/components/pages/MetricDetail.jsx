@@ -3,118 +3,8 @@ import { useParams, Link } from "react-router-dom";
 import axios from "axios";
 
 import { API_BASE_URL } from "../../constants";
-
-// Simple Button component
-const Button = ({
-  children,
-  onClick,
-  variant = "primary",
-  disabled = false,
-  icon,
-}) => {
-  const baseClasses =
-    "flex items-center justify-center gap-2 px-4 py-2 rounded-md font-medium transition-colors";
-  const variantClasses = {
-    primary: "bg-blue-600 text-white hover:bg-blue-700",
-    outline: "border border-gray-300 text-gray-700 hover:bg-gray-50",
-  };
-
-  return (
-    <button
-      className={`${baseClasses} ${variantClasses[variant]} ${
-        disabled ? "opacity-50 cursor-not-allowed" : ""
-      }`}
-      onClick={onClick}
-      disabled={disabled}
-    >
-      {icon && <span>{icon}</span>}
-      {children}
-    </button>
-  );
-};
-
-// Table component
-const Table = ({ headers, children }) => (
-  <div className="overflow-x-auto border border-gray-200 rounded-lg">
-    <table className="min-w-full divide-y divide-gray-200">
-      {headers && (
-        <thead className="bg-gray-50">
-          <tr>
-            {headers.map((header, index) => (
-              <th
-                key={index}
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                {header}
-              </th>
-            ))}
-          </tr>
-        </thead>
-      )}
-      <tbody className="bg-white divide-y divide-gray-200">{children}</tbody>
-    </table>
-  </div>
-);
-
-// Card component
-const Card = ({ title, children, className = "" }) => (
-  <div
-    className={`bg-white shadow rounded-lg overflow-hidden mb-6 ${className}`}
-  >
-    {title && (
-      <div className="px-6 py-4 border-b border-gray-200">
-        <h3 className="text-lg font-medium text-gray-900">{title}</h3>
-      </div>
-    )}
-    <div className="px-6 py-4">{children}</div>
-  </div>
-);
-
-// Alert component
-const Alert = ({ type = "info", children }) => {
-  const typeClasses = {
-    info: "bg-blue-50 text-blue-700 border-blue-200",
-    error: "bg-red-50 text-red-700 border-red-200",
-    warning: "bg-yellow-50 text-yellow-700 border-yellow-200",
-    success: "bg-green-50 text-green-700 border-green-200",
-  };
-
-  return (
-    <div className={`p-4 mb-4 rounded-md border ${typeClasses[type]}`}>
-      {children}
-    </div>
-  );
-};
-
-// Badge/Chip component
-const Badge = ({ label, type = "default" }) => {
-  const typeClasses = {
-    default: "bg-gray-100 text-gray-800",
-    success: "bg-green-100 text-green-800",
-    warning: "bg-yellow-100 text-yellow-800",
-    error: "bg-red-100 text-red-800",
-  };
-
-  return (
-    <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${typeClasses[type]}`}
-    >
-      {label}
-    </span>
-  );
-};
-
-const formatTimestamp = (timestamp) => {
-  if (!timestamp) return "N/A";
-
-  // If it's an ISO string, convert to a readable format
-  try {
-    const date = new Date(timestamp);
-    return date.toLocaleString();
-  } catch (e) {
-    return timestamp;
-  }
-};
+import { Alert, Badge, Button, Card, Table } from "../ui";
+import { formatTimestamp } from "../ui/utils";
 
 const MetricDetail = () => {
   const { id } = useParams();
@@ -198,7 +88,13 @@ const MetricDetail = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6 flex items-center">
-        <Link to="/metrics" className="text-blue-600 hover:text-blue-800 mr-4">
+        <Link
+          to={{
+            pathname: "/metrics",
+            search: `session_id=${metric.session_id}`,
+          }}
+          className="text-blue-600 hover:text-blue-800 mr-4"
+        >
           ← Back to Metrics
         </Link>
         <h1 className="text-2xl font-bold">Metric Details</h1>

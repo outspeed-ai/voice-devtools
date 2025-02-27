@@ -3,77 +3,10 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 import { API_BASE_URL } from "../../constants";
+import { Alert, Button, Card } from "../ui";
+import { utils } from "../ui";
 
-// Simple Button component
-const Button = ({
-  children,
-  onClick,
-  variant = "primary",
-  disabled = false,
-  icon,
-  className = "",
-}) => {
-  const baseClasses =
-    "flex items-center justify-center gap-2 px-4 py-2 rounded-md font-medium transition-colors";
-  const variantClasses = {
-    primary: "bg-blue-600 text-white hover:bg-blue-700",
-    outline: "border border-gray-300 text-gray-700 hover:bg-gray-50",
-  };
-
-  return (
-    <button
-      className={`${baseClasses} ${variantClasses[variant]} ${className}`}
-      disabled={disabled}
-      onClick={onClick}
-    >
-      {icon && <span>{icon}</span>}
-      {children}
-    </button>
-  );
-};
-
-// Card component
-const Card = ({ title, children, className = "" }) => (
-  <div
-    className={`bg-white shadow rounded-lg overflow-hidden mb-6 ${className}`}
-  >
-    {title && (
-      <div className="px-6 py-4 border-b border-gray-200">
-        <h3 className="text-lg font-medium text-gray-900">{title}</h3>
-      </div>
-    )}
-    <div className="px-6 py-4">{children}</div>
-  </div>
-);
-
-// Alert component
-const Alert = ({ type = "info", children }) => {
-  const typeClasses = {
-    info: "bg-blue-50 text-blue-700 border-blue-200",
-    error: "bg-red-50 text-red-700 border-red-200",
-    warning: "bg-yellow-50 text-yellow-700 border-yellow-200",
-    success: "bg-green-50 text-green-700 border-green-200",
-  };
-
-  return (
-    <div className={`p-4 mb-4 rounded-md border ${typeClasses[type]}`}>
-      {children}
-    </div>
-  );
-};
-
-const formatTimestamp = (timestamp) => {
-  if (!timestamp) {
-    return "N/A";
-  }
-
-  try {
-    const date = new Date(timestamp * 1000);
-    return date.toLocaleString();
-  } catch (e) {
-    return timestamp;
-  }
-};
+const formatTimestamp = utils.formatTimestamp;
 
 const SessionsDashboard = () => {
   const [sessions, setSessions] = useState([]);
