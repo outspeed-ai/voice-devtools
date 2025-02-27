@@ -1,56 +1,33 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
-import axios from "axios";
+import { useQuery, useMutation } from "@tanstack/react-query";
 
-import { API_BASE_URL } from "../../constants";
 import { Alert, Badge, Button, Card, Table } from "../ui";
 import { formatTimestamp } from "../ui/utils";
+import { fetchMetricDetail, getAudioUrl } from "../../services/api";
 
 const MetricDetail = () => {
   const { id } = useParams();
-  const [metric, setMetric] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [playingAudio, setPlayingAudio] = useState(null);
   const audioRef = useRef(null);
   const [audioLoading, setAudioLoading] = useState(false);
 
-  useEffect(() => {
-    fetchMetricDetail();
-  }, [id]);
+  // Fetch metric details
+  const {
+    data: metric,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["metric", id],
+    queryFn: () => fetchMetricDetail(id),
+    enabled: !!id,
+  });
 
-  const fetchMetricDetail = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get(`${API_BASE_URL}/metrics/${id}`);
-      setMetric(response.data);
-      setError(null);
-    } catch (err) {
-      console.error("Error fetching metric detail:", err);
-      setError("Failed to load metric details. Please try again later.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const playAudio = async (s3Url, audioId) => {
-    // If already playing this audio, pause it
-    if (playingAudio === audioId && audioRef.current) {
-      audioRef.current.pause();
-      setPlayingAudio(null);
-      return;
-    }
-
-    setAudioLoading(true);
-    setPlayingAudio(audioId);
-
-    try {
-      // Get presigned URL from the backend
-      const response = await axios.post(`${API_BASE_URL}/audio`, {
-        s3_url: s3Url,
-      });
-
-      const presignedUrl = response.data.presigned_url;
+  // Audio URL mutation
+  const audioMutation = useMutation({
+    mutationFn: getAudioUrl,
+    onSuccess: (data) => {
+      const presignedUrl = data.presigned_url;
 
       // Create or reuse audio element
       if (!audioRef.current) {
@@ -65,7 +42,6 @@ const MetricDetail = () => {
       audioRef.current.onerror = (e) => {
         console.error("Audio playback error:", e);
         setPlayingAudio(null);
-        setError("Failed to play audio. Please try again.");
         setAudioLoading(false);
       };
 
@@ -77,12 +53,27 @@ const MetricDetail = () => {
       // Set source and load audio
       audioRef.current.src = presignedUrl;
       audioRef.current.load();
-    } catch (err) {
+    },
+    onError: (err) => {
       console.error("Error getting audio URL:", err);
-      setError("Failed to get audio URL. Please try again.");
       setPlayingAudio(null);
       setAudioLoading(false);
+    },
+  });
+
+  const playAudio = async (s3Url, audioId) => {
+    // If already playing this audio, pause it
+    if (playingAudio === audioId && audioRef.current) {
+      audioRef.current.pause();
+      setPlayingAudio(null);
+      return;
     }
+
+    setAudioLoading(true);
+    setPlayingAudio(audioId);
+
+    // Call the mutation
+    audioMutation.mutate(s3Url);
   };
 
   return (
@@ -91,7 +82,7 @@ const MetricDetail = () => {
         <Link
           to={{
             pathname: "/metrics",
-            search: `session_id=${metric.session_id}`,
+            search: metric ? `session_id=${metric.session_id}` : "",
           }}
           className="text-blue-600 hover:text-blue-800 mr-4"
         >
@@ -100,9 +91,13 @@ const MetricDetail = () => {
         <h1 className="text-2xl font-bold">Metric Details</h1>
       </div>
 
-      {error && <Alert type="error">{error}</Alert>}
+      {error && (
+        <Alert type="error">
+          Failed to load metric details. Please try again later.
+        </Alert>
+      )}
 
-      {loading ? (
+      {isLoading ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
         </div>

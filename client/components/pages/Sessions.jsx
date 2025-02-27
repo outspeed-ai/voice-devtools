@@ -1,42 +1,26 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 
-import { API_BASE_URL } from "../../constants";
 import { Alert, Button, Card } from "../ui";
 import { utils } from "../ui";
+import { fetchSessions } from "../../services/api";
 
 const formatTimestamp = utils.formatTimestamp;
 
 const SessionsDashboard = () => {
-  const [sessions, setSessions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
   const [pageSize] = useState(5);
-  const [totalPages, setTotalPages] = useState(0);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchSessions();
-  }, [page]);
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["sessions", page, pageSize],
+    queryFn: () => fetchSessions({ page, pageSize }),
+    keepPreviousData: true,
+  });
 
-  const fetchSessions = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get(
-        `${API_BASE_URL}/sessions?page=${page}&page_size=${pageSize}`,
-      );
-      setSessions(response.data.sessions);
-      setTotalPages(Math.ceil(response.data.total / pageSize));
-      setError(null);
-    } catch (err) {
-      console.error("Error fetching sessions:", err);
-      setError("Failed to load sessions. Please try again later.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const sessions = data?.sessions || [];
+  const totalPages = data ? Math.ceil(data.total / pageSize) : 0;
 
   const handlePageChange = (newPage) => {
     setPage(newPage);
@@ -46,9 +30,13 @@ const SessionsDashboard = () => {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Your Sessions</h1>
 
-      {error && <Alert type="error">{error}</Alert>}
+      {error && (
+        <Alert type="error">
+          Failed to load sessions. Please try again later.
+        </Alert>
+      )}
 
-      {loading ? (
+      {isLoading ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
         </div>

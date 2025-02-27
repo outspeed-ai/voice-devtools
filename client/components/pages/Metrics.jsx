@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React, { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 
-import { API_BASE_URL } from "../../constants";
 import { Alert, Badge, Button, Card } from "../ui";
 import { utils } from "../ui";
+import { fetchMetricsBySession } from "../../services/api";
 
 const formatTimestamp = utils.formatTimestamp;
 
@@ -12,33 +12,18 @@ const MetricsDashboard = () => {
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get("session_id");
 
-  const [metrics, setMetrics] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
   const [pageSize] = useState(5);
-  const [totalPages, setTotalPages] = useState(0);
 
-  useEffect(() => {
-    fetchMetrics();
-  }, [page]);
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["metrics", sessionId, page, pageSize],
+    queryFn: () => fetchMetricsBySession({ sessionId, page, pageSize }),
+    enabled: !!sessionId,
+    keepPreviousData: true,
+  });
 
-  const fetchMetrics = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get(
-        `${API_BASE_URL}/metrics/by-session/${sessionId}?page=${page}&page_size=${pageSize}`,
-      );
-      setMetrics(response.data.metrics);
-      setTotalPages(Math.ceil(response.data.total / pageSize));
-      setError(null);
-    } catch (err) {
-      console.error("Error fetching metrics:", err);
-      setError("Failed to load metrics. Please try again later.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const metrics = data?.metrics || [];
+  const totalPages = data ? Math.ceil(data.total / pageSize) : 0;
 
   const handlePageChange = (newPage) => {
     setPage(newPage);
@@ -60,9 +45,13 @@ const MetricsDashboard = () => {
         Inference Metrics for session {sessionId}
       </h1>
 
-      {error && <Alert type="error">{error}</Alert>}
+      {error && (
+        <Alert type="error">
+          Failed to load metrics. Please try again later.
+        </Alert>
+      )}
 
-      {loading ? (
+      {isLoading ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
         </div>

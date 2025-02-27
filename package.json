@@ -10,6 +10,7 @@
     "lint": "eslint . --ext .js,.jsx --fix"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.66.9",
     "axios": "^1.7.9",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
