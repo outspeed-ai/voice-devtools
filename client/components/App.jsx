@@ -23,45 +23,20 @@ export default function App() {
   const audioQueue = useRef([]);
   const isPlaying = useRef(false);
 
-  // Handle base URL change
+  // Handle base URL change - silently update the API base URL
   const handleBaseUrlChange = (newUrl) => {
     if (isSessionActive) {
-      // Add a warning event to the log
-      setEvents((prev) => [
-        ...prev,
-        {
-          type: "system.warning",
-          message:
-            "Cannot change base URL while session is active. Please stop the session first.",
-          timestamp: new Date().toISOString(),
-        },
-      ]);
+      // Don't change the base URL while session is active
+      // But also don't send any warning events
       return;
     }
 
     const success = updateBaseUrl(newUrl);
     if (success) {
       setCurrentBaseUrl(newUrl);
-      // Add an info event to the log
-      setEvents((prev) => [
-        ...prev,
-        {
-          type: "system.info",
-          message: `Base URL changed to ${newUrl}`,
-          timestamp: new Date().toISOString(),
-        },
-      ]);
-    } else {
-      // Add an error event to the log
-      setEvents((prev) => [
-        ...prev,
-        {
-          type: "system.error",
-          message: `Failed to change base URL to ${newUrl}. Invalid URL format.`,
-          timestamp: new Date().toISOString(),
-        },
-      ]);
+      // No events added to the log for successful URL change
     }
+    // No events added for failed URL change either
   };
 
   const playNextAudio = async () => {

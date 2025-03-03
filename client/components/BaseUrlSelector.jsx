@@ -60,31 +60,40 @@ export default function BaseUrlSelector({ onBaseUrlChange, currentBaseUrl }) {
   };
 
   return (
-    <div className="flex flex-col gap-2 w-full">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full">
+    <div className="flex flex-col gap-3 w-full">
+      <div className="w-full">
         <select
           id="baseUrlSelect"
           value={selectedOption}
           onChange={handleOptionChange}
-          className="p-2 border border-gray-300 rounded-md text-sm w-full sm:w-auto"
+          className="p-2 border border-gray-300 rounded-md text-sm w-full"
         >
-          <option value="outspeed">outspeed: https://api.outspeed.com</option>
-          <option value="openai">openai: https://api.openai.com</option>
+          <option value="outspeed">outspeed: api.outspeed.com</option>
+          <option value="openai">openai: api.openai.com</option>
           <option value="custom">custom: enter url</option>
         </select>
+      </div>
 
-        {showCustomInput && (
+      {showCustomInput && (
+        <div className="w-full mt-2">
+          <label
+            htmlFor="customUrl"
+            className="block text-xs text-gray-600 mb-1"
+          >
+            Enter custom URL (including https://)
+          </label>
           <input
+            id="customUrl"
             type="text"
             value={customUrl}
             onChange={handleCustomUrlChange}
             onBlur={handleCustomUrlBlur}
             onKeyDown={handleKeyDown}
-            placeholder="Enter custom URL (with https://)"
-            className="p-2 flex-grow border border-gray-300 rounded-md text-sm w-full"
+            placeholder="https://your-api-domain.com"
+            className="p-2 border border-gray-300 rounded-md text-sm w-full"
           />
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

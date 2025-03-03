@@ -80,16 +80,18 @@ export default function SessionControlPanel({
       <div className="h-full bg-gray-50 rounded-md p-4">
         <h2 className="text-lg font-bold mb-4">session control panel</h2>
 
-        <div className="mb-4">
-          <h3 className="text-md font-semibold mb-2">API Configuration</h3>
-          <BaseUrlSelector
-            onBaseUrlChange={onBaseUrlChange}
-            currentBaseUrl={currentBaseUrl}
-          />
+        <div className="mb-6">
+          <h3 className="text-md font-semibold mb-3">API Configuration</h3>
+          <div className="p-2">
+            <BaseUrlSelector
+              onBaseUrlChange={onBaseUrlChange}
+              currentBaseUrl={currentBaseUrl}
+            />
+          </div>
         </div>
 
-        <div className="mt-4">
-          <h3 className="text-md font-semibold mb-2">Session Controls</h3>
+        <div className="mt-6">
+          <h3 className="text-md font-semibold mb-3">Session Controls</h3>
           {isSessionActive ? (
             <SessionConfigPanel sendClientEvent={sendClientEvent} />
           ) : (
