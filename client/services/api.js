@@ -1,15 +1,25 @@
 import axios from "axios";
-import { API_BASE_URL } from "../constants";
+
+import { OUTSPEED_API_BASE_URL, OUTSPEED_API_KEY } from "@/constants";
 
 // Create axios instance with base URL
 const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: OUTSPEED_API_BASE_URL,
 });
 
 // Sessions API
 export const fetchSessions = async ({ page = 1, pageSize = 5 }) => {
+  if (!OUTSPEED_API_KEY) {
+    throw new Error("OUTSPEED_API_KEY is not set");
+  }
+
   const response = await apiClient.get(
     `/sessions?page=${page}&page_size=${pageSize}`,
+    {
+      headers: {
+        Authorization: `Bearer ${OUTSPEED_API_KEY}`,
+      },
+    },
   );
   return response.data;
 };

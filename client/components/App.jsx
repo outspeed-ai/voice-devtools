@@ -1,15 +1,23 @@
 import { useEffect, useRef, useState } from "react";
-import { BASE_URL, CONNECTION_TYPES, ICE_SERVERS, MODEL } from "../constants";
+
+import { CONNECTION_TYPES, ICE_SERVERS, MODEL } from "@/constants";
+import {
+  OPENAI_PROVIDER,
+  OUTSPEED_PROVIDER,
+  useApi,
+} from "@/contexts/ApiContext";
 import EventLog from "./EventLog";
 import SessionControlPanel from "./SessionControlPanel";
 import SessionControls from "./SessionControls";
 
 export default function App() {
+  const { selectedProvider } = useApi();
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [events, setEvents] = useState([]);
   const [connectionType, setConnectionType] = useState(null);
   const [dataChannel, setDataChannel] = useState(null);
   const peerConnection = useRef(null);
+  const signalingWebsocket = useRef(null);
   const websocket = useRef(null);
   const audioContext = useRef(null);
   const audioQueue = useRef([]);
@@ -71,8 +79,10 @@ export default function App() {
     try {
       setEvents([]);
 
-      // Get an ephemeral key from the Fastify server
-      const tokenResponse = await fetch("/token");
+      // Get an ephemeral key from the server with selected provider
+      const tokenResponse = await fetch(
+        `/token?apiUrl=${selectedProvider.url}`,
+      );
       const data = await tokenResponse.json();
       const ephemeralKey = data.client_secret.value;
 
@@ -94,32 +104,35 @@ export default function App() {
       const dc = pc.createDataChannel("oai-events");
       setDataChannel(dc);
 
-      /****** WITHOUT WEBSOCKET start ******/
-      // const noWsOffer = await pc.createOffer();
-      // await pc.setLocalDescription(noWsOffer);
+      if (selectedProvider.url === OPENAI_PROVIDER) {
+        const noWsOffer = await pc.createOffer();
+        await pc.setLocalDescription(noWsOffer);
 
-      // const url = `https://${BASE_URL.host}/v1/realtime?model=${MODEL}`;
-      // const sdpResponse = await fetch(url, {
-      //   method: "POST",
-      //   body: noWsOffer.sdp,
-      //   headers: {
-      //     Authorization: `Bearer ${ephemeralKey}`,
-      //     "Content-Type": "application/sdp",
-      //   },
-      // });
+        const url = `https://${selectedProvider.url}/v1/realtime?model=${MODEL}`;
+        const sdpResponse = await fetch(url, {
+          method: "POST",
+          body: noWsOffer.sdp,
+          headers: {
+            Authorization: `Bearer ${ephemeralKey}`,
+            "Content-Type": "application/sdp",
+          },
+        });
 
-      // const answer = {
-      //   type: "answer",
-      //   sdp: await sdpResponse.text(),
-      // };
-      // await pc.setRemoteDescription(answer);
-      // return;
-      /****** WITHOUT WEBSOCKET end ******/
+        const answer = {
+          type: "answer",
+          sdp: await sdpResponse.text(),
+        };
+        await pc.setRemoteDescription(answer);
+        setConnectionType(CONNECTION_TYPES.WEBRTC);
+        return;
+      }
 
       // signalling SDPs and ICE candidates via WebSocket
       const ws = new WebSocket(
-        `wss://${BASE_URL.host}/v1/realtime/ws?client_secret=${ephemeralKey}`,
+        `wss://${OUTSPEED_PROVIDER}/v1/realtime/ws?client_secret=${ephemeralKey}`,
       );
+
+      signalingWebsocket.current = ws;
 
       const wsConnectedPromise = new Promise((resolve, reject) => {
         ws.onopen = () => {
@@ -194,7 +207,6 @@ export default function App() {
         }),
       );
 
-      peerConnection.current = pc;
       setConnectionType(CONNECTION_TYPES.WEBRTC);
     } catch (error) {
       console.error("Failed to start WebRTC session:", error);
@@ -206,8 +218,7 @@ export default function App() {
     try {
       setEvents([]);
 
-      // const url = `wss://${BASE_URL.hostname}/v1/realtime?model=${MODEL}`;
-      const url = `${BASE_URL.toString()}v1/realtime?model=${MODEL}`;
+      const url = `wss://${selectedProvider.url}/v1/realtime?model=${MODEL}`;
       const ws = new WebSocket(url);
 
       ws.onopen = () => {
@@ -265,7 +276,17 @@ export default function App() {
     setConnectionType(null);
     setDataChannel(null);
     peerConnection.current = null;
-    websocket.current = null;
+
+    // Cleanup signaling WebSocket
+    const signalingWs = signalingWebsocket.current;
+    if (signalingWs) {
+      signalingWs.onopen = null;
+      signalingWs.onclose = null;
+      signalingWs.onerror = null;
+      signalingWs.onmessage = null;
+      signalingWs.close();
+      signalingWebsocket.current = null;
+    }
 
     // Cleanup audio context
     if (audioContext.current) {
@@ -378,7 +399,7 @@ export default function App() {
         </div>
       </nav> */}
       <main className="absolute top-16 left-0 right-0 bottom-0">
-        <section className="absolute top-0 left-0 right-[380px] bottom-0 flex">
+        <section className="absolute top-0 left-0 right-0 md:right-[380px] bottom-0 flex">
           <section className="absolute top-0 left-0 right-0 bottom-32 px-4 overflow-y-auto">
             <EventLog events={events} />
           </section>
@@ -396,7 +417,7 @@ export default function App() {
             />
           </section>
         </section>
-        <section className="absolute top-0 w-[380px] right-0 bottom-0 p-4 pt-0 overflow-y-auto">
+        <section className="hidden md:block absolute top-0 w-[380px] right-0 bottom-0 p-4 pt-0 overflow-y-auto">
           <SessionControlPanel
             sendClientEvent={sendClientEvent}
             isSessionActive={isSessionActive}

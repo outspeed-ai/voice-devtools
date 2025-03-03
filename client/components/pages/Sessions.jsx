@@ -1,10 +1,9 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-import { Alert, Button, Card } from "../ui";
-import { utils } from "../ui";
-import { fetchSessions } from "../../services/api";
+import { Alert, Button, Card, utils } from "@/components/ui";
+import { fetchSessions } from "@/services/api";
 
 const formatTimestamp = utils.formatTimestamp;
 
@@ -32,7 +31,7 @@ const SessionsDashboard = () => {
 
       {error && (
         <Alert type="error">
-          Failed to load sessions. Please try again later.
+          {error.message || "Failed to load sessions. Please try again later."}
         </Alert>
       )}
 
