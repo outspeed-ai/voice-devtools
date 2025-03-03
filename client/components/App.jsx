@@ -358,6 +358,7 @@ export default function App() {
       dataChannel.addEventListener("message", (e) => {
         const event = JSON.parse(e.data);
         event.timestamp = event.timestamp || new Date().toLocaleTimeString();
+        event.server_sent = true; // to distinguish between server and client events
         setEvents((prev) => [event, ...prev]);
       });
 
