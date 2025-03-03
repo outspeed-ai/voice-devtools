@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import logo from "/assets/openai-logomark.svg";
+import { BASE_URL, CONNECTION_TYPES, ICE_SERVERS, MODEL } from "../constants";
 import EventLog from "./EventLog";
-import SessionControls from "./SessionControls";
 import SessionControlPanel from "./SessionControlPanel";
-import { BASE_URL, CONNECTION_TYPES, MODEL, ICE_SERVERS } from "../constants";
+import SessionControls from "./SessionControls";
 
 export default function App() {
   const [isSessionActive, setIsSessionActive] = useState(false);
@@ -119,7 +118,7 @@ export default function App() {
 
       // signalling SDPs and ICE candidates via WebSocket
       const ws = new WebSocket(
-        `wss://${BASE_URL.host}/v1/realtime/ws?session_id=${ephemeralKey}`,
+        `wss://${BASE_URL.host}/v1/realtime/ws?client_secret=${ephemeralKey}`,
       );
 
       const wsConnectedPromise = new Promise((resolve, reject) => {
@@ -143,6 +142,7 @@ export default function App() {
         switch (data.type) {
           case "pong":
             console.log("pong received");
+            setIsSessionActive(true);
             break;
           case "answer":
             await pc.setRemoteDescription(new RTCSessionDescription(data));
@@ -156,8 +156,13 @@ export default function App() {
               }),
             );
             break;
+          case "error":
+            console.error("WebSocket error after WS connection:", data.message);
+            handleConnectionError();
+            break;
           default:
             if (data.event_id) {
+              data.server_sent = true;
               setEvents((prev) => [data, ...prev]);
             }
 
@@ -191,7 +196,6 @@ export default function App() {
 
       peerConnection.current = pc;
       setConnectionType(CONNECTION_TYPES.WEBRTC);
-      setIsSessionActive(true);
     } catch (error) {
       console.error("Failed to start WebRTC session:", error);
       handleConnectionError();
@@ -278,6 +282,8 @@ export default function App() {
     );
     if (reload) {
       window.location.reload();
+    } else {
+      setIsSessionActive(false);
     }
   }
 
@@ -338,6 +344,16 @@ export default function App() {
         setIsSessionActive(true);
         setEvents([]);
       });
+
+      dataChannel.addEventListener("error", (e) => {
+        console.error("Data channel error:", e);
+        handleConnectionError();
+      });
+
+      dataChannel.addEventListener("close", () => {
+        console.log("Data channel closed");
+        setIsSessionActive(false);
+      });
     }
   }, [dataChannel]);
 
@@ -355,12 +371,12 @@ export default function App() {
 
   return (
     <>
-      <nav className="absolute top-0 left-0 right-0 h-16 flex items-center">
+      {/* <nav className="absolute top-0 left-0 right-0 h-16 flex items-center">
         <div className="flex items-center gap-4 w-full m-4 pb-2 border-0 border-b border-solid border-gray-200">
           <img style={{ width: "24px" }} src={logo} />
           <h1>realtime console with Outspeed 🏎️</h1>
         </div>
-      </nav>
+      </nav> */}
       <main className="absolute top-16 left-0 right-0 bottom-0">
         <section className="absolute top-0 left-0 right-[380px] bottom-0 flex">
           <section className="absolute top-0 left-0 right-0 bottom-32 px-4 overflow-y-auto">

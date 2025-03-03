@@ -17,3 +17,5 @@ export const CONNECTION_TYPES = {
 export const MODEL = "MiniCPM-o-2_6";
 
 export const ICE_SERVERS = [{ urls: "stun:stun.l.google.com:19302" }];
+
+export const API_BASE_URL = `${BASE_URL.toString()}v1`;

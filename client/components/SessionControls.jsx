@@ -41,10 +41,13 @@ function SessionStopped({ startWebrtcSession, startWebsocketSession }) {
           icon={<CloudLightning height={16} />}
           disabled={activatingSession}
         >
-          {activatingSession ? "starting webrtc session..." : "webrtc session"}
+          {activatingSession
+            ? "starting webrtc session..."
+            : "start webrtc session"}
         </Button>
       )}
-
+      {/* only WebRTC for now */}
+      {/* 
       {activatingSession !== "webrtc" && (
         <Button
           onClick={handleStartWebsocketSession}
@@ -56,7 +59,7 @@ function SessionStopped({ startWebrtcSession, startWebsocketSession }) {
             ? "starting websocket session..."
             : "websocket session"}
         </Button>
-      )}
+      )} */}
     </div>
   );
 }
