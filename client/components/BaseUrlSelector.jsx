@@ -12,16 +12,52 @@ export default function BaseUrlSelector({ onBaseUrlChange, currentBaseUrl }) {
     custom: customUrl,
   };
 
-  // Initialize based on current URL if it exists
-  useEffect(() => {
-    if (currentBaseUrl) {
-      // Normalize URLs for comparison to handle potential trailing slashes
-      const normalizeUrl = (url) => {
-        // Remove trailing slash if present for consistent comparison
-        return url.replace(/\/$/, "");
-      };
+  // Storage keys for localStorage
+  const STORAGE_KEY_OPTION = "baseUrlSelector_selectedOption";
+  const STORAGE_KEY_CUSTOM_URL = "baseUrlSelector_customUrl";
 
-      // Try to match the current URL with one of our predefined options
+  // Load from localStorage on component mount
+  useEffect(() => {
+    try {
+      // Try to load from localStorage first
+      const storedOption = localStorage.getItem(STORAGE_KEY_OPTION);
+      const storedCustomUrl = localStorage.getItem(STORAGE_KEY_CUSTOM_URL);
+
+      console.log("Loading from localStorage:", {
+        storedOption,
+        storedCustomUrl,
+      });
+
+      if (storedOption) {
+        // Set the selected option from localStorage
+        setSelectedOption(storedOption);
+
+        // If the stored option is custom, show the input field regardless of whether there's a stored URL
+        if (storedOption === "custom") {
+          setShowCustomInput(true);
+
+          // Apply the custom URL if it exists
+          if (storedCustomUrl) {
+            setCustomUrl(storedCustomUrl);
+            onBaseUrlChange(storedCustomUrl);
+          }
+        } else if (urlOptions[storedOption]) {
+          // Apply the predefined URL
+          onBaseUrlChange(urlOptions[storedOption]);
+        }
+
+        return; // Exit early if we loaded from localStorage
+      }
+    } catch (error) {
+      console.error("Error loading from localStorage:", error);
+    }
+
+    // Fall back to currentBaseUrl if localStorage failed or was empty
+    if (currentBaseUrl) {
+      // Normalize URLs for comparison
+      const normalizeUrl = (url) => url.replace(/\/$/, "");
+
+      // Try to match with predefined options
       const matchedOption = Object.entries(urlOptions).find(
         ([key, value]) =>
           key !== "custom" &&
@@ -30,22 +66,32 @@ export default function BaseUrlSelector({ onBaseUrlChange, currentBaseUrl }) {
 
       if (matchedOption) {
         setSelectedOption(matchedOption[0]);
-      } else if (currentBaseUrl !== urlOptions.outspeed) {
-        // Only set to custom if it's actually different from outspeed
+      } else {
+        // Custom URL case
         setSelectedOption("custom");
         setCustomUrl(currentBaseUrl);
         setShowCustomInput(true);
-      } else {
-        // Default to outspeed if no match and not explicitly custom
-        setSelectedOption("outspeed");
-        setShowCustomInput(false);
       }
-    } else {
-      // If no currentBaseUrl is provided, default to outspeed
-      setSelectedOption("outspeed");
-      setShowCustomInput(false);
     }
-  }, [currentBaseUrl]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Save selection to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      // Don't save during the initial render
+      if (document.readyState === "complete") {
+        console.log("Saving to localStorage:", { selectedOption, customUrl });
+        localStorage.setItem(STORAGE_KEY_OPTION, selectedOption);
+
+        if (selectedOption === "custom" && customUrl) {
+          localStorage.setItem(STORAGE_KEY_CUSTOM_URL, customUrl);
+        }
+      }
+    } catch (error) {
+      console.error("Error saving to localStorage:", error);
+    }
+  }, [selectedOption, customUrl]);
 
   const handleOptionChange = (e) => {
     const option = e.target.value;
@@ -53,7 +99,10 @@ export default function BaseUrlSelector({ onBaseUrlChange, currentBaseUrl }) {
 
     if (option === "custom") {
       setShowCustomInput(true);
-      // Don't trigger URL change until custom URL is entered
+      // If there's already a custom URL stored, use that
+      if (customUrl) {
+        onBaseUrlChange(customUrl);
+      }
     } else {
       setShowCustomInput(false);
       onBaseUrlChange(urlOptions[option]);
@@ -68,6 +117,13 @@ export default function BaseUrlSelector({ onBaseUrlChange, currentBaseUrl }) {
   const handleCustomUrlBlur = () => {
     if (customUrl && selectedOption === "custom") {
       onBaseUrlChange(customUrl);
+      // Explicitly save to localStorage when custom URL is confirmed
+      try {
+        localStorage.setItem(STORAGE_KEY_OPTION, "custom");
+        localStorage.setItem(STORAGE_KEY_CUSTOM_URL, customUrl);
+      } catch (error) {
+        console.error("Error saving custom URL to localStorage:", error);
+      }
     }
   };
 
