@@ -2,15 +2,17 @@
 export let BASE_URL;
 let apiBaseUrl;
 
-// Initialize with the default from env
+// Initialize with a default value instead of relying on environment variable
 try {
-  BASE_URL = new URL(import.meta.env.VITE_BASE_URL);
+  // Default to outspeed URL
+  const defaultUrl = "https://api.outspeed.com";
+  BASE_URL = new URL(defaultUrl);
   apiBaseUrl = `${BASE_URL.toString()}v1`;
 } catch (error) {
-  error.message = `Error parsing BASE_URL '${import.meta.env.VITE_BASE_URL}': ${
-    error.message
-  }`;
-  throw error;
+  console.error(`Error initializing BASE_URL: ${error.message}`);
+  // Fallback to a simple URL that should always work
+  BASE_URL = new URL("https://api.outspeed.com");
+  apiBaseUrl = `${BASE_URL.toString()}v1`;
 }
 
 // Function to update the BASE_URL dynamically

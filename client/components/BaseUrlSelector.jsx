@@ -15,17 +15,35 @@ export default function BaseUrlSelector({ onBaseUrlChange, currentBaseUrl }) {
   // Initialize based on current URL if it exists
   useEffect(() => {
     if (currentBaseUrl) {
+      // Normalize URLs for comparison to handle potential trailing slashes
+      const normalizeUrl = (url) => {
+        // Remove trailing slash if present for consistent comparison
+        return url.replace(/\/$/, "");
+      };
+
+      // Try to match the current URL with one of our predefined options
       const matchedOption = Object.entries(urlOptions).find(
-        ([key, value]) => key !== "custom" && value === currentBaseUrl,
+        ([key, value]) =>
+          key !== "custom" &&
+          normalizeUrl(value) === normalizeUrl(currentBaseUrl),
       );
 
       if (matchedOption) {
         setSelectedOption(matchedOption[0]);
-      } else {
+      } else if (currentBaseUrl !== urlOptions.outspeed) {
+        // Only set to custom if it's actually different from outspeed
         setSelectedOption("custom");
         setCustomUrl(currentBaseUrl);
         setShowCustomInput(true);
+      } else {
+        // Default to outspeed if no match and not explicitly custom
+        setSelectedOption("outspeed");
+        setShowCustomInput(false);
       }
+    } else {
+      // If no currentBaseUrl is provided, default to outspeed
+      setSelectedOption("outspeed");
+      setShowCustomInput(false);
     }
   }, [currentBaseUrl]);
 
