@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { BASE_URL, CONNECTION_TYPES, ICE_SERVERS, MODEL } from "../constants";
+import {
+  BASE_URL,
+  CONNECTION_TYPES,
+  ICE_SERVERS,
+  MODEL,
+  updateBaseUrl,
+  getApiBaseUrl,
+} from "../constants";
 import EventLog from "./EventLog";
 import SessionControlPanel from "./SessionControlPanel";
 import SessionControls from "./SessionControls";
@@ -9,11 +16,53 @@ export default function App() {
   const [events, setEvents] = useState([]);
   const [connectionType, setConnectionType] = useState(null);
   const [dataChannel, setDataChannel] = useState(null);
+  const [currentBaseUrl, setCurrentBaseUrl] = useState(BASE_URL.toString());
   const peerConnection = useRef(null);
   const websocket = useRef(null);
   const audioContext = useRef(null);
   const audioQueue = useRef([]);
   const isPlaying = useRef(false);
+
+  // Handle base URL change
+  const handleBaseUrlChange = (newUrl) => {
+    if (isSessionActive) {
+      // Add a warning event to the log
+      setEvents((prev) => [
+        ...prev,
+        {
+          type: "system.warning",
+          message:
+            "Cannot change base URL while session is active. Please stop the session first.",
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+      return;
+    }
+
+    const success = updateBaseUrl(newUrl);
+    if (success) {
+      setCurrentBaseUrl(newUrl);
+      // Add an info event to the log
+      setEvents((prev) => [
+        ...prev,
+        {
+          type: "system.info",
+          message: `Base URL changed to ${newUrl}`,
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+    } else {
+      // Add an error event to the log
+      setEvents((prev) => [
+        ...prev,
+        {
+          type: "system.error",
+          message: `Failed to change base URL to ${newUrl}. Invalid URL format.`,
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+    }
+  };
 
   const playNextAudio = async () => {
     if (!audioQueue.current.length || isPlaying.current) return;
@@ -371,12 +420,6 @@ export default function App() {
 
   return (
     <>
-      {/* <nav className="absolute top-0 left-0 right-0 h-16 flex items-center">
-        <div className="flex items-center gap-4 w-full m-4 pb-2 border-0 border-b border-solid border-gray-200">
-          <img style={{ width: "24px" }} src={logo} />
-          <h1>realtime console with Outspeed 🏎️</h1>
-        </div>
-      </nav> */}
       <main className="absolute top-16 left-0 right-0 bottom-0">
         <section className="absolute top-0 left-0 right-[380px] bottom-0 flex">
           <section className="absolute top-0 left-0 right-0 bottom-32 px-4 overflow-y-auto">
@@ -398,8 +441,10 @@ export default function App() {
         </section>
         <section className="absolute top-0 w-[380px] right-0 bottom-0 p-4 pt-0 overflow-y-auto">
           <SessionControlPanel
-            sendClientEvent={sendClientEvent}
             isSessionActive={isSessionActive}
+            sendClientEvent={sendClientEvent}
+            currentBaseUrl={currentBaseUrl}
+            onBaseUrlChange={handleBaseUrlChange}
           />
         </section>
       </main>

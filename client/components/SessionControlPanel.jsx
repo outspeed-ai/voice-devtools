@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Check } from "react-feather";
 
 import Button from "./Button";
+import BaseUrlSelector from "./BaseUrlSelector";
 
 const functionDescription = `
 Call this function when a user asks for a color palette.
@@ -69,18 +70,32 @@ function FunctionCallOutput({ functionCallOutput }) {
 export default function SessionControlPanel({
   isSessionActive,
   sendClientEvent,
+  currentBaseUrl,
+  onBaseUrlChange,
 }) {
   useEffect(() => {}, []);
 
   return (
     <section className="h-full w-full flex flex-col gap-4">
       <div className="h-full bg-gray-50 rounded-md p-4">
-        <h2 className="text-lg font-bold">session control panel</h2>
-        {isSessionActive ? (
-          <SessionControls sendClientEvent={sendClientEvent} />
-        ) : (
-          <p>start the session to use this tool</p>
-        )}
+        <h2 className="text-lg font-bold mb-4">session control panel</h2>
+
+        <div className="mb-4">
+          <h3 className="text-md font-semibold mb-2">API Configuration</h3>
+          <BaseUrlSelector
+            onBaseUrlChange={onBaseUrlChange}
+            currentBaseUrl={currentBaseUrl}
+          />
+        </div>
+
+        <div className="mt-4">
+          <h3 className="text-md font-semibold mb-2">Session Controls</h3>
+          {isSessionActive ? (
+            <SessionConfigPanel sendClientEvent={sendClientEvent} />
+          ) : (
+            <p>start the session to use this tool</p>
+          )}
+        </div>
       </div>
     </section>
   );
@@ -113,7 +128,7 @@ const voices = [
   },
 ];
 
-function SessionControls({ sendClientEvent }) {
+function SessionConfigPanel({ sendClientEvent }) {
   const [model, setModel] = useState(MODELS.MINI_CPM_O_2_6);
   const [temperature, setTemperature] = useState(0.5);
   const [modalities, setModalities] = useState(MODALITIES);
