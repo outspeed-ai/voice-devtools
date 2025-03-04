@@ -1,5 +1,5 @@
-import { ArrowUp, ArrowDown } from "react-feather";
 import { useState } from "react";
+import { ArrowDown, ArrowUp } from "react-feather";
 
 function Event({ event, timestamp }) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -33,7 +33,7 @@ function Event({ event, timestamp }) {
   );
 }
 
-export default function EventLog({ events }) {
+export default function EventLog({ events, loadingModal = false }) {
   const eventsToDisplay = [];
   let deltaEvents = {};
 
@@ -54,7 +54,12 @@ export default function EventLog({ events }) {
 
   return (
     <div className="flex flex-col gap-2 overflow-x-auto">
-      {events.length === 0 ? (
+      {loadingModal && (
+        <div className="text-gray-500">
+          loading modal to GPU. please wait a moment...
+        </div>
+      )}
+      {!loadingModal && events.length === 0 ? (
         <div className="text-gray-500">Awaiting events...</div>
       ) : (
         eventsToDisplay

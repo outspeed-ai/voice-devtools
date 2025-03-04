@@ -13,6 +13,7 @@ import SessionControls from "./SessionControls";
 export default function App() {
   const { selectedProvider } = useApi();
   const [isSessionActive, setIsSessionActive] = useState(false);
+  const [loadingModal, setLoadingModal] = useState(false);
   const [events, setEvents] = useState([]);
   const [connectionType, setConnectionType] = useState(null);
   const [dataChannel, setDataChannel] = useState(null);
@@ -155,7 +156,6 @@ export default function App() {
         switch (data.type) {
           case "pong":
             console.log("pong received");
-            setIsSessionActive(true);
             break;
           case "answer":
             await pc.setRemoteDescription(new RTCSessionDescription(data));
@@ -208,6 +208,7 @@ export default function App() {
       );
 
       setConnectionType(CONNECTION_TYPES.WEBRTC);
+      setLoadingModal(true); // data channel will open first and then the modal will be loaded
     } catch (error) {
       console.error("Failed to start WebRTC session:", error);
       handleConnectionError();
@@ -273,6 +274,7 @@ export default function App() {
 
   function cleanup() {
     setIsSessionActive(false);
+    setLoadingModal(false);
     setConnectionType(null);
     setDataChannel(null);
     peerConnection.current = null;
@@ -349,16 +351,21 @@ export default function App() {
 
   useEffect(() => {
     if (dataChannel) {
+      dataChannel.addEventListener("open", () => {
+        setIsSessionActive(true);
+        setEvents([]);
+      });
+
       dataChannel.addEventListener("message", (e) => {
         const event = JSON.parse(e.data);
         event.timestamp = event.timestamp || new Date().toLocaleTimeString();
         event.server_sent = true; // to distinguish between server and client events
-        setEvents((prev) => [event, ...prev]);
-      });
 
-      dataChannel.addEventListener("open", () => {
-        setIsSessionActive(true);
-        setEvents([]);
+        if (event.type === "session.created") {
+          setLoadingModal(false); // modal is now loaded
+        }
+
+        setEvents((prev) => [event, ...prev]);
       });
 
       dataChannel.addEventListener("error", (e) => {
@@ -396,10 +403,11 @@ export default function App() {
       <main className="absolute top-16 left-0 right-0 bottom-0">
         <section className="absolute top-0 left-0 right-0 md:right-[380px] bottom-0 flex">
           <section className="absolute top-0 left-0 right-0 bottom-32 px-4 overflow-y-auto">
-            <EventLog events={events} />
+            <EventLog events={events} loadingModal={loadingModal} />
           </section>
           <section className="absolute h-32 left-0 right-0 bottom-0 p-4">
             <SessionControls
+              loadingModal={loadingModal}
               connectionType={connectionType}
               startWebrtcSession={startWebrtcSession}
               stopWebrtcSession={stopWebrtcSession}

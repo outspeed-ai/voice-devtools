@@ -169,10 +169,16 @@ export default function SessionControls({
   events,
   isSessionActive,
   connectionType,
+  loadingModal = false,
 }) {
   return (
     <div className="flex gap-4 border-t-2 border-gray-200 h-full rounded-md">
-      {isSessionActive ? (
+      {loadingModal && (
+        <p className="text-gray-500 w-full flex justify-center items-center h-full text-center">
+          loading modal to GPU. please wait a moment...
+        </p>
+      )}
+      {!loadingModal && isSessionActive && (
         <SessionActive
           connectionType={connectionType}
           stopSession={{ stopWebrtcSession, stopWebsocketSession }}
@@ -180,7 +186,8 @@ export default function SessionControls({
           sendTextMessage={sendTextMessage}
           events={events}
         />
-      ) : (
+      )}
+      {!loadingModal && !isSessionActive && (
         <SessionStopped
           startWebrtcSession={startWebrtcSession}
           startWebsocketSession={startWebsocketSession}
