@@ -3,8 +3,8 @@ import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 
-import AppRouter from "./components/AppRouter";
 import { ApiProvider } from "./contexts/ApiContext";
+import Router from "./router";
 
 import "./base.css";
 
@@ -25,7 +25,7 @@ ReactDOM.hydrateRoot(
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <ApiProvider>
-          <AppRouter />
+          <Router />
         </ApiProvider>
       </BrowserRouter>
     </QueryClientProvider>

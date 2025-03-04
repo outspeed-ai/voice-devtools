@@ -7,7 +7,7 @@ import { fetchSessions } from "@/services/api";
 
 const formatTimestamp = utils.formatTimestamp;
 
-const SessionsDashboard = () => {
+export default function Sessions() {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(5);
   const navigate = useNavigate();
@@ -144,6 +144,4 @@ const SessionsDashboard = () => {
       )}
     </div>
   );
-};
-
-export default SessionsDashboard;
+}

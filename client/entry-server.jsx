@@ -3,8 +3,8 @@ import { StrictMode } from "react";
 import { renderToString } from "react-dom/server";
 import { StaticRouter } from "react-router-dom/server";
 
-import AppRouter from "./components/AppRouter";
 import { ApiProvider } from "./contexts/ApiContext";
+import Router from "./router";
 
 export function render(url) {
   const queryClient = new QueryClient({
@@ -22,7 +22,7 @@ export function render(url) {
       <QueryClientProvider client={queryClient}>
         <StaticRouter location={url}>
           <ApiProvider>
-            <AppRouter />
+            <Router />
           </ApiProvider>
         </StaticRouter>
       </QueryClientProvider>
