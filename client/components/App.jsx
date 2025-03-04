@@ -298,14 +298,8 @@ export default function App() {
   }
 
   function handleConnectionError() {
-    const reload = confirm(
-      "Connection error! Details are available in the console. Reload the page?",
-    );
-    if (reload) {
-      window.location.reload();
-    } else {
-      setIsSessionActive(false);
-    }
+    setIsSessionActive(false);
+    alert("Connection error! Check the console for details.");
   }
 
   function sendClientEvent(message) {
