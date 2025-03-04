@@ -1,12 +1,8 @@
-import { Link, Route, Routes } from "react-router-dom";
+import { Link, Outlet } from "react-router-dom";
 
 import { useApi } from "@/contexts/ApiContext";
-import App from "./App";
-import MetricDetail from "./pages/MetricDetail";
-import MetricsDashboard from "./pages/Metrics";
-import SessionsDashboard from "./pages/Sessions";
 
-import logo from "/assets/openai-logomark.svg";
+import logo from "/assets/logo-dark.png";
 
 const AppRouter = () => {
   const { selectedProvider } = useApi();
@@ -34,14 +30,7 @@ const AppRouter = () => {
         </div>
       </nav>
       <div className="pt-16">
-        <Routes>
-          <Route path="/" element={<App />} />
-          <Route path="/sessions" element={<SessionsDashboard />} />
-
-          {/* session_id will be passed as a query param to fetch metrics by session*/}
-          <Route path="/metrics/" element={<MetricsDashboard />} />
-          <Route path="/metrics/:id" element={<MetricDetail />} />
-        </Routes>
+        <Outlet />
       </div>
     </>
   );

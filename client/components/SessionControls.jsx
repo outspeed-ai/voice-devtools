@@ -1,16 +1,20 @@
 import { useState } from "react";
 import { CloudLightning, CloudOff, MessageSquare } from "react-feather";
-import Button from "./Button";
+
+import { CONNECTION_TYPES } from "@/constants";
+import { API_PROVIDERS, useApi } from "@/contexts/ApiContext";
 import AudioRecorder from "./AudioRecorder";
-import { CONNECTION_TYPES } from "../constants";
+import Button from "./Button";
 
 function SessionStopped({ startWebrtcSession, startWebsocketSession }) {
+  const { selectedProvider, setSelectedProvider } = useApi();
   const [activatingSession, setActivatingSession] = useState(null);
 
   async function handleStartWebrtcSession() {
     if (activatingSession) {
       return;
     }
+
     setActivatingSession("webrtc");
     try {
       await startWebrtcSession();
@@ -33,33 +37,59 @@ function SessionStopped({ startWebrtcSession, startWebsocketSession }) {
   }
 
   return (
-    <div className="flex items-center justify-center w-full h-full gap-4">
-      {activatingSession !== "websocket" && (
-        <Button
-          onClick={handleStartWebrtcSession}
-          className={activatingSession ? "bg-gray-600" : "bg-red-600"}
-          icon={<CloudLightning height={16} />}
-          disabled={activatingSession}
+    <div className="w-full h-full flex items-center justify-center gap-8">
+      <div className="flex items-center gap-3 justify-center mb-2">
+        <span className="text-gray-700">Select API Provider:</span>
+        <select
+          value={selectedProvider.url}
+          onChange={(e) =>
+            setSelectedProvider(
+              Object.values(API_PROVIDERS).find(
+                (p) => p.url === e.target.value,
+              ),
+            )
+          }
+          className="px-3 py-2 rounded-md border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
-          {activatingSession
-            ? "starting webrtc session..."
-            : "start webrtc session"}
-        </Button>
-      )}
-      {/* only WebRTC for now */}
-      {/* 
-      {activatingSession !== "webrtc" && (
-        <Button
-          onClick={handleStartWebsocketSession}
-          className={activatingSession ? "bg-gray-600" : "bg-blue-600"}
-          icon={<MessageSquare height={16} />}
-          disabled={activatingSession}
-        >
-          {activatingSession
-            ? "starting websocket session..."
-            : "websocket session"}
-        </Button>
-      )} */}
+          {Object.values(API_PROVIDERS).map((provider) => (
+            <option key={provider.url} value={provider.url}>
+              {provider.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="flex items-center justify-center gap-4">
+        {activatingSession !== "websocket" && (
+          <Button
+            onClick={handleStartWebrtcSession}
+            className={`${
+              activatingSession ? "bg-gray-600" : "bg-red-600"
+            } hover:opacity-90 transition-opacity`}
+            icon={<CloudLightning height={16} />}
+            disabled={activatingSession}
+          >
+            {activatingSession
+              ? "starting WebRTC session..."
+              : "start WebRTC Session"}
+          </Button>
+        )}
+        {/* only WebRTC for now */}
+        {/* {activatingSession !== "webrtc" && (
+          <Button
+            onClick={handleStartWebsocketSession}
+            className={`${
+              activatingSession ? "bg-gray-600" : "bg-blue-600"
+            } hover:opacity-90 transition-opacity`}
+            icon={<MessageSquare height={16} />}
+            disabled={activatingSession}
+          >
+            {activatingSession
+              ? "Starting WebSocket session..."
+              : "Start WebSocket Session"}
+          </Button>
+        )} */}
+      </div>
     </div>
   );
 }

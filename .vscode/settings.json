@@ -1,0 +1,7 @@
+{
+    "[javascript][typescript][javascriptreact][typescriptreact]": {
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "always"
+        }
+    }
+}

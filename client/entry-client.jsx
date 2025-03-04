@@ -1,8 +1,11 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import AppRouter from "./components/AppRouter";
+
+import { ApiProvider } from "./contexts/ApiContext";
+import Router from "./router";
+
 import "./base.css";
 
 // Create a client
@@ -21,7 +24,9 @@ ReactDOM.hydrateRoot(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <AppRouter />
+        <ApiProvider>
+          <Router />
+        </ApiProvider>
       </BrowserRouter>
     </QueryClientProvider>
   </StrictMode>,

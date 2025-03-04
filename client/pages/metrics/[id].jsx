@@ -1,12 +1,12 @@
-import React, { useState, useRef } from "react";
-import { useParams, Link } from "react-router-dom";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useRef, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 
-import { Alert, Badge, Button, Card, Table } from "../ui";
-import { formatTimestamp } from "../ui/utils";
-import { fetchMetricDetail, getAudioUrl } from "../../services/api";
+import { Alert, Badge, Button, Card, Table } from "@/components/ui";
+import { formatTimestamp } from "@/components/ui/utils";
+import { fetchMetricDetail, getAudioUrl } from "@/services/api";
 
-const MetricDetail = () => {
+export default function MetricDetail() {
   const { id } = useParams();
   const [playingAudio, setPlayingAudio] = useState(null);
   const audioRef = useRef(null);
@@ -341,6 +341,4 @@ const MetricDetail = () => {
       )}
     </div>
   );
-};
-
-export default MetricDetail;
+}
