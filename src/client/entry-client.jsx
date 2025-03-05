@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
+import { Toaster } from "sonner";
 
 import { ApiProvider } from "./contexts/ApiContext";
 import Router from "./router";
@@ -25,6 +26,7 @@ ReactDOM.hydrateRoot(
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <ApiProvider>
+          <Toaster richColors position="top-right" />
           <Router />
         </ApiProvider>
       </BrowserRouter>

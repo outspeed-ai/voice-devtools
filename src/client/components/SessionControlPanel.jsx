@@ -143,8 +143,9 @@ function SessionControls({ sendClientEvent }) {
         <select
           id="model"
           value={model}
-          onChange={(e) => setModel(e.target.value)}
+          // onChange={(e) => setModel(e.target.value)}
           className="border p-2 rounded-md"
+          disabled
         >
           {MODEL_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>

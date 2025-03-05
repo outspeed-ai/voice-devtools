@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { CloudLightning, CloudOff, MessageSquare } from "react-feather";
 
+import { API_PROVIDERS } from "@/config/session";
 import { CONNECTION_TYPES } from "@/constants";
-import { API_PROVIDERS, useApi } from "@/contexts/ApiContext";
+import { useApi } from "@/contexts/ApiContext";
 import AudioRecorder from "./AudioRecorder";
 import Button from "./Button";
 

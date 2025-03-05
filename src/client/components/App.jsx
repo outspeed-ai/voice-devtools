@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
-import { CONNECTION_TYPES, ICE_SERVERS, MODEL } from "@/constants";
 import {
+  API_PROVIDERS,
   OPENAI_PROVIDER,
   OUTSPEED_PROVIDER,
-  useApi,
-} from "@/contexts/ApiContext";
+} from "@/config/session";
+import { CONNECTION_TYPES, ICE_SERVERS, MODEL } from "@/constants";
+import { useApi } from "@/contexts/ApiContext";
 import EventLog from "./EventLog";
 import SessionControlPanel from "./SessionControlPanel";
 import SessionControls from "./SessionControls";
@@ -85,6 +87,23 @@ export default function App() {
         `/token?apiUrl=${selectedProvider.url}`,
       );
       const data = await tokenResponse.json();
+      if (!tokenResponse.ok) {
+        console.error("Failed to get ephemeral key", data);
+        const providerDomain = selectedProvider.url;
+
+        const toastOptions = {};
+        if (data.code === "NO_API_KEY") {
+          toastOptions.action = {
+            label: "Get API Key",
+            onClick: () =>
+              window.open(API_PROVIDERS[providerDomain].apiKeyUrl, "_blank"),
+          };
+        }
+
+        toast.error(data.error || "Failed to get ephemeral key", toastOptions);
+        return;
+      }
+
       const ephemeralKey = data.client_secret.value;
 
       // Create a peer connection

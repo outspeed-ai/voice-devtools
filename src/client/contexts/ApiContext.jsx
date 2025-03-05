@@ -1,26 +1,12 @@
 import { createContext, useContext, useState } from "react";
 
-export const OPENAI_PROVIDER = "api.openai.com";
-export const OUTSPEED_PROVIDER = "api.outspeed.com";
-
-export const API_PROVIDERS = {
-  OUTSPEED: {
-    name: "Outspeed",
-    url: OUTSPEED_PROVIDER,
-    features: ["sessions"],
-  },
-  OPENAI: {
-    name: "OpenAI",
-    url: OPENAI_PROVIDER,
-    features: [],
-  },
-};
+import { API_PROVIDERS, OUTSPEED_PROVIDER } from "@/config/session";
 
 const ApiContext = createContext(null);
 
 export function ApiProvider({ children }) {
   const [selectedProvider, setSelectedProvider] = useState(
-    API_PROVIDERS.OUTSPEED,
+    API_PROVIDERS[OUTSPEED_PROVIDER],
   );
 
   return (

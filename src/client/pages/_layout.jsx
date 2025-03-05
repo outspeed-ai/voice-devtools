@@ -2,7 +2,7 @@ import { Link, Outlet } from "react-router-dom";
 
 import { useApi } from "@/contexts/ApiContext";
 
-import logo from "/assets/logo-dark.png";
+import logo from "/outspeed-logo-dark.png";
 
 const AppRouter = () => {
   const { selectedProvider } = useApi();

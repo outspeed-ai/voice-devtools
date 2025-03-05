@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import fs from "fs";
+import path from "path";
 import { createServer as createViteServer } from "vite";
 
 const app = express();
@@ -45,16 +46,22 @@ app.get("/token", async (req, res) => {
   try {
     const provider = req.query.apiUrl;
     if (typeof provider !== "string") {
-      throw new Error(`apiUrl query param must be a string`);
+      res.status(400).json({ error: "apiUrl query param must be a string" });
+      return;
     }
 
     if (!(provider in providerConfigs)) {
-      throw new Error(`no config found for ${provider}`);
+      res.status(400).json({ error: `no config found for ${provider}` });
+      return;
     }
 
     const config = providerConfigs[provider];
     if (!config.apiKey) {
-      throw new Error(`no API key found for ${provider}`);
+      res.status(400).json({
+        error: `no API key found for ${provider}`,
+        code: "NO_API_KEY",
+      });
+      return;
     }
 
     const url = `https://${provider}/v1/realtime/sessions`;
@@ -89,9 +96,11 @@ app.use("*", async (req, res, next) => {
   try {
     const template = await vite.transformIndexHtml(
       url,
-      fs.readFileSync("./client/index.html", "utf-8"),
+      fs.readFileSync("./index.html", "utf-8"),
     );
-    const { render } = await vite.ssrLoadModule("./client/entry-server.jsx");
+    const { render } = await vite.ssrLoadModule(
+      path.join(import.meta.dirname, "./client/entry-server.jsx"),
+    );
     const appHtml = await render(url);
     const html = template.replace(`<!--ssr-outlet-->`, appHtml?.html);
     res.status(200).set({ "Content-Type": "text/html" }).end(html);
