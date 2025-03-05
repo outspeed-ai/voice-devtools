@@ -1,5 +1,6 @@
 import { Link, Outlet } from "react-router-dom";
 
+import { OUTSPEED_PROVIDER } from "@/config/session";
 import { useApi } from "@/contexts/ApiContext";
 
 import logo from "/outspeed-logo-dark.png";
@@ -18,7 +19,7 @@ const AppRouter = () => {
             <Link to="/" className="text-blue-600 hover:text-blue-800">
               Home
             </Link>
-            {selectedProvider.features.includes("sessions") && (
+            {selectedProvider.url === OUTSPEED_PROVIDER && (
               <Link
                 to="/sessions"
                 className="text-blue-600 hover:text-blue-800"

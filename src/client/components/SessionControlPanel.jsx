@@ -1,7 +1,4 @@
-import { useEffect, useState } from "react";
-import { Check } from "react-feather";
-
-import Button from "./Button";
+import { useApi } from "@/contexts/ApiContext";
 
 const functionDescription = `
 Call this function when a user asks for a color palette.
@@ -66,73 +63,31 @@ function FunctionCallOutput({ functionCallOutput }) {
   );
 }
 
-export default function SessionControlPanel({
+export default function SessionDetailsPanel({
   isSessionActive,
+  loadingModal,
   sendClientEvent,
 }) {
-  useEffect(() => {}, []);
-
   return (
     <section className="h-full w-full flex flex-col gap-4">
       <div className="h-full bg-gray-50 rounded-md p-4">
-        <h2 className="text-lg font-bold">session control panel</h2>
-        {isSessionActive ? (
-          <SessionControls sendClientEvent={sendClientEvent} />
+        <h2 className="text-lg font-bold">session details</h2>
+        {isSessionActive && !loadingModal ? (
+          <>
+            <SessionDetails sendClientEvent={sendClientEvent} />
+          </>
         ) : (
-          <p>start the session to use this tool</p>
+          <p>start the session to see details</p>
         )}
       </div>
     </section>
   );
 }
 
-const MODELS = Object.freeze({
-  MINI_CPM_O_2_6: "MiniCPM-o-2_6",
-});
-
-const MODEL_OPTIONS = Object.values(MODELS).map((model) => ({
-  label: model,
-  value: model,
-}));
-
-const Modality = Object.freeze({
-  TEXT: "text",
-  AUDIO: "audio",
-});
-
-const MODALITIES = new Set([Modality.TEXT, Modality.AUDIO]);
-
-const voices = [
-  {
-    label: "female",
-    value: "female_eng",
-  },
-  {
-    label: "male",
-    value: "male_eng",
-  },
-];
-
-function SessionControls({ sendClientEvent }) {
-  const [model, setModel] = useState(MODELS.MINI_CPM_O_2_6);
-  const [temperature, setTemperature] = useState(0.5);
-  const [modalities, setModalities] = useState(MODALITIES);
-  const [voice, setVoice] = useState(voices[0]);
-
-  const handleModalitiesChange = (modality) => {
-    const newModalities = new Set(modalities);
-    if (newModalities.has(modality)) {
-      newModalities.delete(modality);
-    } else {
-      newModalities.add(modality);
-    }
-    setModalities(newModalities);
-  };
-
-  const handleUpdateSession = () => {
-    alert("biraj will implement this soon!!!");
-    // sendClientEvent(sessionUpdate);
-  };
+function SessionDetails({ sendClientEvent }) {
+  const {
+    selectedProvider: { sessionConfig },
+  } = useApi();
 
   return (
     <div className="flex flex-col gap-6">
@@ -140,74 +95,42 @@ function SessionControls({ sendClientEvent }) {
 
       <div className="flex flex-col gap-1">
         <label htmlFor="model">model</label>
-        <select
-          id="model"
-          value={model}
-          // onChange={(e) => setModel(e.target.value)}
-          className="border p-2 rounded-md"
-          disabled
-        >
-          {MODEL_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+        <input readOnly value={sessionConfig.model} className="border p-2" />
+      </div>
+      <div className="flex flex-col gap-1">
+        <label htmlFor="instructions">instructions</label>
+        <textarea
+          readOnly
+          value={sessionConfig.instructions}
+          className="border p-2"
+          rows={7}
+        />
       </div>
       <div className="flex flex-col gap-1">
         <label htmlFor="temperature">
-          temperature ({temperature.toFixed(1)})
+          temperature: {sessionConfig.temperature.toFixed(1)}
         </label>
-        <input
-          id="temperature"
-          type="range"
-          min={0}
-          max={1}
-          step={0.1}
-          value={temperature}
-          onChange={(e) => setTemperature(Number(e.target.value))}
-          className="border p-2 rounded-md"
-        />
       </div>
       <div className="flex flex-col gap-1">
         <label htmlFor="modalities">modalities</label>
         <div className="flex flex-col gap-2">
-          {Array.from(MODALITIES).map((modality) => (
+          {Array.from(sessionConfig.modalities).map((modality) => (
             <label key={modality} className="flex items-center gap-2">
               <input
                 type="checkbox"
-                checked={modalities.has(modality)}
-                onChange={() => handleModalitiesChange(modality)}
+                checked={sessionConfig.modalities.includes(modality)}
               />
               {modality}
             </label>
           ))}
         </div>
       </div>
-      {modalities.has(Modality.AUDIO) && (
+      {sessionConfig.modalities.includes("audio") && (
         <div className="flex flex-col gap-1">
           <label htmlFor="voice">voice</label>
-          <select
-            id="voice"
-            value={voice}
-            onChange={(e) => setVoice(e.target.value)}
-            className="border p-2 rounded-md"
-          >
-            {voices.map((voice) => (
-              <option key={voice.value} value={voice.value}>
-                {voice.label}
-              </option>
-            ))}
-          </select>
+          <input readOnly value={sessionConfig.voice} className="border p-2" />
         </div>
       )}
-      <Button
-        onClick={() => sendClientEvent(sessionUpdate)}
-        icon={<Check height={16} />}
-        className="justify-center"
-      >
-        update session
-      </Button>
     </div>
   );
 }

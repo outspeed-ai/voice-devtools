@@ -6,10 +6,10 @@ import {
   OPENAI_PROVIDER,
   OUTSPEED_PROVIDER,
 } from "@/config/session";
-import { CONNECTION_TYPES, ICE_SERVERS, MODEL } from "@/constants";
+import { CONNECTION_TYPES, ICE_SERVERS } from "@/constants";
 import { useApi } from "@/contexts/ApiContext";
 import EventLog from "./EventLog";
-import SessionControlPanel from "./SessionControlPanel";
+import SessionDetailsPanel from "./SessionControlPanel";
 import SessionControls from "./SessionControls";
 
 export default function App() {
@@ -82,9 +82,16 @@ export default function App() {
     try {
       setEvents([]);
 
+      const { sessionConfig } = selectedProvider;
+
       // Get an ephemeral key from the server with selected provider
       const tokenResponse = await fetch(
         `/token?apiUrl=${selectedProvider.url}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(sessionConfig),
+        },
       );
       const data = await tokenResponse.json();
       if (!tokenResponse.ok) {
@@ -128,7 +135,7 @@ export default function App() {
         const noWsOffer = await pc.createOffer();
         await pc.setLocalDescription(noWsOffer);
 
-        const url = `https://${selectedProvider.url}/v1/realtime?model=${MODEL}`;
+        const url = `https://${selectedProvider.url}/v1/realtime?model=${sessionConfig.model}`;
         const sdpResponse = await fetch(url, {
           method: "POST",
           body: noWsOffer.sdp,
@@ -238,7 +245,7 @@ export default function App() {
     try {
       setEvents([]);
 
-      const url = `wss://${selectedProvider.url}/v1/realtime?model=${MODEL}`;
+      const url = `wss://${selectedProvider.url}/v1/realtime`;
       const ws = new WebSocket(url);
 
       ws.onopen = () => {
@@ -320,7 +327,7 @@ export default function App() {
 
   function handleConnectionError() {
     setIsSessionActive(false);
-    alert("Connection error! Check the console for details.");
+    toast.error("Connection error! Check the console for details.");
   }
 
   function sendClientEvent(message) {
@@ -440,7 +447,8 @@ export default function App() {
           </section>
         </section>
         <section className="hidden md:block absolute top-0 w-[380px] right-0 bottom-0 p-4 pt-0 overflow-y-auto">
-          <SessionControlPanel
+          <SessionDetailsPanel
+            loadingModal={loadingModal}
             sendClientEvent={sendClientEvent}
             isSessionActive={isSessionActive}
           />
