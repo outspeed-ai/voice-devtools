@@ -1,11 +1,14 @@
+import fs from "node:fs";
+import net from "node:net";
+import os from "node:os";
+import path from "node:path";
+
 import "dotenv/config";
 import express from "express";
-import fs from "fs";
-import path from "path";
 import { createServer as createViteServer } from "vite";
 
 const app = express();
-const port = process.env.PORT || 3000;
+const initialPort = process.env.PORT || 3000;
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 if (!OPENAI_API_KEY) {
@@ -110,6 +113,63 @@ app.use("*", async (req, res, next) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Express server running on *:${port}`);
-});
+// Function to check if a port is available
+const isPortAvailable = (port) => {
+  return new Promise((resolve) => {
+    const server = net.createServer();
+
+    server.once("error", () => {
+      resolve(false);
+    });
+
+    // close the server once it's listening so it can be used by http server
+    server.once("listening", () => {
+      server.close();
+      resolve(true);
+    });
+
+    server.listen(port);
+  });
+};
+
+// Function to find an available port
+const findAvailablePort = async (startPort) => {
+  let port = startPort;
+  while (!(await isPortAvailable(port))) {
+    console.log(`Port ${port} is in use, trying ${port + 1}`);
+    port++;
+  }
+
+  return port;
+};
+
+const startServer = async () => {
+  try {
+    const availablePort = await findAvailablePort(initialPort);
+    app.listen(availablePort, (err) => {
+      if (err) {
+        console.error(err);
+        return;
+      }
+
+      // Get all network interfaces
+      const interfaces = os.networkInterfaces();
+      console.log("\n🚀 App running at:\n");
+      Object.keys(interfaces).forEach((interfaceName) => {
+        interfaces[interfaceName]?.forEach((details) => {
+          if (details.family === "IPv4") {
+            console.log(
+              `  ➜ Local: http://${details.address}:${availablePort}`,
+            );
+          }
+        });
+      });
+
+      console.log(`  ➜ Local: http://localhost:${availablePort}`);
+    });
+  } catch (err) {
+    console.error("Failed to start server:", err);
+  }
+};
+
+startServer();
