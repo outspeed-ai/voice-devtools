@@ -67,7 +67,7 @@ export default function Metrics() {
                       {metric.label || "Unlabeled Session"}
                     </h2>
                     <p className="text-gray-500 text-sm">
-                      {formatTimestamp(metric.logged_at)}
+                      {formatTimestamp(metric.created_at)}
                     </p>
                   </div>
                   <Badge
