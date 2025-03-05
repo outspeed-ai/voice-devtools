@@ -45,7 +45,7 @@ const vite = await createViteServer({
 app.use(vite.middlewares);
 
 // API route for token generation
-app.get("/token", async (req, res) => {
+app.post("/token", express.json(), async (req, res) => {
   try {
     const provider = req.query.apiUrl;
     if (typeof provider !== "string") {
@@ -75,13 +75,14 @@ app.get("/token", async (req, res) => {
         Authorization: `Bearer ${config.apiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(config.body),
+      body: JSON.stringify(req.body),
     });
 
     if (!response.ok) {
       const error = await response.text();
       console.error("Token generation error:", error);
-      throw new Error(error);
+      res.status(response.status).send(error);
+      return;
     }
 
     const data = await response.json();

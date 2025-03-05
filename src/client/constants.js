@@ -3,8 +3,6 @@ export const CONNECTION_TYPES = {
   WEBSOCKET: "websocket",
 };
 
-export const MODEL = "MiniCPM-o-2_6";
-
 export const ICE_SERVERS = [{ urls: "stun:stun.l.google.com:19302" }];
 
 export const OUTSPEED_API_BASE_URL = "https://api.outspeed.com/v1";
