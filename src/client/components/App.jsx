@@ -419,6 +419,33 @@ export default function App() {
   };
 
   return (
+    <main className="h-full flex flex-col p-4 gap-4">
+      <div className="flex grow gap-4">
+        <div className="flex-1 rounded-xl bg-white overflow-y-auto p-4">
+          chats here...
+        </div>
+        <div className="flex-1 rounded-xl bg-white overflow-y-auto p-4">
+          <EventLog events={events} loadingModal={loadingModal} />
+        </div>
+      </div>
+      <section className="shrink-0">
+        <SessionControls
+          loadingModal={loadingModal}
+          connectionType={connectionType}
+          startWebrtcSession={startWebrtcSession}
+          stopWebrtcSession={stopWebrtcSession}
+          startWebsocketSession={startWebsocketSession}
+          stopWebsocketSession={stopWebsocketSession}
+          sendClientEvent={sendClientEvent}
+          sendTextMessage={sendTextMessage}
+          events={events}
+          isSessionActive={isSessionActive}
+        />
+      </section>
+    </main>
+  );
+
+  return (
     <>
       {/* <nav className="absolute top-0 left-0 right-0 h-16 flex items-center">
         <div className="flex items-center gap-4 w-full m-4 pb-2 border-0 border-b border-solid border-gray-200">

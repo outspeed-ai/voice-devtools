@@ -5,12 +5,12 @@ import { useApi } from "@/contexts/ApiContext";
 
 import logo from "/outspeed-logo-dark.png";
 
-const AppRouter = () => {
+export default function RootLayout() {
   const { selectedProvider } = useApi();
 
   return (
-    <>
-      <nav className="absolute top-0 left-0 right-0 h-16 flex items-center bg-[#efefef]">
+    <div className="h-full flex flex-col">
+      <nav className="absolute top-0 left-0 right-0 h-16 flex items-center bg-[var(--color-bg)]">
         <div className="flex items-center gap-4 w-full m-4 pb-2 border-0 border-b border-solid border-gray-200">
           <img style={{ width: "24px" }} src={logo} />
           <h1>Outspeed Realtime Console 🏎️</h1>
@@ -30,11 +30,9 @@ const AppRouter = () => {
           </div>
         </div>
       </nav>
-      <div className="pt-16">
+      <div className="pt-16 flex-1">
         <Outlet />
       </div>
-    </>
+    </div>
   );
-};
-
-export default AppRouter;
+}

@@ -64,9 +64,7 @@ function SessionStopped({ startWebrtcSession, startWebsocketSession }) {
         {activatingSession !== "websocket" && (
           <Button
             onClick={handleStartWebrtcSession}
-            className={`${
-              activatingSession ? "bg-gray-600" : "bg-red-600"
-            } hover:opacity-90 transition-opacity`}
+            className={`hover:opacity-90 transition-opacity`}
             icon={<CloudLightning height={16} />}
             disabled={activatingSession}
           >
@@ -148,11 +146,7 @@ function SessionActive({
       <Button
         onClick={stopCurrentSession}
         icon={<CloudOff height={16} />}
-        className={
-          connectionType === CONNECTION_TYPES.WEBRTC
-            ? "bg-red-600"
-            : "bg-blue-600"
-        }
+        className="bg-red-600"
       >
         disconnect
       </Button>
@@ -173,7 +167,7 @@ export default function SessionControls({
   loadingModal = false,
 }) {
   return (
-    <div className="flex gap-4 border-t-2 border-gray-200 h-full rounded-md">
+    <div className="flex">
       {loadingModal && (
         <p className="text-gray-500 w-full flex justify-center items-center h-full text-center">
           loading modal to GPU. please wait a moment...
