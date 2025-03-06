@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -6,22 +6,21 @@ import {
   OPENAI_PROVIDER,
   OUTSPEED_PROVIDER,
 } from "@/config/session";
-import { CONNECTION_TYPES, ICE_SERVERS } from "@/constants";
+import { ICE_SERVERS } from "@/constants";
 import { useApi } from "@/contexts/ApiContext";
+import Chat from "./Chat";
 import EventLog from "./EventLog";
-import SessionDetailsPanel from "./SessionControlPanel";
 import SessionControls from "./SessionControls";
 
 export default function App() {
   const { selectedProvider } = useApi();
   const [isSessionActive, setIsSessionActive] = useState(false);
-  const [loadingModal, setLoadingModal] = useState(false);
+  const [loadingModel, setLoadingModal] = useState(false);
   const [events, setEvents] = useState([]);
-  const [connectionType, setConnectionType] = useState(null);
-  const [dataChannel, setDataChannel] = useState(null);
-  const peerConnection = useRef(null);
-  const signalingWebsocket = useRef(null);
-  const websocket = useRef(null);
+  const pcRef = useRef(null);
+  const dcRef = useRef(null);
+  const signallingWsRef = useRef(null);
+  const [messages, setMessages] = useState([]);
   const audioContext = useRef(null);
   const audioQueue = useRef([]);
   const isPlaying = useRef(false);
@@ -124,12 +123,55 @@ export default function App() {
       // Add local audio track for microphone input
       const ms = await navigator.mediaDevices.getUserMedia({ audio: true });
       pc.addTrack(ms.getTracks()[0]);
-
-      peerConnection.current = pc;
+      pcRef.current = pc;
 
       // Set up data channel
       const dc = pc.createDataChannel("oai-events");
-      setDataChannel(dc);
+
+      dc.addEventListener("open", () => {
+        setIsSessionActive(true);
+        setEvents([]);
+      });
+
+      dc.addEventListener("message", (e) => {
+        const event = JSON.parse(e.data);
+
+        event.timestamp = event.timestamp || new Date().toLocaleTimeString();
+        event.server_sent = true; // to distinguish between server and client events
+
+        switch (event.type) {
+          case "session.created":
+            setLoadingModal(false); // modal is now loaded
+            break;
+
+          case "response.audio_transcript.done":
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: event.event_id || crypto.randomUUID(),
+                role: "assistant",
+                type: "text",
+                content: event.transcript,
+                timestamp: new Date().toLocaleTimeString(),
+              },
+            ]);
+            break;
+        }
+
+        setEvents((prev) => [event, ...prev]);
+      });
+
+      dc.addEventListener("error", (e) => {
+        console.error("Data channel error:", e);
+        handleConnectionError();
+      });
+
+      dc.addEventListener("close", () => {
+        console.log("Data channel closed");
+        setIsSessionActive(false);
+      });
+
+      dcRef.current = dc;
 
       if (selectedProvider.url === OPENAI_PROVIDER) {
         const noWsOffer = await pc.createOffer();
@@ -150,7 +192,6 @@ export default function App() {
           sdp: await sdpResponse.text(),
         };
         await pc.setRemoteDescription(answer);
-        setConnectionType(CONNECTION_TYPES.WEBRTC);
         return;
       }
 
@@ -159,7 +200,7 @@ export default function App() {
         `wss://${OUTSPEED_PROVIDER}/v1/realtime/ws?client_secret=${ephemeralKey}`,
       );
 
-      signalingWebsocket.current = ws;
+      signallingWsRef.current = ws;
 
       const wsConnectedPromise = new Promise((resolve, reject) => {
         ws.onopen = () => {
@@ -233,7 +274,6 @@ export default function App() {
         }),
       );
 
-      setConnectionType(CONNECTION_TYPES.WEBRTC);
       setLoadingModal(true); // data channel will open first and then the modal will be loaded
     } catch (error) {
       console.error("Failed to start WebRTC session:", error);
@@ -241,79 +281,38 @@ export default function App() {
     }
   }
 
-  async function startWebsocketSession() {
-    try {
-      setEvents([]);
-
-      const url = `wss://${selectedProvider.url}/v1/realtime`;
-      const ws = new WebSocket(url);
-
-      ws.onopen = () => {
-        console.log("WebSocket session connected");
-        setIsSessionActive(true);
-        setConnectionType(CONNECTION_TYPES.WEBSOCKET);
-      };
-
-      ws.onclose = () => {
-        console.log("WebSocket session closed");
-        stopWebsocketSession();
-      };
-
-      ws.onerror = (error) => {
-        console.error("WebSocket session error:", error);
-        handleConnectionError();
-      };
-
-      ws.onmessage = handleWebSocketMessage;
-
-      websocket.current = ws;
-    } catch (error) {
-      console.error("Failed to start WebSocket session:", error);
-      handleConnectionError();
-    }
-  }
-
   function stopWebrtcSession() {
-    if (dataChannel) {
-      dataChannel.close();
+    if (dcRef.current) {
+      dcRef.current.close();
     }
 
-    if (peerConnection.current) {
-      peerConnection.current.getSenders().forEach((sender) => {
+    if (pcRef.current) {
+      pcRef.current.getSenders().forEach((sender) => {
         if (sender.track) {
           sender.track.stop();
         }
       });
-      peerConnection.current.close();
+      pcRef.current.close();
     }
 
-    cleanup();
-  }
-
-  function stopWebsocketSession() {
-    if (websocket.current) {
-      console.log("!!!!!!!!! closing websocket");
-      websocket.current.close();
-    }
     cleanup();
   }
 
   function cleanup() {
     setIsSessionActive(false);
     setLoadingModal(false);
-    setConnectionType(null);
-    setDataChannel(null);
-    peerConnection.current = null;
+    pcRef.current = null;
+    dcRef.current = null;
 
     // Cleanup signaling WebSocket
-    const signalingWs = signalingWebsocket.current;
+    const signalingWs = signallingWsRef.current;
     if (signalingWs) {
       signalingWs.onopen = null;
       signalingWs.onclose = null;
       signalingWs.onerror = null;
       signalingWs.onmessage = null;
       signalingWs.close();
-      signalingWebsocket.current = null;
+      signallingWsRef.current = null;
     }
 
     // Cleanup audio context
@@ -333,15 +332,8 @@ export default function App() {
   function sendClientEvent(message) {
     message.event_id = message.event_id || crypto.randomUUID();
 
-    console.log("sending client event connectionType", connectionType);
-
-    if (connectionType === CONNECTION_TYPES.WEBRTC && dataChannel) {
-      dataChannel.send(JSON.stringify(message));
-    } else if (
-      connectionType === CONNECTION_TYPES.WEBSOCKET &&
-      websocket.current
-    ) {
-      websocket.current.send(JSON.stringify(message));
+    if (dcRef.current) {
+      dcRef.current.send(JSON.stringify(message));
     } else {
       console.error("Failed to send message - no active connection", message);
       return;
@@ -369,73 +361,42 @@ export default function App() {
       },
     };
 
-    console.log("sending text message", event);
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        role: "user",
+        type: "text",
+        content: message,
+        timestamp: new Date().toLocaleTimeString(),
+      },
+    ]);
 
     sendClientEvent(event);
     sendClientEvent({ type: "response.create" });
   }
 
-  useEffect(() => {
-    if (dataChannel) {
-      dataChannel.addEventListener("open", () => {
-        setIsSessionActive(true);
-        setEvents([]);
-      });
-
-      dataChannel.addEventListener("message", (e) => {
-        const event = JSON.parse(e.data);
-        event.timestamp = event.timestamp || new Date().toLocaleTimeString();
-        event.server_sent = true; // to distinguish between server and client events
-
-        if (event.type === "session.created") {
-          setLoadingModal(false); // modal is now loaded
-        }
-
-        setEvents((prev) => [event, ...prev]);
-      });
-
-      dataChannel.addEventListener("error", (e) => {
-        console.error("Data channel error:", e);
-        handleConnectionError();
-      });
-
-      dataChannel.addEventListener("close", () => {
-        console.log("Data channel closed");
-        setIsSessionActive(false);
-      });
-    }
-  }, [dataChannel]);
-
-  // Handle WebSocket messages
-  const handleWebSocketMessage = (message) => {
-    console.log("WebSocket message received:", message.data);
-    const data = JSON.parse(message.data);
-
-    data.event_id = data.event_id || crypto.randomUUID();
-    data.type = data.type || "<unknown>";
-    data.timestamp = data.timestamp || new Date().toLocaleTimeString();
-    handleAudioDelta(data);
-    setEvents((prev) => [data, ...prev]);
-  };
-
   return (
     <main className="h-full flex flex-col p-4 gap-4">
-      <div className="flex grow gap-4">
-        <div className="flex-1 rounded-xl bg-white overflow-y-auto p-4">
-          chats here...
+      <div className="flex grow gap-4 overflow-hidden">
+        <div className="flex-1 h-full min-h-0 rounded-xl bg-white overflow-y-auto">
+          <Chat
+            messages={messages}
+            setMessages={setMessages}
+            isSessionActive={isSessionActive}
+            loadingModel={loadingModel}
+            sendTextMessage={sendTextMessage}
+          />
         </div>
-        <div className="flex-1 rounded-xl bg-white overflow-y-auto p-4">
-          <EventLog events={events} loadingModal={loadingModal} />
+        <div className="flex-1 h-full min-h-0 rounded-xl bg-white overflow-y-auto">
+          <EventLog events={events} loadingModal={loadingModel} />
         </div>
       </div>
       <section className="shrink-0">
         <SessionControls
-          loadingModal={loadingModal}
-          connectionType={connectionType}
+          loadingModal={loadingModel}
           startWebrtcSession={startWebrtcSession}
           stopWebrtcSession={stopWebrtcSession}
-          startWebsocketSession={startWebsocketSession}
-          stopWebsocketSession={stopWebsocketSession}
           sendClientEvent={sendClientEvent}
           sendTextMessage={sendTextMessage}
           events={events}
@@ -443,44 +404,5 @@ export default function App() {
         />
       </section>
     </main>
-  );
-
-  return (
-    <>
-      {/* <nav className="absolute top-0 left-0 right-0 h-16 flex items-center">
-        <div className="flex items-center gap-4 w-full m-4 pb-2 border-0 border-b border-solid border-gray-200">
-          <img style={{ width: "24px" }} src={logo} />
-          <h1>realtime console with Outspeed 🏎️</h1>
-        </div>
-      </nav> */}
-      <main className="absolute top-16 left-0 right-0 bottom-0">
-        <section className="absolute top-0 left-0 right-0 md:right-[380px] bottom-0 flex">
-          <section className="absolute top-0 left-0 right-0 bottom-32 px-4 overflow-y-auto">
-            <EventLog events={events} loadingModal={loadingModal} />
-          </section>
-          <section className="absolute h-32 left-0 right-0 bottom-0 p-4">
-            <SessionControls
-              loadingModal={loadingModal}
-              connectionType={connectionType}
-              startWebrtcSession={startWebrtcSession}
-              stopWebrtcSession={stopWebrtcSession}
-              startWebsocketSession={startWebsocketSession}
-              stopWebsocketSession={stopWebsocketSession}
-              sendClientEvent={sendClientEvent}
-              sendTextMessage={sendTextMessage}
-              events={events}
-              isSessionActive={isSessionActive}
-            />
-          </section>
-        </section>
-        <section className="hidden md:block absolute top-0 w-[380px] right-0 bottom-0 p-4 pt-0 overflow-y-auto">
-          <SessionDetailsPanel
-            loadingModal={loadingModal}
-            sendClientEvent={sendClientEvent}
-            isSessionActive={isSessionActive}
-          />
-        </section>
-      </main>
-    </>
   );
 }

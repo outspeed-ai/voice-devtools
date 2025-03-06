@@ -30,7 +30,7 @@ export default function RootLayout() {
           </div>
         </div>
       </nav>
-      <div className="pt-16 flex-1">
+      <div className="pt-16 flex-1 overflow-hidden">
         <Outlet />
       </div>
     </div>
