@@ -1,7 +1,7 @@
 {
   "type": "module",
   "scripts": {
-    "dev": "NODE_TLS_REJECT_UNAUTHORIZED='0'  nodemon src/server.js --dev",
+    "dev": "nodemon src/server.js --dev",
     "start": "node src/server.js",
     "build": "npm run build:client && npm run build:server",
     "build:client": "vite build --outDir dist/client --ssrManifest",
