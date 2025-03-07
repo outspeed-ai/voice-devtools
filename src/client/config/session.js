@@ -5,6 +5,9 @@ export const API_PROVIDERS = {
     name: "Outspeed",
     url: "api.outspeed.com",
     apiKeyUrl: "https://dashboard.outspeed.com/dashboard",
+    cost: {
+      perMinute: 0.01, // $0.01 per minute. NO input/output token bs
+    },
     sessionConfig: {
       model: "MiniCPM-o-2_6",
       modalities: ["text", "audio"],
@@ -12,14 +15,17 @@ export const API_PROVIDERS = {
         sessionConfig.instructions ||
         "You are a helpful voice assistant that understands human speech and responds in a helpful manner. Please respond in English with this voice style.",
       temperature: sessionConfig.temperature || 0.6,
-      // male (default), female
-      voice: "male",
+      voice: "male", // male (default), female
     },
   },
   "api.openai.com": {
     name: "OpenAI",
     url: "api.openai.com",
     apiKeyUrl: "https://platform.openai.com/api-keys",
+    cost: {
+      input: 5, // $5 per million input tokens
+      output: 20, // $20 per million output tokens
+    },
     sessionConfig: {
       model: "gpt-4o-realtime-preview-2024-12-17",
       modalities: ["text", "audio"],

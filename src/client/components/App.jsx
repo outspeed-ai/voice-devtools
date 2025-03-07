@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -24,11 +24,57 @@ export default function App() {
   const audioContext = useRef(null);
   const audioQueue = useRef([]);
   const isPlaying = useRef(false);
+  const [costData, setCostData] = useState(null);
+  const [cumulativeCost, setCumulativeCost] = useState({
+    inputTokens: 0,
+    outputTokens: 0,
+    totalCost: 0,
+    durationInSeconds: 0,
+  });
+  const [sessionStartTime, setSessionStartTime] = useState(null);
+  const sessionDurationInterval = useRef(null);
 
   // Add refs for speech recording
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const currentSpeechItemRef = useRef(null);
+
+  // Update session duration every second when active
+  useEffect(() => {
+    if (isSessionActive && sessionStartTime) {
+      sessionDurationInterval.current = setInterval(() => {
+        const durationInSeconds = Math.floor(
+          (Date.now() - sessionStartTime) / 1000,
+        );
+
+        // Update Outspeed cost if using that provider
+        if (selectedProvider?.url === OUTSPEED_PROVIDER) {
+          const durationInMinutes = durationInSeconds / 60;
+          const cost = durationInMinutes * selectedProvider.cost.perMinute;
+
+          setCostData({
+            durationInSeconds,
+            durationInMinutes,
+            costPerMinute: selectedProvider.cost.perMinute,
+            totalCost: cost,
+            timestamp: new Date().toLocaleTimeString(),
+          });
+
+          // Update cumulative cost for Outspeed
+          setCumulativeCost({
+            inputTokens: 0,
+            outputTokens: 0,
+            durationInSeconds,
+            totalCost: cost,
+          });
+        }
+      }, 1000);
+
+      return () => {
+        clearInterval(sessionDurationInterval.current);
+      };
+    }
+  }, [isSessionActive, sessionStartTime, selectedProvider]);
 
   // Function to start recording audio
   const startRecording = () => {
@@ -89,6 +135,16 @@ export default function App() {
   };
 
   async function startWebrtcSession() {
+    // Reset costs when starting a new session
+    setCostData(null);
+    setCumulativeCost({
+      inputTokens: 0,
+      outputTokens: 0,
+      durationInSeconds: 0,
+      totalCost: 0,
+    });
+    setSessionStartTime(Date.now());
+
     try {
       setEvents([]);
       setMessages([]);
@@ -143,6 +199,7 @@ export default function App() {
       dc.addEventListener("open", () => {
         setIsSessionActive(true);
         setEvents([]);
+        setSessionStartTime(Date.now());
       });
 
       dc.addEventListener("message", async (e) => {
@@ -154,6 +211,51 @@ export default function App() {
         switch (event.type) {
           case "session.created":
             setLoadingModal(false); // modal is now loaded
+            break;
+
+          case "response.done":
+            // Calculate cost for OpenAI API usage
+            if (
+              selectedProvider.url === OPENAI_PROVIDER &&
+              event.response?.usage
+            ) {
+              const { usage } = event.response;
+              const { input: inputCost, output: outputCost } =
+                selectedProvider.cost;
+
+              // Get token counts
+              const inputTokens = usage.input_tokens;
+              const outputTokens = usage.output_tokens;
+
+              // Calculate cost in dollars (cost is per million tokens)
+              const inputCostValue = (inputTokens / 1000000) * inputCost;
+              const outputCostValue = (outputTokens / 1000000) * outputCost;
+              const totalCost = inputCostValue + outputCostValue;
+
+              // Extract detailed token breakdown if available
+              const tokenDetails = {
+                input: usage.input_token_details || null,
+                output: usage.output_token_details || null,
+              };
+
+              // Update current cost data
+              setCostData({
+                inputTokens,
+                outputTokens,
+                inputCost: inputCostValue,
+                outputCost: outputCostValue,
+                totalCost,
+                tokenDetails,
+                timestamp: new Date().toLocaleTimeString(),
+              });
+
+              // Update cumulative cost
+              setCumulativeCost((prev) => ({
+                inputTokens: prev.inputTokens + inputTokens,
+                outputTokens: prev.outputTokens + outputTokens,
+                totalCost: prev.totalCost + totalCost,
+              }));
+            }
             break;
 
           case "response.audio_transcript.done":
@@ -373,6 +475,12 @@ export default function App() {
     }
 
     cleanup();
+
+    // Stop the session duration interval
+    if (sessionDurationInterval.current) {
+      clearInterval(sessionDurationInterval.current);
+      sessionDurationInterval.current = null;
+    }
   }
 
   function cleanup() {
@@ -469,7 +577,12 @@ export default function App() {
           />
         </div>
         <div className="flex-1 h-full min-h-0 rounded-xl bg-white overflow-y-auto">
-          <EventLog events={events} loadingModal={loadingModel} />
+          <EventLog
+            events={events}
+            loadingModal={loadingModel}
+            costData={costData}
+            cumulativeCost={cumulativeCost}
+          />
         </div>
       </div>
       <section className="shrink-0">

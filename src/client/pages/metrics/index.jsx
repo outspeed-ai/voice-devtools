@@ -39,7 +39,7 @@ export default function Metrics() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container h-full overflow-y-auto mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">
         Inference Metrics for session {sessionId}
       </h1>
