@@ -189,9 +189,10 @@ export default function App() {
           case "input_audio_buffer.speech_started":
             // Start recording when speech is detected
             currentSpeechItemRef.current = {
-              id: event.item_id || crypto.randomUUID(),
+              id: crypto.randomUUID(),
               startTime: event.audio_start_ms,
               eventId: event.event_id,
+              item_id: event.item_id,
             };
             startRecording();
             break;
