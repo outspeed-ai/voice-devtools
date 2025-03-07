@@ -2,6 +2,7 @@ import fs from "node:fs";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "url";
 
 import "dotenv/config";
 import express from "express";
@@ -102,8 +103,16 @@ app.use("*", async (req, res, next) => {
       url,
       fs.readFileSync("./index.html", "utf-8"),
     );
+
+    // Get the directory name properly
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+
+    console.log(__dirname);
+    console.log(__filename);
+
     const { render } = await vite.ssrLoadModule(
-      path.join(import.meta.dirname, "./client/entry-server.jsx"),
+      path.join(__dirname, "./client/entry-server.jsx"),
     );
     const appHtml = await render(url);
     const html = template.replace(`<!--ssr-outlet-->`, appHtml?.html);
