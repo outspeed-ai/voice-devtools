@@ -81,7 +81,7 @@ app.post("/token", express.json(), async (req, res) => {
     if (!response.ok) {
       const error = await response.text();
       console.error("Token generation error:", error);
-      res.status(response.status).send(error);
+      res.status(response.status).send({ type: "error", message: error });
       return;
     }
 
