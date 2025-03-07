@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { ArrowDown, ArrowUp } from "react-feather";
 
 function Event({ event, timestamp }) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -7,23 +6,23 @@ function Event({ event, timestamp }) {
   const isClient = !event.server_sent;
 
   return (
-    <div className="flex flex-col gap-2 p-2 rounded-md bg-gray-50">
+    <div className="flex flex-col gap-2 p-2 border-b">
       <div
-        className="flex items-center gap-2 cursor-pointer"
+        className="flex items-center gap-2 cursor-pointer justify-between"
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        {isClient ? (
-          <ArrowUp className="text-blue-400" />
-        ) : (
-          <ArrowDown className="text-green-400" />
-        )}
-        <div className="text-sm text-gray-500">
-          {isClient ? "client:" : "server:"}
-          &nbsp;{event.type} | {timestamp}
-        </div>
+        <p className="flex items-center gap-2">
+          {isClient ? (
+            <span className="text-[#7f5af0] text-lg">▲</span>
+          ) : (
+            <span className="text-[#2cb67d] text-lg">▼</span>
+          )}
+          {event.type}
+        </p>
+        <span className="text-gray-500">{timestamp}</span>
       </div>
       <div
-        className={`text-gray-500 bg-gray-200 p-2 rounded-md overflow-x-auto ${
+        className={`p-2 rounded-md bg-gray-50 overflow-x-auto ${
           isExpanded ? "block" : "hidden"
         }`}
       >
@@ -53,17 +52,22 @@ export default function EventLog({ events, loadingModal = false }) {
   });
 
   return (
-    <div className="flex flex-col gap-2 overflow-x-auto">
-      {loadingModal && (
-        <div className="text-gray-500">
-          loading modal to GPU. please wait a moment...
-        </div>
-      )}
-      {!loadingModal && events.length === 0 ? (
-        <div className="text-gray-500">Awaiting events...</div>
-      ) : (
-        eventsToDisplay
-      )}
-    </div>
+    <>
+      <h3 className="font-semibold sticky top-0 z-10 text-base border-b bg-white p-4">
+        Logs
+      </h3>
+      <div className="flex flex-col gap-2 overflow-x-auto p-4">
+        {loadingModal && (
+          <div className="text-gray-500">
+            loading modal to GPU. please wait a moment...
+          </div>
+        )}
+        {!loadingModal && events.length === 0 ? (
+          <div className="text-gray-500">Awaiting events...</div>
+        ) : (
+          eventsToDisplay
+        )}
+      </div>
+    </>
   );
 }

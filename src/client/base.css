@@ -7,7 +7,9 @@ https://tailwindcss.com/docs/preflight
 @tailwind utilities;
 
 :root {
-  --color-base: #efefef;
+  /* tailwind gray-100 color */
+  --color-bg: theme("colors.gray.100");
+
   --color-highlight: #ff80ff;
 }
 
@@ -20,5 +22,10 @@ body {
   overflow: auto;
   font-family: "Consolas", "Andale Mono", monospace;
   font-size: 0.9rem;
-  background-color: var(--color-base);
+  background-color: var(--color-bg);
+}
+
+#root {
+  height: 100%;
+  width: 100%;
 }

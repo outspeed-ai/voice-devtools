@@ -1,13 +1,11 @@
 import { useState } from "react";
-import { CloudLightning, CloudOff, MessageSquare } from "react-feather";
+import { CloudLightning, CloudOff } from "react-feather";
 
 import { API_PROVIDERS } from "@/config/session";
-import { CONNECTION_TYPES } from "@/constants";
 import { useApi } from "@/contexts/ApiContext";
-import AudioRecorder from "./AudioRecorder";
 import Button from "./Button";
 
-function SessionStopped({ startWebrtcSession, startWebsocketSession }) {
+function SessionStopped({ startWebrtcSession }) {
   const { selectedProvider, setSelectedProvider } = useApi();
   const [activatingSession, setActivatingSession] = useState(null);
 
@@ -19,19 +17,6 @@ function SessionStopped({ startWebrtcSession, startWebsocketSession }) {
     setActivatingSession("webrtc");
     try {
       await startWebrtcSession();
-    } finally {
-      setActivatingSession(null);
-    }
-  }
-
-  async function handleStartWebsocketSession() {
-    if (activatingSession) {
-      return;
-    }
-
-    setActivatingSession("websocket");
-    try {
-      await startWebsocketSession();
     } finally {
       setActivatingSession(null);
     }
@@ -64,9 +49,7 @@ function SessionStopped({ startWebrtcSession, startWebsocketSession }) {
         {activatingSession !== "websocket" && (
           <Button
             onClick={handleStartWebrtcSession}
-            className={`${
-              activatingSession ? "bg-gray-600" : "bg-red-600"
-            } hover:opacity-90 transition-opacity`}
+            className={`hover:opacity-90 transition-opacity`}
             icon={<CloudLightning height={16} />}
             disabled={activatingSession}
           >
@@ -75,84 +58,22 @@ function SessionStopped({ startWebrtcSession, startWebsocketSession }) {
               : "start WebRTC Session"}
           </Button>
         )}
-        {/* only WebRTC for now */}
-        {/* {activatingSession !== "webrtc" && (
-          <Button
-            onClick={handleStartWebsocketSession}
-            className={`${
-              activatingSession ? "bg-gray-600" : "bg-blue-600"
-            } hover:opacity-90 transition-opacity`}
-            icon={<MessageSquare height={16} />}
-            disabled={activatingSession}
-          >
-            {activatingSession
-              ? "Starting WebSocket session..."
-              : "Start WebSocket Session"}
-          </Button>
-        )} */}
       </div>
     </div>
   );
 }
 
-function SessionActive({
-  connectionType,
-  sendTextMessage,
-  sendClientEvent,
-  stopSession,
-}) {
-  const [message, setMessage] = useState("");
-
-  function handleSendClientEvent() {
-    if (!message.trim()) return;
-    sendTextMessage(message);
-    setMessage("");
-  }
-
+function SessionActive({ stopSession }) {
   const stopCurrentSession = () => {
-    if (connectionType === CONNECTION_TYPES.WEBRTC) {
-      stopSession.stopWebrtcSession();
-    } else if (connectionType === CONNECTION_TYPES.WEBSOCKET) {
-      stopSession.stopWebsocketSession();
-    }
+    stopSession.stopWebrtcSession();
   };
 
   return (
     <div className="flex items-center justify-center w-full h-full gap-4">
-      <input
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && message.trim()) {
-            handleSendClientEvent();
-          }
-        }}
-        autoFocus
-        type="text"
-        placeholder="send a text message..."
-        className="border border-gray-200 rounded-full p-4 flex-1"
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-      />
-      <Button
-        onClick={handleSendClientEvent}
-        icon={<MessageSquare height={16} />}
-        className="bg-blue-400"
-      >
-        send text
-      </Button>
-      {connectionType === CONNECTION_TYPES.WEBSOCKET && (
-        <AudioRecorder
-          sendClientEvent={sendClientEvent}
-          isSessionActive={true}
-        />
-      )}
       <Button
         onClick={stopCurrentSession}
         icon={<CloudOff height={16} />}
-        className={
-          connectionType === CONNECTION_TYPES.WEBRTC
-            ? "bg-red-600"
-            : "bg-blue-600"
-        }
+        className="bg-red-600"
       >
         disconnect
       </Button>
@@ -163,36 +84,24 @@ function SessionActive({
 export default function SessionControls({
   startWebrtcSession,
   stopWebrtcSession,
-  startWebsocketSession,
-  stopWebsocketSession,
   sendClientEvent,
   sendTextMessage,
   events,
   isSessionActive,
-  connectionType,
   loadingModal = false,
 }) {
   return (
-    <div className="flex gap-4 border-t-2 border-gray-200 h-full rounded-md">
+    <div className="flex">
       {loadingModal && (
         <p className="text-gray-500 w-full flex justify-center items-center h-full text-center">
           loading model to GPU. please wait a moment...
         </p>
       )}
       {!loadingModal && isSessionActive && (
-        <SessionActive
-          connectionType={connectionType}
-          stopSession={{ stopWebrtcSession, stopWebsocketSession }}
-          sendClientEvent={sendClientEvent}
-          sendTextMessage={sendTextMessage}
-          events={events}
-        />
+        <SessionActive stopSession={{ stopWebrtcSession }} events={events} />
       )}
       {!loadingModal && !isSessionActive && (
-        <SessionStopped
-          startWebrtcSession={startWebrtcSession}
-          startWebsocketSession={startWebsocketSession}
-        />
+        <SessionStopped startWebrtcSession={startWebrtcSession} />
       )}
     </div>
   );
