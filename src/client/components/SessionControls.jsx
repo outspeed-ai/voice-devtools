@@ -176,7 +176,7 @@ export default function SessionControls({
     <div className="flex gap-4 border-t-2 border-gray-200 h-full rounded-md">
       {loadingModal && (
         <p className="text-gray-500 w-full flex justify-center items-center h-full text-center">
-          loading modal to GPU. please wait a moment...
+          loading model to GPU. please wait a moment...
         </p>
       )}
       {!loadingModal && isSessionActive && (
