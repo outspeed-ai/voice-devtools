@@ -9,6 +9,7 @@ export default {
   resolve: {
     alias: {
       "@": join(dirname(path), "src/client"),
+      "@src": join(dirname(path), "src"),
     },
   },
   plugins: [react()],

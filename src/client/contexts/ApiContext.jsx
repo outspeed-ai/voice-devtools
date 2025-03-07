@@ -1,25 +1,23 @@
 import { createContext, useContext, useState } from "react";
 
-import { API_PROVIDERS, OUTSPEED_PROVIDER } from "@/config/session";
+import { MODELS } from "@src/session-config";
 
-const ApiContext = createContext(null);
+const ModelContext = createContext(null);
 
-export function ApiProvider({ children }) {
-  const [selectedProvider, setSelectedProvider] = useState(
-    API_PROVIDERS[OUTSPEED_PROVIDER],
-  );
+export function ModelProvider({ children }) {
+  const [selectedModel, setSelectedModel] = useState(MODELS["MiniCPM-o-2_6"]);
 
   return (
-    <ApiContext.Provider value={{ selectedProvider, setSelectedProvider }}>
+    <ModelContext.Provider value={{ selectedModel, setSelectedModel }}>
       {children}
-    </ApiContext.Provider>
+    </ModelContext.Provider>
   );
 }
 
-export function useApi() {
-  const context = useContext(ApiContext);
+export function useModel() {
+  const context = useContext(ModelContext);
   if (!context) {
-    throw new Error("useApi must be used within an ApiProvider");
+    throw new Error("useModel() hook must be used within a ModelProvider");
   }
   return context;
 }

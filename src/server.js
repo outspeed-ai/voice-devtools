@@ -1,11 +1,21 @@
 import fs from "node:fs";
 import net from "node:net";
 import path from "node:path";
-import { fileURLToPath } from "url";
+import { fileURLToPath } from "node:url";
 
 import "dotenv/config";
 import express from "express";
 import { createServer as createViteServer } from "vite";
+
+import {
+  MODELS,
+  OPENAI_PROVIDER,
+  OUTSPEED_PROVIDER,
+} from "./session-config.js";
+
+// Get the directory name properly
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const initialPort = process.env.PORT || 3000;
@@ -18,6 +28,15 @@ if (!OPENAI_API_KEY) {
 const OUTSPEED_API_KEY = process.env.VITE_OUTSPEED_API_KEY;
 if (!OUTSPEED_API_KEY) {
   console.log("⚠️ VITE_OUTSPEED_API_KEY is not set");
+}
+
+const apiKeys = {};
+for (const model in MODELS) {
+  if (MODELS[model].url === OPENAI_PROVIDER) {
+    apiKeys[model] = OPENAI_API_KEY;
+  } else if (MODELS[model].url === OUTSPEED_PROVIDER) {
+    apiKeys[model] = OUTSPEED_API_KEY;
+  }
 }
 
 const providerConfigs = {
@@ -47,32 +66,34 @@ app.use(vite.middlewares);
 // API route for token generation
 app.post("/token", express.json(), async (req, res) => {
   try {
-    const provider = req.query.apiUrl;
-    if (typeof provider !== "string") {
-      res.status(400).json({ error: "apiUrl query param must be a string" });
+    const { model } = req.body;
+    if (typeof model !== "string") {
+      res.status(400).json({ error: "model query param must be a string" });
       return;
     }
 
-    if (!(provider in providerConfigs)) {
-      res.status(400).json({ error: `no config found for ${provider}` });
+    const config = MODELS[model];
+    if (!config) {
+      res
+        .status(400)
+        .json({ error: `no model found for ${model}`, code: "NO_MODEL" });
       return;
     }
 
-    const config = providerConfigs[provider];
-    if (!config.apiKey) {
-      res.status(400).json({
-        error: `no API key found for ${provider}`,
-        code: "NO_API_KEY",
-      });
+    const apiKey = apiKeys[model];
+    if (!apiKey) {
+      res
+        .status(400)
+        .json({ error: `no API key found for ${model}`, code: "NO_API_KEY" });
       return;
     }
 
-    const url = `https://${provider}/v1/realtime/sessions`;
+    const url = `https://${config.url}/v1/realtime/sessions`;
     console.log(`👉 using ${url} to create session...`);
     const response = await fetch(url, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${config.apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(req.body),
@@ -102,13 +123,6 @@ app.use("*", async (req, res, next) => {
       url,
       fs.readFileSync("./index.html", "utf-8"),
     );
-
-    // Get the directory name properly
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = path.dirname(__filename);
-
-    console.log(__dirname);
-    console.log(__filename);
 
     const { render } = await vite.ssrLoadModule(
       path.join(__dirname, "./client/entry-server.jsx"),

@@ -4,7 +4,7 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { Toaster } from "sonner";
 
-import { ApiProvider } from "./contexts/ApiContext";
+import { ModelProvider } from "./contexts/ApiContext";
 import Router from "./router";
 
 import "./base.css";
@@ -25,10 +25,10 @@ ReactDOM.hydrateRoot(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <ApiProvider>
+        <ModelProvider>
           <Toaster richColors position="top-right" />
           <Router />
-        </ApiProvider>
+        </ModelProvider>
       </BrowserRouter>
     </QueryClientProvider>
   </StrictMode>,

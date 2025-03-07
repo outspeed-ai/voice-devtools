@@ -1,19 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { ICE_SERVERS } from "@/constants";
+import { useModel } from "@/contexts/ApiContext";
 import {
-  API_PROVIDERS,
+  MODELS,
   OPENAI_PROVIDER,
   OUTSPEED_PROVIDER,
-} from "@/config/session";
-import { ICE_SERVERS } from "@/constants";
-import { useApi } from "@/contexts/ApiContext";
+} from "@src/session-config";
 import Chat from "./Chat";
 import EventLog from "./EventLog";
 import SessionControls from "./SessionControls";
 
 export default function App() {
-  const { selectedProvider } = useApi();
+  const { selectedModel } = useModel();
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [loadingModel, setLoadingModal] = useState(false);
   const [events, setEvents] = useState([]);
@@ -48,14 +48,14 @@ export default function App() {
         );
 
         // Update Outspeed cost if using that provider
-        if (selectedProvider?.url === OUTSPEED_PROVIDER) {
+        if (selectedModel?.url === OUTSPEED_PROVIDER) {
           const durationInMinutes = durationInSeconds / 60;
-          const cost = durationInMinutes * selectedProvider.cost.perMinute;
+          const cost = durationInMinutes * selectedModel.cost.perMinute;
 
           setCostData({
             durationInSeconds,
             durationInMinutes,
-            costPerMinute: selectedProvider.cost.perMinute,
+            costPerMinute: selectedModel.cost.perMinute,
             totalCost: cost,
             timestamp: new Date().toLocaleTimeString(),
           });
@@ -74,7 +74,7 @@ export default function App() {
         clearInterval(sessionDurationInterval.current);
       };
     }
-  }, [isSessionActive, sessionStartTime, selectedProvider]);
+  }, [isSessionActive, sessionStartTime, selectedModel]);
 
   // Function to start recording audio
   const startRecording = () => {
@@ -149,28 +149,25 @@ export default function App() {
       setEvents([]);
       setMessages([]);
 
-      const { sessionConfig } = selectedProvider;
+      const { sessionConfig } = selectedModel;
 
       // Get an ephemeral key from the server with selected provider
-      const tokenResponse = await fetch(
-        `/token?apiUrl=${selectedProvider.url}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(sessionConfig),
-        },
-      );
+      const tokenResponse = await fetch(`/token?apiUrl=${selectedModel.url}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sessionConfig),
+      });
       const data = await tokenResponse.json();
       if (!tokenResponse.ok) {
         console.error("Failed to get ephemeral key", data);
-        const providerDomain = selectedProvider.url;
+        const providerDomain = selectedModel.url;
 
         const toastOptions = {};
         if (data.code === "NO_API_KEY") {
           toastOptions.action = {
             label: "Get API Key",
             onClick: () =>
-              window.open(API_PROVIDERS[providerDomain].apiKeyUrl, "_blank"),
+              window.open(MODELS[providerDomain].apiKeyUrl, "_blank"),
           };
         }
 
@@ -216,12 +213,12 @@ export default function App() {
           case "response.done":
             // Calculate cost for OpenAI API usage
             if (
-              selectedProvider.url === OPENAI_PROVIDER &&
+              selectedModel.url === OPENAI_PROVIDER &&
               event.response?.usage
             ) {
               const { usage } = event.response;
               const { input: inputCost, output: outputCost } =
-                selectedProvider.cost;
+                selectedModel.cost;
 
               // Get token counts
               const inputTokens = usage.input_tokens;
@@ -344,11 +341,11 @@ export default function App() {
 
       dcRef.current = dc;
 
-      if (selectedProvider.url === OPENAI_PROVIDER) {
+      if (selectedModel.url === OPENAI_PROVIDER) {
         const noWsOffer = await pc.createOffer();
         await pc.setLocalDescription(noWsOffer);
 
-        const url = `https://${selectedProvider.url}/v1/realtime?model=${sessionConfig.model}`;
+        const url = `https://${selectedModel.url}/v1/realtime?model=${sessionConfig.model}`;
         const sdpResponse = await fetch(url, {
           method: "POST",
           body: noWsOffer.sdp,
