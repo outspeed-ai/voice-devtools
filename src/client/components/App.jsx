@@ -25,61 +25,73 @@ export default function App() {
   const audioQueue = useRef([]);
   const isPlaying = useRef(false);
 
-  const playNextAudio = async () => {
-    if (!audioQueue.current.length || isPlaying.current) return;
+  // Add refs for speech recording
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const currentSpeechItemRef = useRef(null);
 
-    isPlaying.current = true;
-    const audioData = audioQueue.current.shift();
-
-    try {
-      // Decode base64 to array buffer
-      const binaryString = atob(audioData);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-
-      // Create audio context if not exists
-      if (!audioContext.current) {
-        audioContext.current = new (window.AudioContext ||
-          window.webkitAudioContext)({
-          sampleRate: 16000,
-        });
-      }
-
-      // Decode audio data
-      const audioBuffer = await audioContext.current.decodeAudioData(
-        bytes.buffer,
-      );
-
-      // Create buffer source
-      const source = audioContext.current.createBufferSource();
-      source.buffer = audioBuffer;
-      source.connect(audioContext.current.destination);
-
-      // Play and handle completion
-      source.onended = () => {
-        isPlaying.current = false;
-        playNextAudio();
-      };
-      source.start();
-    } catch (error) {
-      console.error("Error playing audio:", error);
-      isPlaying.current = false;
-      playNextAudio();
+  // Function to start recording audio
+  const startRecording = () => {
+    if (!pcRef.current) {
+      return;
     }
+
+    // Get the audio track from the peer connection
+    const senders = pcRef.current.getSenders();
+    const audioSender = senders.find(
+      (sender) => sender.track && sender.track.kind === "audio",
+    );
+
+    if (!audioSender || !audioSender.track) {
+      console.error("No audio track found");
+      return;
+    }
+
+    // Create a MediaStream with the audio track
+    const stream = new MediaStream([audioSender.track]);
+
+    // Create a MediaRecorder
+    const mediaRecorder = new MediaRecorder(stream);
+    mediaRecorderRef.current = mediaRecorder;
+    audioChunksRef.current = [];
+
+    // Handle data available event
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        audioChunksRef.current.push(event.data);
+      }
+    };
+
+    // Start recording
+    mediaRecorder.start();
   };
 
-  const handleAudioDelta = (event) => {
-    if (event.type === "response.audio.delta" && event.delta) {
-      audioQueue.current.push(event.delta);
-      playNextAudio();
+  // Function to stop recording and create audio blob
+  const stopRecording = () => {
+    if (
+      !mediaRecorderRef.current ||
+      mediaRecorderRef.current.state === "inactive"
+    ) {
+      return;
     }
+
+    return new Promise((resolve) => {
+      mediaRecorderRef.current.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: "audio/webm",
+        });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        resolve(audioUrl);
+      };
+
+      mediaRecorderRef.current.stop();
+    });
   };
 
   async function startWebrtcSession() {
     try {
       setEvents([]);
+      setMessages([]);
 
       const { sessionConfig } = selectedProvider;
 
@@ -133,7 +145,7 @@ export default function App() {
         setEvents([]);
       });
 
-      dc.addEventListener("message", (e) => {
+      dc.addEventListener("message", async (e) => {
         const event = JSON.parse(e.data);
 
         event.timestamp = event.timestamp || new Date().toLocaleTimeString();
@@ -155,6 +167,63 @@ export default function App() {
                 timestamp: new Date().toLocaleTimeString(),
               },
             ]);
+            break;
+
+          case "error":
+            if (!event.error.message) {
+              break;
+            }
+
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: event.event_id || crypto.randomUUID(),
+                role: "assistant",
+                type: "error",
+                content: event.error.message,
+                timestamp: new Date().toLocaleTimeString(),
+              },
+            ]);
+            break;
+
+          case "input_audio_buffer.speech_started":
+            // Start recording when speech is detected
+            currentSpeechItemRef.current = {
+              id: event.item_id || crypto.randomUUID(),
+              startTime: event.audio_start_ms,
+              eventId: event.event_id,
+            };
+            startRecording();
+            break;
+
+          case "input_audio_buffer.speech_stopped":
+            // Stop recording when speech ends and add to messages
+            if (currentSpeechItemRef.current?.startTime) {
+              const audioUrl = await stopRecording();
+              if (audioUrl) {
+                const duration =
+                  event.audio_end_ms - currentSpeechItemRef.current.startTime;
+
+                // if we were to directly use currentSpeechItemRef.current in setMessages callback,
+                // that would fail even tho we're setting it to null AFTER setMessages() since
+                // state update is an async operation
+                const currentSpeechItem = currentSpeechItemRef.current;
+
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    id: currentSpeechItem.id,
+                    role: "user",
+                    type: "audio",
+                    content: audioUrl,
+                    duration: duration,
+                    timestamp: new Date().toLocaleTimeString(),
+                  },
+                ]);
+
+                currentSpeechItemRef.current = null;
+              }
+            }
             break;
         }
 
@@ -282,6 +351,14 @@ export default function App() {
   }
 
   function stopWebrtcSession() {
+    // Stop recording if active
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state !== "inactive"
+    ) {
+      mediaRecorderRef.current.stop();
+    }
+
     if (dcRef.current) {
       dcRef.current.close();
     }
@@ -303,6 +380,9 @@ export default function App() {
     setLoadingModal(false);
     pcRef.current = null;
     dcRef.current = null;
+    mediaRecorderRef.current = null;
+    audioChunksRef.current = [];
+    currentSpeechItemRef.current = null;
 
     // Cleanup signaling WebSocket
     const signalingWs = signallingWsRef.current;
