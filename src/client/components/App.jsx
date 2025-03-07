@@ -238,7 +238,7 @@ export default function App() {
 
       dc.addEventListener("close", () => {
         console.log("Data channel closed");
-        setIsSessionActive(false);
+        cleanup();
       });
 
       dcRef.current = dc;
@@ -406,7 +406,7 @@ export default function App() {
   }
 
   function handleConnectionError() {
-    setIsSessionActive(false);
+    cleanup();
     toast.error("Connection error! Check the console for details.");
   }
 
