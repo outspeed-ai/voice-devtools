@@ -1,6 +1,5 @@
 import fs from "node:fs";
 import net from "node:net";
-import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "url";
 
@@ -162,20 +161,7 @@ const startServer = async () => {
         return;
       }
 
-      // Get all network interfaces
-      const interfaces = os.networkInterfaces();
-      console.log("\n🚀 App running at:\n");
-      Object.keys(interfaces).forEach((interfaceName) => {
-        interfaces[interfaceName]?.forEach((details) => {
-          if (details.family === "IPv4") {
-            console.log(
-              `  ➜ Local: http://${details.address}:${availablePort}`,
-            );
-          }
-        });
-      });
-
-      console.log(`  ➜ Local: http://localhost:${availablePort}`);
+      console.log(`🚀 App running at http://localhost:${availablePort}`);
     });
   } catch (err) {
     console.error("Failed to start server:", err);
