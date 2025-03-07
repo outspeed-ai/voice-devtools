@@ -1,7 +1,7 @@
 {
   "type": "module",
   "scripts": {
-    "dev": "NODE_TLS_REJECT_UNAUTHORIZED='0' nodemon src/server.js --dev",
+    "dev": "NODE_TLS_REJECT_UNAUTHORIZED='0'  nodemon src/server.js --dev",
     "start": "node src/server.js",
     "build": "npm run build:client && npm run build:server",
     "build:client": "vite build --outDir dist/client --ssrManifest",
@@ -25,6 +25,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
+    "nodemon": "^3.1.9",
     "postcss": "^8.4.31",
     "postcss-nesting": "^12.0.2",
     "postcss-preset-env": "^7.7.1",
