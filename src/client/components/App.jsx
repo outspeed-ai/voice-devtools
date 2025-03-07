@@ -160,28 +160,31 @@ export default function App() {
             setMessages((prev) => [
               ...prev,
               {
-                id: event.event_id || crypto.randomUUID(),
+                id: crypto.randomUUID(),
                 role: "assistant",
                 type: "text",
                 content: event.transcript,
                 timestamp: new Date().toLocaleTimeString(),
+                item_id: event.item_id,
+                event_id: event.event_id,
               },
             ]);
             break;
 
           case "error":
-            if (!event.error.message) {
+            if (!event.message) {
               break;
             }
 
             setMessages((prev) => [
               ...prev,
               {
-                id: event.event_id || crypto.randomUUID(),
+                id: crypto.randomUUID(),
                 role: "assistant",
                 type: "error",
-                content: event.error.message,
+                content: event.message,
                 timestamp: new Date().toLocaleTimeString(),
+                event_id: event.event_id,
               },
             ]);
             break;
