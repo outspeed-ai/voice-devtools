@@ -259,28 +259,31 @@ export default function App() {
             setMessages((prev) => [
               ...prev,
               {
-                id: event.event_id || crypto.randomUUID(),
+                id: crypto.randomUUID(),
                 role: "assistant",
                 type: "text",
                 content: event.transcript,
                 timestamp: new Date().toLocaleTimeString(),
+                item_id: event.item_id,
+                event_id: event.event_id,
               },
             ]);
             break;
 
           case "error":
-            if (!event.error.message) {
+            if (!event.message) {
               break;
             }
 
             setMessages((prev) => [
               ...prev,
               {
-                id: event.event_id || crypto.randomUUID(),
+                id: crypto.randomUUID(),
                 role: "assistant",
                 type: "error",
-                content: event.error.message,
+                content: event.message,
                 timestamp: new Date().toLocaleTimeString(),
+                event_id: event.event_id,
               },
             ]);
             break;
@@ -288,9 +291,10 @@ export default function App() {
           case "input_audio_buffer.speech_started":
             // Start recording when speech is detected
             currentSpeechItemRef.current = {
-              id: event.item_id || crypto.randomUUID(),
+              id: crypto.randomUUID(),
               startTime: event.audio_start_ms,
               eventId: event.event_id,
+              item_id: event.item_id,
             };
             startRecording();
             break;
@@ -336,7 +340,7 @@ export default function App() {
 
       dc.addEventListener("close", () => {
         console.log("Data channel closed");
-        setIsSessionActive(false);
+        cleanup();
       });
 
       dcRef.current = dc;
@@ -510,7 +514,7 @@ export default function App() {
   }
 
   function handleConnectionError() {
-    setIsSessionActive(false);
+    cleanup();
     toast.error("Connection error! Check the console for details.");
   }
 
