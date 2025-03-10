@@ -176,7 +176,9 @@ export default function App() {
 
       // Add local audio track for microphone input
       const ms = await navigator.mediaDevices.getUserMedia({ audio: true });
-      pc.addTrack(ms.getTracks()[0]);
+      const audioTrack = ms.getTracks()[0];
+      audioTrack.enabled = false; // disable the track initially
+      pc.addTrack(audioTrack);
       pcRef.current = pc;
 
       // Set up data channel
@@ -197,6 +199,11 @@ export default function App() {
         switch (event.type) {
           case "session.created":
             setLoadingModal(false); // modal is now loaded
+
+            // enable the audio track after the model is ready
+            pcRef.current.getSenders().forEach((sender) => {
+              sender.track.enabled = true;
+            });
             break;
 
           case "response.done":
