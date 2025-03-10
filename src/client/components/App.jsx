@@ -3,6 +3,12 @@ import { toast } from "sonner";
 
 import { ICE_SERVERS } from "@/constants";
 import { useModel } from "@/contexts/model";
+import {
+  calculateOpenAICosts,
+  calculateTimeCosts,
+  getInitialCostState,
+  updateCumulativeCost,
+} from "@/utils/cost-calc";
 import { providers } from "@src/session-config";
 import Chat from "./Chat";
 import EventLog from "./EventLog";
@@ -21,12 +27,7 @@ export default function App() {
   const audioQueue = useRef([]);
   const isPlaying = useRef(false);
   const [costData, setCostData] = useState(null);
-  const [cumulativeCost, setCumulativeCost] = useState({
-    inputTokens: 0,
-    outputTokens: 0,
-    totalCost: 0,
-    durationInSeconds: 0,
-  });
+  const [cumulativeCost, setCumulativeCost] = useState(getInitialCostState());
   const [sessionStartTime, setSessionStartTime] = useState(null);
   const sessionDurationInterval = useRef(null);
 
@@ -48,23 +49,19 @@ export default function App() {
 
       // Update Outspeed cost if using that provider
       if (selectedModel.provider === providers.Outspeed) {
-        const durationInMinutes = durationInSeconds / 60;
-        const cost = durationInMinutes * selectedModel.cost.perMinute;
-
-        setCostData({
+        const timeCosts = calculateTimeCosts(
           durationInSeconds,
-          durationInMinutes,
-          costPerMinute: selectedModel.cost.perMinute,
-          totalCost: cost,
-          timestamp: new Date().toLocaleTimeString(),
-        });
+          selectedModel.cost.perMinute,
+        );
+
+        setCostData(timeCosts);
 
         // Update cumulative cost for Outspeed
         setCumulativeCost({
           inputTokens: 0,
           outputTokens: 0,
           durationInSeconds,
-          totalCost: cost,
+          totalCost: timeCosts.totalCost,
         });
       }
     }, 1000);
@@ -135,12 +132,7 @@ export default function App() {
   async function startWebrtcSession() {
     // Reset costs when starting a new session
     setCostData(null);
-    setCumulativeCost({
-      inputTokens: 0,
-      outputTokens: 0,
-      durationInSeconds: 0,
-      totalCost: 0,
-    });
+    setCumulativeCost(getInitialCostState());
     setSessionStartTime(Date.now());
 
     try {
@@ -213,42 +205,19 @@ export default function App() {
               selectedModel.provider === providers.OpenAI &&
               event.response?.usage
             ) {
-              const { usage } = event.response;
-              const { input: inputCost, output: outputCost } =
-                selectedModel.cost;
-
-              // Get token counts
-              const inputTokens = usage.input_tokens;
-              const outputTokens = usage.output_tokens;
-
-              // Calculate cost in dollars (cost is per million tokens)
-              const inputCostValue = (inputTokens / 1000000) * inputCost;
-              const outputCostValue = (outputTokens / 1000000) * outputCost;
-              const totalCost = inputCostValue + outputCostValue;
-
-              // Extract detailed token breakdown if available
-              const tokenDetails = {
-                input: usage.input_token_details || null,
-                output: usage.output_token_details || null,
-              };
+              // Use our utility functions to calculate costs
+              const newCostData = calculateOpenAICosts(
+                event.response.usage,
+                selectedModel.cost,
+              );
 
               // Update current cost data
-              setCostData({
-                inputTokens,
-                outputTokens,
-                inputCost: inputCostValue,
-                outputCost: outputCostValue,
-                totalCost,
-                tokenDetails,
-                timestamp: new Date().toLocaleTimeString(),
-              });
+              setCostData(newCostData);
 
               // Update cumulative cost
-              setCumulativeCost((prev) => ({
-                inputTokens: prev.inputTokens + inputTokens,
-                outputTokens: prev.outputTokens + outputTokens,
-                totalCost: prev.totalCost + totalCost,
-              }));
+              setCumulativeCost((prev) =>
+                updateCumulativeCost(prev, newCostData),
+              );
             }
             break;
 
@@ -300,29 +269,34 @@ export default function App() {
             // Stop recording when speech ends and add to messages
             if (currentSpeechItemRef.current?.startTime) {
               const audioUrl = await stopRecording();
-              if (audioUrl) {
-                const duration =
-                  event.audio_end_ms - currentSpeechItemRef.current.startTime;
-
-                // if we were to directly use currentSpeechItemRef.current in setMessages callback,
-                // that would fail even tho we're setting it to null AFTER setMessages() since
-                // state update is an async operation
-                const currentSpeechItem = currentSpeechItemRef.current;
-
-                setMessages((prev) => [
-                  ...prev,
-                  {
-                    id: currentSpeechItem.id,
-                    role: "user",
-                    type: "audio",
-                    content: audioUrl,
-                    duration: duration,
-                    timestamp: new Date().toLocaleTimeString(),
-                  },
-                ]);
-
-                currentSpeechItemRef.current = null;
+              if (!audioUrl) {
+                console.error(
+                  "error: input_audio_buffer.speech_stopped - No audio URL found",
+                );
+                break;
               }
+
+              const duration =
+                event.audio_end_ms - currentSpeechItemRef.current.startTime;
+
+              // if we were to directly use currentSpeechItemRef.current in setMessages callback,
+              // that would fail even tho we're setting it to null AFTER setMessages() since
+              // state update is an async operation
+              const currentSpeechItem = currentSpeechItemRef.current;
+
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: currentSpeechItem.id,
+                  role: "user",
+                  type: "audio",
+                  content: audioUrl,
+                  duration: duration,
+                  timestamp: new Date().toLocaleTimeString(),
+                },
+              ]);
+
+              currentSpeechItemRef.current = null;
             }
             break;
         }

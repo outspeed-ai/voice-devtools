@@ -1,42 +1,102 @@
 import { useState } from "react";
 
-function TokenDetailsDisplay({ tokenDetails }) {
+function TokenDetailsDisplay({ tokenDetails, costBreakdown }) {
   if (!tokenDetails) {
     return null;
   }
 
+  // Ensure costBreakdown exists to prevent errors
+  const safeBreakdown = costBreakdown || {
+    input: { text: 0, audio: 0, cached: { text: 0, audio: 0 } },
+    output: { text: 0, audio: 0 },
+  };
+
   return (
     <div className="mt-3 pt-3 border-t border-gray-200">
       <h5 className="text-xs font-semibold text-gray-700 mb-2">
-        Token Breakdown
+        Token & Cost Breakdown
       </h5>
 
       {tokenDetails.input && (
         <div className="mb-2">
           <div className="text-xs font-medium text-gray-600">Input:</div>
-          <div className="grid grid-cols-2 gap-1 text-xs ml-2">
+          <div className="grid grid-cols-3 gap-1 text-xs ml-2">
+            <div className="text-gray-500">Type</div>
+            <div className="text-gray-500 text-right">Tokens</div>
+            <div className="text-gray-500 text-right">Cost ($)</div>
+
             {tokenDetails.input.text_tokens !== undefined && (
               <>
                 <div className="text-gray-500">Text:</div>
                 <div className="text-right">
                   {tokenDetails.input.text_tokens.toLocaleString()}
                 </div>
+                <div className="text-right">
+                  ${safeBreakdown.input?.text?.toFixed(6) || "0.000000"}
+                </div>
               </>
             )}
+
             {tokenDetails.input.audio_tokens !== undefined && (
               <>
                 <div className="text-gray-500">Audio:</div>
                 <div className="text-right">
                   {tokenDetails.input.audio_tokens.toLocaleString()}
                 </div>
+                <div className="text-right">
+                  ${safeBreakdown.input?.audio?.toFixed(6) || "0.000000"}
+                </div>
               </>
             )}
+
             {tokenDetails.input.cached_tokens !== undefined && (
               <>
-                <div className="text-gray-500">Cached:</div>
-                <div className="text-right">
-                  {tokenDetails.input.cached_tokens.toLocaleString()}
-                </div>
+                {/* If we have cached token details, show them broken down */}
+                {tokenDetails.input.cached_tokens_details ? (
+                  <>
+                    {tokenDetails.input.cached_tokens_details.text_tokens !==
+                      undefined && (
+                      <>
+                        <div className="text-gray-500">Cached Text:</div>
+                        <div className="text-right">
+                          {tokenDetails.input.cached_tokens_details.text_tokens.toLocaleString()}
+                        </div>
+                        <div className="text-right">
+                          $
+                          {safeBreakdown.input?.cached?.text?.toFixed(6) ||
+                            "0.000000"}
+                        </div>
+                      </>
+                    )}
+
+                    {tokenDetails.input.cached_tokens_details.audio_tokens !==
+                      undefined && (
+                      <>
+                        <div className="text-gray-500">Cached Audio:</div>
+                        <div className="text-right">
+                          {tokenDetails.input.cached_tokens_details.audio_tokens.toLocaleString()}
+                        </div>
+                        <div className="text-right">
+                          $
+                          {safeBreakdown.input?.cached?.audio?.toFixed(6) ||
+                            "0.000000"}
+                        </div>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div className="text-gray-500">Cached Total:</div>
+                    <div className="text-right">
+                      {tokenDetails.input.cached_tokens.toLocaleString()}
+                    </div>
+                    <div className="text-right">
+                      $
+                      {safeBreakdown.input?.cached?.text?.toFixed(6) ||
+                        "0.000000"}
+                    </div>
+                  </>
+                )}
               </>
             )}
           </div>
@@ -46,20 +106,31 @@ function TokenDetailsDisplay({ tokenDetails }) {
       {tokenDetails.output && (
         <div>
           <div className="text-xs font-medium text-gray-600">Output:</div>
-          <div className="grid grid-cols-2 gap-1 text-xs ml-2">
+          <div className="grid grid-cols-3 gap-1 text-xs ml-2">
+            <div className="text-gray-500">Type</div>
+            <div className="text-gray-500 text-right">Tokens</div>
+            <div className="text-gray-500 text-right">Cost ($)</div>
+
             {tokenDetails.output.text_tokens !== undefined && (
               <>
                 <div className="text-gray-500">Text:</div>
                 <div className="text-right">
                   {tokenDetails.output.text_tokens.toLocaleString()}
                 </div>
+                <div className="text-right">
+                  ${safeBreakdown.output?.text?.toFixed(6) || "0.000000"}
+                </div>
               </>
             )}
+
             {tokenDetails.output.audio_tokens !== undefined && (
               <>
                 <div className="text-gray-500">Audio:</div>
                 <div className="text-right">
                   {tokenDetails.output.audio_tokens.toLocaleString()}
+                </div>
+                <div className="text-right">
+                  ${safeBreakdown.output?.audio?.toFixed(6) || "0.000000"}
                 </div>
               </>
             )}
@@ -127,7 +198,8 @@ export default function CostDisplay({ costData, cumulativeCost }) {
         <div className="flex gap-1">
           {!isDurationBased && (
             <>
-              {!showCumulative && costData?.tokenDetails && (
+              {((!showCumulative && costData?.tokenDetails) ||
+                (showCumulative && cumulativeCost?.costBreakdown)) && (
                 <button
                   onClick={() => setShowDetails(!showDetails)}
                   className="text-xs px-2 py-1 rounded bg-white border border-gray-300 hover:bg-gray-50"
@@ -210,7 +282,65 @@ export default function CostDisplay({ costData, cumulativeCost }) {
         !showCumulative &&
         showDetails &&
         costData?.tokenDetails && (
-          <TokenDetailsDisplay tokenDetails={costData.tokenDetails} />
+          <TokenDetailsDisplay
+            tokenDetails={costData.tokenDetails}
+            costBreakdown={costData.costBreakdown}
+          />
+        )}
+
+      {!isDurationBased &&
+        showCumulative &&
+        showDetails &&
+        cumulativeCost?.costBreakdown && (
+          <div className="mt-3 pt-3 border-t border-gray-200">
+            <h5 className="text-xs font-semibold text-gray-700 mb-2">
+              Cumulative Cost Breakdown
+            </h5>
+            <div className="grid grid-cols-2 gap-1 text-xs">
+              <div className="text-gray-600">Input - Text:</div>
+              <div className="text-right font-medium">
+                $
+                {cumulativeCost.costBreakdown.input?.text?.toFixed(6) ||
+                  "0.000000"}
+              </div>
+
+              <div className="text-gray-600">Input - Audio:</div>
+              <div className="text-right font-medium">
+                $
+                {cumulativeCost.costBreakdown.input?.audio?.toFixed(6) ||
+                  "0.000000"}
+              </div>
+
+              <div className="text-gray-600">Input - Cached Text:</div>
+              <div className="text-right font-medium">
+                $
+                {cumulativeCost.costBreakdown.input?.cached?.text?.toFixed(6) ||
+                  "0.000000"}
+              </div>
+
+              <div className="text-gray-600">Input - Cached Audio:</div>
+              <div className="text-right font-medium">
+                $
+                {cumulativeCost.costBreakdown.input?.cached?.audio?.toFixed(
+                  6,
+                ) || "0.000000"}
+              </div>
+
+              <div className="text-gray-600">Output - Text:</div>
+              <div className="text-right font-medium">
+                $
+                {cumulativeCost.costBreakdown.output?.text?.toFixed(6) ||
+                  "0.000000"}
+              </div>
+
+              <div className="text-gray-600">Output - Audio:</div>
+              <div className="text-right font-medium">
+                $
+                {cumulativeCost.costBreakdown.output?.audio?.toFixed(6) ||
+                  "0.000000"}
+              </div>
+            </div>
+          </div>
         )}
 
       {costData && (

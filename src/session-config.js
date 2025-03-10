@@ -56,7 +56,20 @@ export const MODELS = {
      *
      * Last updated: March 10, 2025
      */
-    cost: { input: 5.0, cached: 2.5, output: 20.0 }, // $ per million tokens
+    cost: {
+      input: {
+        text: 5.0, // $ per million tokens
+        audio: 40.0, // $ per million tokens
+        cached: {
+          text: 2.5, // $ per million tokens
+          audio: 2.5, // $ per million tokens
+        },
+      },
+      output: {
+        text: 20.0, // $ per million tokens
+        audio: 80.0, // $ per million tokens
+      },
+    },
     sessionConfig: {
       model: "gpt-4o-realtime-preview-2024-12-17",
       modalities: sharedConfig.modalities,
@@ -74,7 +87,20 @@ export const MODELS = {
      *
      * Last updated: March 10, 2025
      */
-    cost: { input: 0.6, cached: 0.3, output: 2.4 }, // $ per million tokens
+    cost: {
+      input: {
+        text: 0.6, // $ per million tokens
+        audio: 10.0, // $ per million tokens
+        cached: {
+          text: 0.3, // $ per million tokens
+          audio: 0.3, // $ per million tokens
+        },
+      },
+      output: {
+        text: 2.4, // $ per million tokens
+        audio: 20.0, // $ per million tokens
+      },
+    },
     sessionConfig: {
       model: "gpt-4o-mini-realtime-preview-2024-12-17",
       modalities: sharedConfig.modalities,
