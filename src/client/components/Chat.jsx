@@ -2,7 +2,7 @@ import { useState } from "react";
 import { AlertCircle, Send } from "react-feather";
 
 import AudioPlayer from "./AudioPlayer";
-import Button from "./Button";
+import Button from "./ui/Button";
 
 const Chat = ({ messages, isSessionActive, loadingModel, sendTextMessage }) => {
   const [message, setMessage] = useState("");

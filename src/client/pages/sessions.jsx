@@ -76,7 +76,7 @@ export default function Sessions() {
                 <Button
                   variant="outline"
                   onClick={() => navigate(`/metrics?session_id=${session.id}`)}
-                  className="inline-block ml-auto mt-2"
+                  className="ml-auto mt-2"
                 >
                   View Metrics
                 </Button>

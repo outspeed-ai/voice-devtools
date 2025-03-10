@@ -3,7 +3,7 @@ import { CloudLightning, CloudOff } from "react-feather";
 
 import { useModel } from "@/contexts/ApiContext";
 import { MODELS } from "@src/session-config";
-import Button from "./Button";
+import Button from "./ui/Button";
 
 function SessionStopped({ startWebrtcSession }) {
   const { selectedModel, setSelectedModel } = useModel();
@@ -24,7 +24,7 @@ function SessionStopped({ startWebrtcSession }) {
 
   return (
     <div className="w-full h-full flex items-center justify-center gap-8">
-      <div className="flex items-center gap-3 justify-center mb-2">
+      <div className="flex items-center gap-4 justify-center">
         <span className="text-gray-700">Select Model:</span>
         <select
           value={selectedModel.sessionConfig.model}
@@ -39,13 +39,10 @@ function SessionStopped({ startWebrtcSession }) {
             ),
           )}
         </select>
-      </div>
 
-      <div className="flex items-center justify-center gap-4">
         {activatingSession !== "websocket" && (
           <Button
             onClick={handleStartWebrtcSession}
-            className={`hover:opacity-90 transition-opacity`}
             icon={<CloudLightning height={16} />}
             disabled={activatingSession}
           >
