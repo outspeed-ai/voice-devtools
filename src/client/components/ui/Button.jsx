@@ -9,7 +9,7 @@ const Button = ({
   className = "",
 }) => {
   const baseClasses =
-    " flex items-center gap-1 p-4 py-2 rounded-md font-medium transition-colors hover:opacity-90 transition-opacity";
+    " flex items-center justify-center gap-1 p-4 py-2 rounded-md font-medium transition-colors hover:opacity-90 transition-opacity disabled:opacity-50";
   const variantClasses = {
     primary: "bg-gray-800 text-white",
     outline: "border border-gray-300 text-gray-700 hover:bg-gray-50",

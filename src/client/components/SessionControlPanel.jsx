@@ -1,4 +1,4 @@
-import { useModel } from "@/contexts/ApiContext";
+import { useModel } from "@/contexts/model";
 
 const functionDescription = `
 Call this function when a user asks for a color palette.

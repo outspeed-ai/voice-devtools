@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { CloudLightning, CloudOff } from "react-feather";
 
-import { useModel } from "@/contexts/ApiContext";
+import { useModel } from "@/contexts/model";
 import { MODELS } from "@src/session-config";
 import Button from "./ui/Button";
 
 function SessionStopped({ startWebrtcSession }) {
   const { selectedModel, setSelectedModel } = useModel();
-  const [activatingSession, setActivatingSession] = useState(null);
+  const [activatingSession, setActivatingSession] = useState(null); // webrtc or websocket or null for idle state
 
   async function handleStartWebrtcSession() {
     if (activatingSession) {
@@ -34,21 +34,19 @@ function SessionStopped({ startWebrtcSession }) {
           {Object.values(MODELS).map(
             ({ label, provider, sessionConfig: { model } }) => (
               <option key={model} value={model}>
-                {label} ({provider})
+                {label} ({provider.name})
               </option>
             ),
           )}
         </select>
 
-        {activatingSession !== "websocket" && (
-          <Button
-            onClick={handleStartWebrtcSession}
-            icon={<CloudLightning height={16} />}
-            disabled={activatingSession}
-          >
-            {activatingSession ? "Connecting..." : "Connect"}
-          </Button>
-        )}
+        <Button
+          onClick={handleStartWebrtcSession}
+          icon={<CloudLightning height={16} />}
+          disabled={activatingSession}
+        >
+          {activatingSession ? "Connecting..." : "Connect"}
+        </Button>
       </div>
     </div>
   );

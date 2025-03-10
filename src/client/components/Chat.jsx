@@ -98,11 +98,10 @@ const Chat = ({ messages, isSessionActive, loadingModel, sendTextMessage }) => {
           value={message}
           onChange={(e) => setMessage(e.target.value)}
         />
-
         <Button
           onClick={handleSendClientEvent}
           icon={<Send height={16} />}
-          className="disabled:opacity-50"
+          className="rounded-full w-10 h-10 p-0"
           disabled={!isSessionActive || loadingModel}
         />
       </div>

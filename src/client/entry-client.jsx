@@ -4,7 +4,7 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { Toaster } from "sonner";
 
-import { ModelProvider } from "./contexts/ApiContext";
+import { ModelProvider } from "./contexts/model";
 import Router from "./router";
 
 import "./base.css";

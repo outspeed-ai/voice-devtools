@@ -4,7 +4,7 @@ import { renderToString } from "react-dom/server";
 import { StaticRouter } from "react-router-dom/server";
 import { Toaster } from "sonner";
 
-import { ModelProvider } from "./contexts/ApiContext";
+import { ModelProvider } from "./contexts/model";
 import Router from "./router";
 
 export function render(url) {

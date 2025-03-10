@@ -7,11 +7,7 @@ import "dotenv/config";
 import express from "express";
 import { createServer as createViteServer } from "vite";
 
-import {
-  MODELS,
-  OPENAI_PROVIDER,
-  OUTSPEED_PROVIDER,
-} from "./session-config.js";
+import { MODELS, providers } from "./session-config.js";
 
 // Get the directory name properly
 const __filename = fileURLToPath(import.meta.url);
@@ -32,9 +28,9 @@ if (!OUTSPEED_API_KEY) {
 
 const apiKeys = {};
 for (const model in MODELS) {
-  if (MODELS[model].url === OPENAI_PROVIDER) {
+  if (MODELS[model].provider === providers.OpenAI) {
     apiKeys[model] = OPENAI_API_KEY;
-  } else if (MODELS[model].url === OUTSPEED_PROVIDER) {
+  } else if (MODELS[model].provider === providers.Outspeed) {
     apiKeys[model] = OUTSPEED_API_KEY;
   }
 }
@@ -68,12 +64,12 @@ app.post("/token", express.json(), async (req, res) => {
   try {
     const { model } = req.body;
     if (typeof model !== "string") {
-      res.status(400).json({ error: "model query param must be a string" });
+      res.status(400).json({ error: "model field must be a string" });
       return;
     }
 
-    const config = MODELS[model];
-    if (!config) {
+    const modelData = MODELS[model];
+    if (!modelData) {
       res
         .status(400)
         .json({ error: `no model found for ${model}`, code: "NO_MODEL" });
@@ -88,7 +84,7 @@ app.post("/token", express.json(), async (req, res) => {
       return;
     }
 
-    const url = `https://${config.url}/v1/realtime/sessions`;
+    const url = `https://${modelData.provider.url}/v1/realtime/sessions`;
     console.log(`👉 using ${url} to create session...`);
     const response = await fetch(url, {
       method: "POST",

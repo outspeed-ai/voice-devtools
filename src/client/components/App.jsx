@@ -2,12 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { ICE_SERVERS } from "@/constants";
-import { useModel } from "@/contexts/ApiContext";
-import {
-  MODELS,
-  OPENAI_PROVIDER,
-  OUTSPEED_PROVIDER,
-} from "@src/session-config";
+import { useModel } from "@/contexts/model";
+import { providers } from "@src/session-config";
 import Chat from "./Chat";
 import EventLog from "./EventLog";
 import SessionControls from "./SessionControls";
@@ -41,40 +37,42 @@ export default function App() {
 
   // Update session duration every second when active
   useEffect(() => {
-    if (isSessionActive && sessionStartTime) {
-      sessionDurationInterval.current = setInterval(() => {
-        const durationInSeconds = Math.floor(
-          (Date.now() - sessionStartTime) / 1000,
-        );
-
-        // Update Outspeed cost if using that provider
-        if (selectedModel?.url === OUTSPEED_PROVIDER) {
-          const durationInMinutes = durationInSeconds / 60;
-          const cost = durationInMinutes * selectedModel.cost.perMinute;
-
-          setCostData({
-            durationInSeconds,
-            durationInMinutes,
-            costPerMinute: selectedModel.cost.perMinute,
-            totalCost: cost,
-            timestamp: new Date().toLocaleTimeString(),
-          });
-
-          // Update cumulative cost for Outspeed
-          setCumulativeCost({
-            inputTokens: 0,
-            outputTokens: 0,
-            durationInSeconds,
-            totalCost: cost,
-          });
-        }
-      }, 1000);
-
-      return () => {
-        clearInterval(sessionDurationInterval.current);
-      };
+    if (loadingModel || !isSessionActive || !sessionStartTime) {
+      return;
     }
-  }, [isSessionActive, sessionStartTime, selectedModel]);
+
+    sessionDurationInterval.current = setInterval(() => {
+      const durationInSeconds = Math.floor(
+        (Date.now() - sessionStartTime) / 1000,
+      );
+
+      // Update Outspeed cost if using that provider
+      if (selectedModel.provider === providers.Outspeed) {
+        const durationInMinutes = durationInSeconds / 60;
+        const cost = durationInMinutes * selectedModel.cost.perMinute;
+
+        setCostData({
+          durationInSeconds,
+          durationInMinutes,
+          costPerMinute: selectedModel.cost.perMinute,
+          totalCost: cost,
+          timestamp: new Date().toLocaleTimeString(),
+        });
+
+        // Update cumulative cost for Outspeed
+        setCumulativeCost({
+          inputTokens: 0,
+          outputTokens: 0,
+          durationInSeconds,
+          totalCost: cost,
+        });
+      }
+    }, 1000);
+
+    return () => {
+      clearInterval(sessionDurationInterval.current);
+    };
+  }, [isSessionActive, sessionStartTime, selectedModel, loadingModel]);
 
   // Function to start recording audio
   const startRecording = () => {
@@ -152,7 +150,7 @@ export default function App() {
       const { sessionConfig } = selectedModel;
 
       // Get an ephemeral key from the server with selected provider
-      const tokenResponse = await fetch(`/token?apiUrl=${selectedModel.url}`, {
+      const tokenResponse = await fetch(`/token`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(sessionConfig),
@@ -160,14 +158,13 @@ export default function App() {
       const data = await tokenResponse.json();
       if (!tokenResponse.ok) {
         console.error("Failed to get ephemeral key", data);
-        const providerDomain = selectedModel.url;
 
         const toastOptions = {};
         if (data.code === "NO_API_KEY") {
           toastOptions.action = {
             label: "Get API Key",
             onClick: () =>
-              window.open(MODELS[providerDomain].apiKeyUrl, "_blank"),
+              window.open(selectedModel.provider.apiKeyUrl, "_blank"),
           };
         }
 
@@ -213,7 +210,7 @@ export default function App() {
           case "response.done":
             // Calculate cost for OpenAI API usage
             if (
-              selectedModel.url === OPENAI_PROVIDER &&
+              selectedModel.provider === providers.OpenAI &&
               event.response?.usage
             ) {
               const { usage } = event.response;
@@ -345,11 +342,13 @@ export default function App() {
 
       dcRef.current = dc;
 
-      if (selectedModel.url === OPENAI_PROVIDER) {
+      if (selectedModel.provider === providers.OpenAI) {
+        // OpenAI WebRTC signalling with an HTTP POST request
+
         const noWsOffer = await pc.createOffer();
         await pc.setLocalDescription(noWsOffer);
 
-        const url = `https://${selectedModel.url}/v1/realtime?model=${sessionConfig.model}`;
+        const url = `https://${selectedModel.provider.url}/v1/realtime?model=${sessionConfig.model}`;
         const sdpResponse = await fetch(url, {
           method: "POST",
           body: noWsOffer.sdp,
@@ -364,12 +363,13 @@ export default function App() {
           sdp: await sdpResponse.text(),
         };
         await pc.setRemoteDescription(answer);
+
         return;
       }
 
-      // signalling SDPs and ICE candidates via WebSocket
+      // Outspeed WebRTC signalling of  SDPs and ICE candidates via WebSocket
       const ws = new WebSocket(
-        `wss://${OUTSPEED_PROVIDER}/v1/realtime/ws?client_secret=${ephemeralKey}`,
+        `wss://${selectedModel.provider.url}/v1/realtime/ws?client_secret=${ephemeralKey}`,
       );
 
       signallingWsRef.current = ws;
@@ -475,13 +475,13 @@ export default function App() {
       pcRef.current.close();
     }
 
-    cleanup();
-
     // Stop the session duration interval
     if (sessionDurationInterval.current) {
       clearInterval(sessionDurationInterval.current);
       sessionDurationInterval.current = null;
     }
+
+    cleanup();
   }
 
   function cleanup() {
