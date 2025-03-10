@@ -21,7 +21,8 @@
     "react-dom": "^18.2.0",
     "react-feather": "^2.0.10",
     "react-router-dom": "^6.20.0",
-    "sonner": "^2.0.1"
+    "sonner": "^2.0.1",
+    "tailwind-merge": "^3.0.2"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",

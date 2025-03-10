@@ -1,4 +1,4 @@
-import React from "react";
+import { twMerge } from "tailwind-merge";
 
 const Button = ({
   children,
@@ -9,17 +9,20 @@ const Button = ({
   className = "",
 }) => {
   const baseClasses =
-    "flex items-center justify-center gap-2 px-4 py-2 rounded-md font-medium transition-colors";
+    " flex items-center justify-center gap-1 p-4 py-2 rounded-md font-medium transition-colors hover:opacity-90 transition-opacity disabled:opacity-50";
   const variantClasses = {
-    primary: "bg-blue-600 text-white hover:bg-blue-700",
+    primary: "bg-gray-800 text-white",
     outline: "border border-gray-300 text-gray-700 hover:bg-gray-50",
   };
 
   return (
     <button
-      className={`${baseClasses} ${variantClasses[variant]} ${
-        disabled ? "opacity-50 cursor-not-allowed" : ""
-      } ${className}`}
+      className={twMerge(
+        baseClasses,
+        variantClasses[variant],
+        disabled && "opacity-50 cursor-not-allowed",
+        className,
+      )}
       onClick={onClick}
       disabled={disabled}
     >

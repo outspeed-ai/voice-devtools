@@ -1,4 +1,4 @@
-import { useApi } from "@/contexts/ApiContext";
+import { useModel } from "@/contexts/model";
 
 const functionDescription = `
 Call this function when a user asks for a color palette.
@@ -86,8 +86,8 @@ export default function SessionDetailsPanel({
 
 function SessionDetails({ sendClientEvent }) {
   const {
-    selectedProvider: { sessionConfig },
-  } = useApi();
+    selectedModel: { sessionConfig },
+  } = useModel();
 
   return (
     <div className="flex flex-col gap-6">

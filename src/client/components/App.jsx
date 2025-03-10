@@ -1,19 +1,21 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import {
-  API_PROVIDERS,
-  OPENAI_PROVIDER,
-  OUTSPEED_PROVIDER,
-} from "@/config/session";
 import { ICE_SERVERS } from "@/constants";
-import { useApi } from "@/contexts/ApiContext";
+import { useModel } from "@/contexts/model";
+import {
+  calculateOpenAICosts,
+  calculateTimeCosts,
+  getInitialCostState,
+  updateCumulativeCost,
+} from "@/utils/cost-calc";
+import { providers } from "@src/session-config";
 import Chat from "./Chat";
 import EventLog from "./EventLog";
 import SessionControls from "./SessionControls";
 
 export default function App() {
-  const { selectedProvider } = useApi();
+  const { selectedModel } = useModel();
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [loadingModel, setLoadingModal] = useState(false);
   const [events, setEvents] = useState([]);
@@ -24,11 +26,50 @@ export default function App() {
   const audioContext = useRef(null);
   const audioQueue = useRef([]);
   const isPlaying = useRef(false);
+  const [costData, setCostData] = useState(null);
+  const [cumulativeCost, setCumulativeCost] = useState(getInitialCostState());
+  const [sessionStartTime, setSessionStartTime] = useState(null);
+  const sessionDurationInterval = useRef(null);
 
   // Add refs for speech recording
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const currentSpeechItemRef = useRef(null);
+
+  // Update session duration every second when active
+  useEffect(() => {
+    if (loadingModel || !isSessionActive || !sessionStartTime) {
+      return;
+    }
+
+    sessionDurationInterval.current = setInterval(() => {
+      const durationInSeconds = Math.floor(
+        (Date.now() - sessionStartTime) / 1000,
+      );
+
+      // Update Outspeed cost if using that provider
+      if (selectedModel.provider === providers.Outspeed) {
+        const timeCosts = calculateTimeCosts(
+          durationInSeconds,
+          selectedModel.cost.perMinute,
+        );
+
+        setCostData(timeCosts);
+
+        // Update cumulative cost for Outspeed
+        setCumulativeCost({
+          inputTokens: 0,
+          outputTokens: 0,
+          durationInSeconds,
+          totalCost: timeCosts.totalCost,
+        });
+      }
+    }, 1000);
+
+    return () => {
+      clearInterval(sessionDurationInterval.current);
+    };
+  }, [isSessionActive, sessionStartTime, selectedModel, loadingModel]);
 
   // Function to start recording audio
   const startRecording = () => {
@@ -89,32 +130,33 @@ export default function App() {
   };
 
   async function startWebrtcSession() {
+    // Reset costs when starting a new session
+    setCostData(null);
+    setCumulativeCost(getInitialCostState());
+    setSessionStartTime(Date.now());
+
     try {
       setEvents([]);
       setMessages([]);
 
-      const { sessionConfig } = selectedProvider;
+      const { sessionConfig } = selectedModel;
 
       // Get an ephemeral key from the server with selected provider
-      const tokenResponse = await fetch(
-        `/token?apiUrl=${selectedProvider.url}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(sessionConfig),
-        },
-      );
+      const tokenResponse = await fetch(`/token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sessionConfig),
+      });
       const data = await tokenResponse.json();
       if (!tokenResponse.ok) {
         console.error("Failed to get ephemeral key", data);
-        const providerDomain = selectedProvider.url;
 
         const toastOptions = {};
         if (data.code === "NO_API_KEY") {
           toastOptions.action = {
             label: "Get API Key",
             onClick: () =>
-              window.open(API_PROVIDERS[providerDomain].apiKeyUrl, "_blank"),
+              window.open(selectedModel.provider.apiKeyUrl, "_blank"),
           };
         }
 
@@ -143,6 +185,7 @@ export default function App() {
       dc.addEventListener("open", () => {
         setIsSessionActive(true);
         setEvents([]);
+        setSessionStartTime(Date.now());
       });
 
       dc.addEventListener("message", async (e) => {
@@ -154,6 +197,28 @@ export default function App() {
         switch (event.type) {
           case "session.created":
             setLoadingModal(false); // modal is now loaded
+            break;
+
+          case "response.done":
+            // Calculate cost for OpenAI API usage
+            if (
+              selectedModel.provider === providers.OpenAI &&
+              event.response?.usage
+            ) {
+              // Use our utility functions to calculate costs
+              const newCostData = calculateOpenAICosts(
+                event.response.usage,
+                selectedModel.cost,
+              );
+
+              // Update current cost data
+              setCostData(newCostData);
+
+              // Update cumulative cost
+              setCumulativeCost((prev) =>
+                updateCumulativeCost(prev, newCostData),
+              );
+            }
             break;
 
           case "response.audio_transcript.done":
@@ -204,29 +269,34 @@ export default function App() {
             // Stop recording when speech ends and add to messages
             if (currentSpeechItemRef.current?.startTime) {
               const audioUrl = await stopRecording();
-              if (audioUrl) {
-                const duration =
-                  event.audio_end_ms - currentSpeechItemRef.current.startTime;
-
-                // if we were to directly use currentSpeechItemRef.current in setMessages callback,
-                // that would fail even tho we're setting it to null AFTER setMessages() since
-                // state update is an async operation
-                const currentSpeechItem = currentSpeechItemRef.current;
-
-                setMessages((prev) => [
-                  ...prev,
-                  {
-                    id: currentSpeechItem.id,
-                    role: "user",
-                    type: "audio",
-                    content: audioUrl,
-                    duration: duration,
-                    timestamp: new Date().toLocaleTimeString(),
-                  },
-                ]);
-
-                currentSpeechItemRef.current = null;
+              if (!audioUrl) {
+                console.error(
+                  "error: input_audio_buffer.speech_stopped - No audio URL found",
+                );
+                break;
               }
+
+              const duration =
+                event.audio_end_ms - currentSpeechItemRef.current.startTime;
+
+              // if we were to directly use currentSpeechItemRef.current in setMessages callback,
+              // that would fail even tho we're setting it to null AFTER setMessages() since
+              // state update is an async operation
+              const currentSpeechItem = currentSpeechItemRef.current;
+
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: currentSpeechItem.id,
+                  role: "user",
+                  type: "audio",
+                  content: audioUrl,
+                  duration: duration,
+                  timestamp: new Date().toLocaleTimeString(),
+                },
+              ]);
+
+              currentSpeechItemRef.current = null;
             }
             break;
         }
@@ -246,11 +316,13 @@ export default function App() {
 
       dcRef.current = dc;
 
-      if (selectedProvider.url === OPENAI_PROVIDER) {
+      if (selectedModel.provider === providers.OpenAI) {
+        // OpenAI WebRTC signalling with an HTTP POST request
+
         const noWsOffer = await pc.createOffer();
         await pc.setLocalDescription(noWsOffer);
 
-        const url = `https://${selectedProvider.url}/v1/realtime?model=${sessionConfig.model}`;
+        const url = `https://${selectedModel.provider.url}/v1/realtime?model=${sessionConfig.model}`;
         const sdpResponse = await fetch(url, {
           method: "POST",
           body: noWsOffer.sdp,
@@ -265,12 +337,13 @@ export default function App() {
           sdp: await sdpResponse.text(),
         };
         await pc.setRemoteDescription(answer);
+
         return;
       }
 
-      // signalling SDPs and ICE candidates via WebSocket
+      // Outspeed WebRTC signalling of  SDPs and ICE candidates via WebSocket
       const ws = new WebSocket(
-        `wss://${OUTSPEED_PROVIDER}/v1/realtime/ws?client_secret=${ephemeralKey}`,
+        `wss://${selectedModel.provider.url}/v1/realtime/ws?client_secret=${ephemeralKey}`,
       );
 
       signallingWsRef.current = ws;
@@ -376,6 +449,12 @@ export default function App() {
       pcRef.current.close();
     }
 
+    // Stop the session duration interval
+    if (sessionDurationInterval.current) {
+      clearInterval(sessionDurationInterval.current);
+      sessionDurationInterval.current = null;
+    }
+
     cleanup();
   }
 
@@ -473,7 +552,12 @@ export default function App() {
           />
         </div>
         <div className="flex-1 h-full min-h-0 rounded-xl bg-white overflow-y-auto">
-          <EventLog events={events} loadingModal={loadingModel} />
+          <EventLog
+            events={events}
+            loadingModal={loadingModel}
+            costData={costData}
+            cumulativeCost={cumulativeCost}
+          />
         </div>
       </div>
       <section className="shrink-0">

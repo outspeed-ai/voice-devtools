@@ -1,12 +1,12 @@
 import { Link, Outlet } from "react-router-dom";
 
-import { OUTSPEED_PROVIDER } from "@/config/session";
-import { useApi } from "@/contexts/ApiContext";
+import { useModel } from "@/contexts/model";
+import { providers } from "@src/session-config";
 
 import logo from "/outspeed-logo-dark.png";
 
 export default function RootLayout() {
-  const { selectedProvider } = useApi();
+  const { selectedModel } = useModel();
 
   return (
     <div className="h-full flex flex-col">
@@ -24,7 +24,7 @@ export default function RootLayout() {
             <Link to="/" className="text-blue-600 hover:text-blue-800">
               Home
             </Link>
-            {selectedProvider.url === OUTSPEED_PROVIDER && (
+            {selectedModel.provider === providers.Outspeed && (
               <Link
                 to="/sessions"
                 className="text-blue-600 hover:text-blue-800"

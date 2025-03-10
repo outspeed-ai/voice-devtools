@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { CloudLightning, CloudOff } from "react-feather";
 
-import { API_PROVIDERS } from "@/config/session";
-import { useApi } from "@/contexts/ApiContext";
-import Button from "./Button";
+import { useModel } from "@/contexts/model";
+import { MODELS } from "@src/session-config";
+import Button from "./ui/Button";
 
 function SessionStopped({ startWebrtcSession }) {
-  const { selectedProvider, setSelectedProvider } = useApi();
-  const [activatingSession, setActivatingSession] = useState(null);
+  const { selectedModel, setSelectedModel } = useModel();
+  const [activatingSession, setActivatingSession] = useState(null); // webrtc or websocket or null for idle state
 
   async function handleStartWebrtcSession() {
     if (activatingSession) {
@@ -24,40 +24,29 @@ function SessionStopped({ startWebrtcSession }) {
 
   return (
     <div className="w-full h-full flex items-center justify-center gap-8">
-      <div className="flex items-center gap-3 justify-center mb-2">
-        <span className="text-gray-700">Select API Provider:</span>
+      <div className="flex items-center gap-4 justify-center">
+        <span className="text-gray-700">Select Model:</span>
         <select
-          value={selectedProvider.url}
-          onChange={(e) =>
-            setSelectedProvider(
-              Object.values(API_PROVIDERS).find(
-                (p) => p.url === e.target.value,
-              ),
-            )
-          }
+          value={selectedModel.sessionConfig.model}
+          onChange={(e) => setSelectedModel(MODELS[e.target.value])}
           className="px-3 py-2 rounded-md border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
-          {Object.values(API_PROVIDERS).map((provider) => (
-            <option key={provider.url} value={provider.url}>
-              {provider.name}
-            </option>
-          ))}
+          {Object.values(MODELS).map(
+            ({ label, provider, sessionConfig: { model } }) => (
+              <option key={model} value={model}>
+                {label} ({provider.name})
+              </option>
+            ),
+          )}
         </select>
-      </div>
 
-      <div className="flex items-center justify-center gap-4">
-        {activatingSession !== "websocket" && (
-          <Button
-            onClick={handleStartWebrtcSession}
-            className={`hover:opacity-90 transition-opacity`}
-            icon={<CloudLightning height={16} />}
-            disabled={activatingSession}
-          >
-            {activatingSession
-              ? "starting WebRTC session..."
-              : "start WebRTC Session"}
-          </Button>
-        )}
+        <Button
+          onClick={handleStartWebrtcSession}
+          icon={<CloudLightning height={16} />}
+          disabled={activatingSession}
+        >
+          {activatingSession ? "Connecting..." : "Connect"}
+        </Button>
       </div>
     </div>
   );
@@ -84,8 +73,6 @@ function SessionActive({ stopSession }) {
 export default function SessionControls({
   startWebrtcSession,
   stopWebrtcSession,
-  sendClientEvent,
-  sendTextMessage,
   events,
   isSessionActive,
   loadingModal = false,

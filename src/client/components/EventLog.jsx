@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import CostDisplay from "./CostDisplay";
+
 function Event({ event, timestamp }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -32,7 +34,12 @@ function Event({ event, timestamp }) {
   );
 }
 
-export default function EventLog({ events, loadingModal = false }) {
+export default function EventLog({
+  events,
+  loadingModal = false,
+  costData = null,
+  cumulativeCost = null,
+}) {
   const eventsToDisplay = [];
   let deltaEvents = {};
 
@@ -60,6 +67,10 @@ export default function EventLog({ events, loadingModal = false }) {
         Logs
       </h3>
       <div className="flex flex-col gap-2 overflow-x-auto p-4">
+        {(costData || (cumulativeCost && cumulativeCost.totalCost > 0)) && (
+          <CostDisplay costData={costData} cumulativeCost={cumulativeCost} />
+        )}
+
         {loadingModal && (
           <div className="text-gray-500">
             loading modal to GPU. please wait a moment...

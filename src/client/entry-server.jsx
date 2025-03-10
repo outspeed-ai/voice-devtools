@@ -4,7 +4,7 @@ import { renderToString } from "react-dom/server";
 import { StaticRouter } from "react-router-dom/server";
 import { Toaster } from "sonner";
 
-import { ApiProvider } from "./contexts/ApiContext";
+import { ModelProvider } from "./contexts/model";
 import Router from "./router";
 
 export function render(url) {
@@ -22,10 +22,10 @@ export function render(url) {
     <StrictMode>
       <QueryClientProvider client={queryClient}>
         <StaticRouter location={url}>
-          <ApiProvider>
+          <ModelProvider>
             <Toaster richColors position="top-right" />
             <Router />
-          </ApiProvider>
+          </ModelProvider>
         </StaticRouter>
       </QueryClientProvider>
     </StrictMode>,

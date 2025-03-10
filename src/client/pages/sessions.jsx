@@ -26,7 +26,7 @@ export default function Sessions() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container h-full overflow-y-auto mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Your Sessions</h1>
 
       {error && (
@@ -76,7 +76,7 @@ export default function Sessions() {
                 <Button
                   variant="outline"
                   onClick={() => navigate(`/metrics?session_id=${session.id}`)}
-                  className="inline-block ml-auto mt-2"
+                  className="ml-auto mt-2"
                 >
                   View Metrics
                 </Button>
