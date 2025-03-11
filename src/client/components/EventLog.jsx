@@ -37,22 +37,11 @@ function Event({ event, timestamp }) {
 export default function EventLog({
   events,
   loadingModel = false,
-  costData = null,
-  cumulativeCost = null,
+  costState = null,
 }) {
   const eventsToDisplay = [];
-  let deltaEvents = {};
 
   events.forEach((event, index) => {
-    if (event.type.endsWith("delta")) {
-      if (deltaEvents[event.type]) {
-        // for now just log a single event per render pass
-        return;
-      } else {
-        deltaEvents[event.type] = event;
-      }
-    }
-
     // Generate a unique key using event.id if available, otherwise use a unique key based on type and index
     const uniqueKey = event.id || event.event_id || `${event.type}-${index}`;
 
@@ -67,8 +56,8 @@ export default function EventLog({
         Logs
       </h3>
       <div className="flex flex-col gap-2 overflow-x-auto p-4">
-        {(costData || (cumulativeCost && cumulativeCost.totalCost > 0)) && (
-          <CostDisplay costData={costData} cumulativeCost={cumulativeCost} />
+        {costState && costState.totalCost > 0 && (
+          <CostDisplay costState={costState} />
         )}
 
         {loadingModel && (

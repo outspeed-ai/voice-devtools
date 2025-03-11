@@ -26,8 +26,7 @@ export default function App() {
   const audioContext = useRef(null);
   const audioQueue = useRef([]);
   const isPlaying = useRef(false);
-  const [costData, setCostData] = useState(null);
-  const [cumulativeCost, setCumulativeCost] = useState(getInitialCostState());
+  const [costState, setCostState] = useState(getInitialCostState());
   const [sessionStartTime, setSessionStartTime] = useState(null);
   const sessionDurationInterval = useRef(null);
 
@@ -54,14 +53,13 @@ export default function App() {
           selectedModel.cost.perMinute,
         );
 
-        setCostData(timeCosts);
-
-        // Update cumulative cost for Outspeed
-        setCumulativeCost({
-          inputTokens: 0,
-          outputTokens: 0,
+        // Update cost state for Outspeed (time-based)
+        setCostState({
+          ...getInitialCostState(),
           durationInSeconds,
+          costPerMinute: selectedModel.cost.perMinute,
           totalCost: timeCosts.totalCost,
+          timestamp: timeCosts.timestamp,
         });
       }
     }, 1000);
@@ -69,7 +67,7 @@ export default function App() {
     return () => {
       clearInterval(sessionDurationInterval.current);
     };
-  }, [isSessionActive, sessionStartTime, selectedModel, loadingModel]);
+  }, [loadingModel, isSessionActive, sessionStartTime, selectedModel]);
 
   // Function to start recording audio
   const startRecording = () => {
@@ -131,8 +129,7 @@ export default function App() {
 
   async function startWebrtcSession() {
     // Reset costs when starting a new session
-    setCostData(null);
-    setCumulativeCost(getInitialCostState());
+    setCostState(getInitialCostState());
     setSessionStartTime(Date.now());
 
     try {
@@ -218,13 +215,8 @@ export default function App() {
                 selectedModel.cost,
               );
 
-              // Update current cost data
-              setCostData(newCostData);
-
-              // Update cumulative cost
-              setCumulativeCost((prev) =>
-                updateCumulativeCost(prev, newCostData),
-              );
+              // Update cost state by incorporating the new data into cumulative
+              setCostState((prev) => updateCumulativeCost(prev, newCostData));
             }
             break;
 
@@ -562,8 +554,7 @@ export default function App() {
           <EventLog
             events={events}
             loadingModel={loadingModel}
-            costData={costData}
-            cumulativeCost={cumulativeCost}
+            costState={costState}
           />
         </div>
       </div>
