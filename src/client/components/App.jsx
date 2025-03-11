@@ -23,17 +23,18 @@ export default function App() {
   const dcRef = useRef(null);
   const signallingWsRef = useRef(null);
   const [messages, setMessages] = useState([]);
-  const audioContext = useRef(null);
-  const audioQueue = useRef([]);
-  const isPlaying = useRef(false);
+
+  // states for cost calculation
   const [costState, setCostState] = useState(getInitialCostState());
   const [sessionStartTime, setSessionStartTime] = useState(null);
   const sessionDurationInterval = useRef(null);
 
-  // Add refs for speech recording
-  const mediaRecorderRef = useRef(null);
-  const audioChunksRef = useRef([]);
+  // refs for speech recording
+  const audioContext = useRef(null);
+  const iAudioRecorderRef = useRef(null); // input audio recorder
+  const oAudioRecorderRef = useRef(null); // output audio recorder
   const currentSpeechItemRef = useRef(null);
+  const currentBotSpeechItemRef = useRef(null); // Reference for bot's speech
 
   // Update session duration every second when active
   useEffect(() => {
@@ -69,10 +70,30 @@ export default function App() {
     };
   }, [loadingModel, isSessionActive, sessionStartTime, selectedModel]);
 
+  useEffect(() => {
+    if (loadingModel || !isSessionActive) {
+      stopInputRecording();
+      return;
+    }
+
+    startInputRecording();
+    return () => {
+      stopInputRecording();
+      stopBotRecording();
+      if (audioContext.current) {
+        audioContext.current.close();
+      }
+    };
+  }, [isSessionActive, loadingModel]);
+
   // Function to start recording audio
-  const startRecording = () => {
+  const startInputRecording = () => {
     if (!pcRef.current) {
       return;
+    }
+
+    if (!audioContext.current) {
+      audioContext.current = new AudioContext();
     }
 
     // Get the audio track from the peer connection
@@ -91,39 +112,173 @@ export default function App() {
 
     // Create a MediaRecorder
     const mediaRecorder = new MediaRecorder(stream);
-    mediaRecorderRef.current = mediaRecorder;
-    audioChunksRef.current = [];
-
-    // Handle data available event
-    mediaRecorder.ondataavailable = (event) => {
-      if (event.data.size > 0) {
-        audioChunksRef.current.push(event.data);
-      }
-    };
+    iAudioRecorderRef.current = mediaRecorder;
 
     // Start recording
     mediaRecorder.start();
   };
 
   // Function to stop recording and create audio blob
-  const stopRecording = () => {
+  const stopInputRecording = () => {
     if (
-      !mediaRecorderRef.current ||
-      mediaRecorderRef.current.state === "inactive"
+      !iAudioRecorderRef.current ||
+      iAudioRecorderRef.current.state === "inactive"
     ) {
       return;
     }
 
+    iAudioRecorderRef.current.stop();
+  };
+
+  // Function to start recording bot's audio output
+  const startBotRecording = () => {
+    if (!pcRef.current) {
+      return;
+    }
+
+    if (!audioContext.current) {
+      audioContext.current = new AudioContext();
+    }
+
+    // Get the audio track from the peer connection's receivers (bot's audio)
+    const receivers = pcRef.current.getReceivers();
+    const audioReceiver = receivers.find(
+      (receiver) => receiver.track && receiver.track.kind === "audio",
+    );
+
+    if (!audioReceiver || !audioReceiver.track) {
+      console.error("No bot audio track found");
+      return;
+    }
+
+    // Create a MediaStream with the audio track
+    const stream = new MediaStream([audioReceiver.track]);
+
+    // Create a MediaRecorder
+    const mediaRecorder = new MediaRecorder(stream);
+    oAudioRecorderRef.current = mediaRecorder;
+
+    // Start recording
+    mediaRecorder.start();
+  };
+
+  // Function to stop bot recording
+  const stopBotRecording = () => {
+    if (
+      !oAudioRecorderRef.current ||
+      oAudioRecorderRef.current.state === "inactive"
+    ) {
+      return;
+    }
+
+    oAudioRecorderRef.current.stop();
+  };
+
+  const getRecording = () => {
     return new Promise((resolve) => {
-      mediaRecorderRef.current.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, {
+      // Create a one-time event listener for dataavailable
+      const handleDataAvailable = async (e) => {
+        // Remove the event listener to avoid memory leaks
+        iAudioRecorderRef.current.removeEventListener(
+          "dataavailable",
+          handleDataAvailable,
+        );
+
+        const audioBlob = new Blob([e.data], {
           type: "audio/webm",
         });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        resolve(audioUrl);
+
+        const audioArrayBuffer = await audioBlob.arrayBuffer();
+
+        if (!currentSpeechItemRef.current.startTime) {
+          console.error("No start time found");
+          return;
+        }
+
+        const duration =
+          (Date.now() - currentSpeechItemRef.current.startTime + 1000) / 1000;
+        const audioData = await audioContext.current.decodeAudioData(
+          audioArrayBuffer,
+        );
+
+        /** @type {Float32Array} */
+        const lastNSeconds = audioData
+          .getChannelData(0)
+          .slice(-Math.floor(audioData.sampleRate * duration));
+
+        // Create a new AudioBuffer to hold our sliced data
+        /** @type {AudioBuffer} */
+        const newAudioBuffer = audioContext.current.createBuffer(
+          1, // mono channel
+          lastNSeconds.length,
+          audioData.sampleRate,
+        );
+
+        // Copy the data to the new buffer
+        newAudioBuffer.getChannelData(0).set(lastNSeconds);
+        resolve([newAudioBuffer, newAudioBuffer.duration]);
+
+        // start recording again
+        startInputRecording();
       };
 
-      mediaRecorderRef.current.stop();
+      // Add the one-time event listener
+      iAudioRecorderRef.current.addEventListener(
+        "dataavailable",
+        handleDataAvailable,
+      );
+
+      // stopping the recording, which will trigger the dataavailable event
+      stopInputRecording();
+    });
+  };
+
+  // Function to get bot's recording
+  const getBotRecording = () => {
+    return new Promise((resolve) => {
+      // Create a one-time event listener for dataavailable
+      const handleDataAvailable = async (e) => {
+        // Remove the event listener to avoid memory leaks
+        oAudioRecorderRef.current.removeEventListener(
+          "dataavailable",
+          handleDataAvailable,
+        );
+
+        const audioBlob = new Blob([e.data], {
+          type: "audio/webm",
+        });
+
+        const audioArrayBuffer = await audioBlob.arrayBuffer();
+
+        if (!currentBotSpeechItemRef.current.startTime) {
+          console.error("No bot start time found");
+          return;
+        }
+
+        const duration =
+          (Date.now() - currentBotSpeechItemRef.current.startTime + 1000) /
+          1000;
+        const audioBuffer = await audioContext.current.decodeAudioData(
+          audioArrayBuffer,
+        );
+
+        resolve([audioBuffer, audioBuffer.duration]);
+      };
+
+      // Add the one-time event listener
+      oAudioRecorderRef.current.addEventListener(
+        "dataavailable",
+        handleDataAvailable,
+      );
+
+      // stopping the recording, which will trigger the dataavailable event
+      // manually causing a delay to ensure the audio is fully recorded
+      // for some reason, a few milliseconds is getting cut off otherwise
+      // which means that when we receive the output_audio_buffer.stopped event,
+      // the audio didn't fully stop
+      setTimeout(() => {
+        stopBotRecording();
+      }, 400);
     });
   };
 
@@ -257,26 +412,22 @@ export default function App() {
             // Start recording when speech is detected
             currentSpeechItemRef.current = {
               id: crypto.randomUUID(),
-              startTime: event.audio_start_ms,
+              startTime: Date.now(),
               eventId: event.event_id,
               item_id: event.item_id,
             };
-            startRecording();
             break;
 
           case "input_audio_buffer.speech_stopped":
             // Stop recording when speech ends and add to messages
             if (currentSpeechItemRef.current?.startTime) {
-              const audioUrl = await stopRecording();
-              if (!audioUrl) {
+              const [audioBuffer, duration] = await getRecording();
+              if (!audioBuffer) {
                 console.error(
-                  "error: input_audio_buffer.speech_stopped - No audio URL found",
+                  "error: input_audio_buffer.speech_stopped - No audio buffer found",
                 );
                 break;
               }
-
-              const duration =
-                event.audio_end_ms - currentSpeechItemRef.current.startTime;
 
               // if we were to directly use currentSpeechItemRef.current in setMessages callback,
               // that would fail even tho we're setting it to null AFTER setMessages() since
@@ -289,13 +440,52 @@ export default function App() {
                   id: currentSpeechItem.id,
                   role: "user",
                   type: "audio",
-                  content: audioUrl,
+                  content: audioBuffer, // No longer using URL-based content
                   duration: duration,
                   timestamp: new Date().toLocaleTimeString(),
                 },
               ]);
 
               currentSpeechItemRef.current = null;
+            }
+            break;
+
+          case "output_audio_buffer.started":
+            startBotRecording();
+            currentBotSpeechItemRef.current = {
+              id: crypto.randomUUID(),
+              startTime: Date.now(),
+              eventId: event.event_id,
+              item_id: event.item_id,
+            };
+            break;
+
+          case "output_audio_buffer.stopped":
+            // Stop recording when bot stops speaking and add to messages
+            if (currentBotSpeechItemRef.current?.startTime) {
+              const [audioBuffer, duration] = await getBotRecording();
+              if (!audioBuffer) {
+                console.error(
+                  "error: output_audio_buffer.stopped - No audio buffer found",
+                );
+                break;
+              }
+
+              const currentBotSpeechItem = currentBotSpeechItemRef.current;
+
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: currentBotSpeechItem.id,
+                  role: "assistant",
+                  type: "audio",
+                  content: audioBuffer,
+                  duration: duration,
+                  timestamp: new Date().toLocaleTimeString(),
+                },
+              ]);
+
+              currentBotSpeechItemRef.current = null;
             }
             break;
         }
@@ -429,10 +619,18 @@ export default function App() {
   function stopWebrtcSession() {
     // Stop recording if active
     if (
-      mediaRecorderRef.current &&
-      mediaRecorderRef.current.state !== "inactive"
+      iAudioRecorderRef.current &&
+      iAudioRecorderRef.current.state !== "inactive"
     ) {
-      mediaRecorderRef.current.stop();
+      iAudioRecorderRef.current.stop();
+    }
+
+    // Stop bot recording if active
+    if (
+      oAudioRecorderRef.current &&
+      oAudioRecorderRef.current.state !== "inactive"
+    ) {
+      oAudioRecorderRef.current.stop();
     }
 
     if (dcRef.current) {
@@ -462,9 +660,10 @@ export default function App() {
     setLoadingModel(false);
     pcRef.current = null;
     dcRef.current = null;
-    mediaRecorderRef.current = null;
-    audioChunksRef.current = [];
+    iAudioRecorderRef.current = null;
+    oAudioRecorderRef.current = null; // Clean up bot audio recorder
     currentSpeechItemRef.current = null;
+    currentBotSpeechItemRef.current = null; // Clean up bot speech reference
 
     // Cleanup signaling WebSocket
     const signalingWs = signallingWsRef.current;
@@ -482,8 +681,6 @@ export default function App() {
       audioContext.current.close();
       audioContext.current = null;
     }
-    audioQueue.current = [];
-    isPlaying.current = false;
   }
 
   function handleConnectionError() {

@@ -1,74 +1,173 @@
 import { useEffect, useRef, useState } from "react";
 import { Pause, Play } from "react-feather";
 
-// Audio player component for speech messages
-const AudioPlayer = ({ src, duration }) => {
+// Simplified Audio player component for AudioBuffer playback
+const AudioPlayer = ({ duration, audioBuffer }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const audioRef = useRef(null);
+  const [isEnded, setIsEnded] = useState(false);
+  const audioContextRef = useRef(null);
+  const audioSourceRef = useRef(null);
   const progressBarRef = useRef(null);
+  const intervalRef = useRef(null);
+  const startTimeRef = useRef(0);
+  const offsetTimeRef = useRef(0);
 
-  const formattedDuration = duration ? Math.round(duration / 1000) : 0;
+  // Use actual buffer duration if available, otherwise use provided duration
+  const actualDuration = audioBuffer?.duration || duration / 1000;
+  const formattedDuration = actualDuration ? Math.round(actualDuration) : 0;
   const formattedCurrentTime = Math.round(currentTime);
   const progress = formattedDuration
     ? (formattedCurrentTime / formattedDuration) * 100
     : 0;
 
+  // Initialize AudioContext for buffer playback
   useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) {
-      return;
+    if (audioBuffer && !audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext ||
+        window.webkitAudioContext)();
     }
-
-    const updateTime = () => setCurrentTime(audio.currentTime);
-    const handleEnded = () => {
-      setIsPlaying(false);
-      setCurrentTime(formattedDuration);
-    };
-
-    audio.addEventListener("timeupdate", updateTime);
-    audio.addEventListener("ended", handleEnded);
 
     return () => {
-      audio.removeEventListener("timeupdate", updateTime);
-      audio.removeEventListener("ended", handleEnded);
+      safeStopPlayback();
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
     };
-  }, [formattedDuration]);
+  }, [audioBuffer]);
+
+  // Clean up when component unmounts
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, []);
+
+  // Update progress when playing
+  useEffect(() => {
+    if (isPlaying) {
+      // Start a timer to update currentTime
+      intervalRef.current = setInterval(() => {
+        if (audioContextRef.current) {
+          const elapsed =
+            audioContextRef.current.currentTime - startTimeRef.current;
+          const newTime = offsetTimeRef.current + elapsed;
+
+          if (newTime >= formattedDuration) {
+            setCurrentTime(formattedDuration);
+            setIsEnded(true);
+            setIsPlaying(false);
+            safeStopPlayback();
+          } else {
+            setCurrentTime(newTime);
+          }
+        }
+      }, 50); // Update approximately 20 times per second
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [isPlaying, formattedDuration]);
+
+  // Safely stop any active playback
+  const safeStopPlayback = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
+    // Only call stop if the source node exists and has been started
+    if (audioSourceRef.current && isPlaying) {
+      try {
+        audioSourceRef.current.stop();
+      } catch (error) {
+        console.error("Safe cleanup: AudioNode was not playing");
+      }
+      audioSourceRef.current = null;
+    }
+  };
 
   const togglePlayPause = () => {
-    if (!audioRef.current) {
-      return;
-    }
-
     if (isPlaying) {
-      audioRef.current.pause();
+      safeStopPlayback();
+      setIsPlaying(false);
     } else {
-      if (currentTime >= formattedDuration) {
-        audioRef.current.currentTime = 0;
+      if (!audioContextRef.current || !audioBuffer) return;
+
+      let reset = false;
+
+      // If playback ended, reset to beginning
+      if (isEnded || currentTime >= formattedDuration - 0.1) {
+        reset = true;
         setCurrentTime(0);
+        setIsEnded(false);
+        clearInterval(intervalRef.current);
       }
-      audioRef.current.play();
+
+      // Create new source (required for WebAudio API)
+      audioSourceRef.current = audioContextRef.current.createBufferSource();
+      audioSourceRef.current.buffer = audioBuffer;
+      audioSourceRef.current.connect(audioContextRef.current.destination);
+
+      // Handle playback end
+      audioSourceRef.current.onended = () => {
+        setIsPlaying(false);
+        setIsEnded(true);
+        setCurrentTime(formattedDuration);
+        audioSourceRef.current = null;
+
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+      };
+
+      // Start playback from current position
+      const startTime = reset ? 0 : currentTime;
+      const offsetTime = Math.min(
+        reset ? 0 : currentTime,
+        formattedDuration - 0.1,
+      );
+
+      // Store references for progress tracking
+      startTimeRef.current = audioContextRef.current.currentTime;
+      offsetTimeRef.current = offsetTime;
+
+      audioSourceRef.current.start(0, offsetTime);
+
+      setIsPlaying(true);
     }
-    setIsPlaying(!isPlaying);
   };
 
   const handleProgressBarClick = (e) => {
-    if (!audioRef.current || !progressBarRef.current) {
-      return;
-    }
+    if (!progressBarRef.current) return;
 
     const rect = progressBarRef.current.getBoundingClientRect();
     const clickPosition = (e.clientX - rect.left) / rect.width;
     const newTime = clickPosition * formattedDuration;
 
-    audioRef.current.currentTime = newTime;
     setCurrentTime(newTime);
+    setIsEnded(false);
+
+    // If currently playing, restart from new position
+    if (isPlaying) {
+      safeStopPlayback();
+      setIsPlaying(false);
+      // Use setTimeout to ensure state updates before toggling play
+      setTimeout(() => togglePlayPause(), 10);
+    }
   };
 
   return (
     <div className="flex flex-col gap-2 w-full">
-      <audio ref={audioRef} src={src} className="hidden" />
-
       <div className="flex items-center gap-2">
         <button
           onClick={togglePlayPause}
