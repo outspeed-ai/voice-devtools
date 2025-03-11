@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AlertCircle, Send } from "react-feather";
 
 import AudioPlayer from "./AudioPlayer";
@@ -7,6 +7,49 @@ import Button from "./ui/Button";
 const Chat = ({ messages, isSessionActive, loadingModel, sendTextMessage }) => {
   const [message, setMessage] = useState("");
 
+  const scrolledManually = useRef(false);
+  const messagesEndRef = useRef(null);
+  const containerRef = useRef(null);
+
+  // Function to scroll to bottom of messages
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // Handle auto-scrolling when messages change
+  useEffect(() => {
+    // Only auto-scroll if user hasn't manually scrolled up
+    if (!scrolledManually.current && messages.length > 0) {
+      scrollToBottom();
+    } else if (messages.length === 0) {
+      // reset the scrolledManually ref when starting a new stream
+      scrolledManually.current = false;
+    }
+  }, [messages]);
+
+  // Detect when user manually scrolls
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      // Check if scrolled away from bottom
+      const isAtBottom =
+        container.scrollHeight - container.scrollTop <=
+        container.clientHeight + 100; // 100px threshold
+
+      if (!isAtBottom) {
+        console.log("scrolledManually.current", scrolledManually.current);
+        scrolledManually.current = true;
+      } else {
+        scrolledManually.current = false;
+      }
+    };
+
+    container.addEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const handleSendClientEvent = () => {
     if (!isSessionActive || loadingModel) {
       return;
@@ -14,11 +57,17 @@ const Chat = ({ messages, isSessionActive, loadingModel, sendTextMessage }) => {
 
     sendTextMessage(message);
     setMessage("");
+    // Reset scroll position when sending a new message
+    scrolledManually.current = false;
+    scrollToBottom();
   };
 
   return (
     <div className="flex flex-col h-full">
-      <section className="overflow-auto p-4 flex flex-col gap-y-4 flex-1">
+      <section
+        ref={containerRef}
+        className="overflow-auto p-4 flex flex-col gap-y-4 flex-1"
+      >
         {messages.map(({ id, role, type, content, timestamp, duration }) => {
           const isUser = role === "user";
           const baseContainer = "flex justify-end flex-col";
@@ -83,6 +132,8 @@ const Chat = ({ messages, isSessionActive, loadingModel, sendTextMessage }) => {
 
           return null;
         })}
+        {/* Invisible element to scroll to */}
+        <div ref={messagesEndRef} />
       </section>
       <div className="p-4 flex items-center gap-x-2 flex-shrink-0 border-t border-gray-200">
         <input
