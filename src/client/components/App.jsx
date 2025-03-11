@@ -423,7 +423,8 @@ export default function App() {
             break;
 
           case "error":
-            if (!event.message) {
+            const errorMessage = event.error.message;
+            if (!errorMessage) {
               break;
             }
 
@@ -433,7 +434,7 @@ export default function App() {
                 id: crypto.randomUUID(),
                 role: "assistant",
                 type: "error",
-                content: event.message,
+                content: errorMessage,
                 timestamp: new Date().toLocaleTimeString(),
                 event_id: event.event_id,
               },
