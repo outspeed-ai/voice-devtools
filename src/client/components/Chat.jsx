@@ -103,7 +103,7 @@ const Chat = ({ messages, isSessionActive, loadingModel, sendTextMessage }) => {
                   >
                     {timestamp}
                   </div>
-                  <AudioPlayer src={content} duration={duration} />
+                  <AudioPlayer audioBuffer={content} duration={duration} />
                 </div>
               </div>
             );

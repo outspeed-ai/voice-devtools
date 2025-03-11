@@ -23,16 +23,15 @@ export default function App() {
   const dcRef = useRef(null);
   const signallingWsRef = useRef(null);
   const [messages, setMessages] = useState([]);
-  const audioContext = useRef(null);
-  const audioQueue = useRef([]);
-  const isPlaying = useRef(false);
+
+  // states for cost calculation
   const [costState, setCostState] = useState(getInitialCostState());
   const [sessionStartTime, setSessionStartTime] = useState(null);
   const sessionDurationInterval = useRef(null);
 
-  // Add refs for speech recording
-  const mediaRecorderRef = useRef(null);
-  const audioChunksRef = useRef([]);
+  // refs for speech recording
+  const audioContext = useRef(null);
+  const iAudioRecorderRef = useRef(null); // input audio recorder
   const currentSpeechItemRef = useRef(null);
 
   // Update session duration every second when active
@@ -69,11 +68,28 @@ export default function App() {
     };
   }, [loadingModel, isSessionActive, sessionStartTime, selectedModel]);
 
+  useEffect(() => {
+    if (loadingModel || !isSessionActive) {
+      stopRecording();
+      return;
+    }
+
+    startRecording();
+    return () => {
+      stopRecording();
+      if (audioContext.current) {
+        audioContext.current.close();
+      }
+    };
+  }, [isSessionActive, loadingModel]);
+
   // Function to start recording audio
   const startRecording = () => {
     if (!pcRef.current) {
       return;
     }
+
+    audioContext.current = new AudioContext();
 
     // Get the audio track from the peer connection
     const senders = pcRef.current.getSenders();
@@ -91,15 +107,7 @@ export default function App() {
 
     // Create a MediaRecorder
     const mediaRecorder = new MediaRecorder(stream);
-    mediaRecorderRef.current = mediaRecorder;
-    audioChunksRef.current = [];
-
-    // Handle data available event
-    mediaRecorder.ondataavailable = (event) => {
-      if (event.data.size > 0) {
-        audioChunksRef.current.push(event.data);
-      }
-    };
+    iAudioRecorderRef.current = mediaRecorder;
 
     // Start recording
     mediaRecorder.start();
@@ -108,22 +116,71 @@ export default function App() {
   // Function to stop recording and create audio blob
   const stopRecording = () => {
     if (
-      !mediaRecorderRef.current ||
-      mediaRecorderRef.current.state === "inactive"
+      !iAudioRecorderRef.current ||
+      iAudioRecorderRef.current.state === "inactive"
     ) {
       return;
     }
 
+    iAudioRecorderRef.current.stop();
+  };
+
+  const getRecording = () => {
     return new Promise((resolve) => {
-      mediaRecorderRef.current.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, {
+      // Create a one-time event listener for dataavailable
+      const handleDataAvailable = async (e) => {
+        // Remove the event listener to avoid memory leaks
+        iAudioRecorderRef.current.removeEventListener(
+          "dataavailable",
+          handleDataAvailable,
+        );
+
+        const audioBlob = new Blob([e.data], {
           type: "audio/webm",
         });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        resolve(audioUrl);
+
+        const audioArrayBuffer = await audioBlob.arrayBuffer();
+
+        if (!currentSpeechItemRef.current.startTime) {
+          console.error("No start time found");
+          return;
+        }
+
+        const duration =
+          (Date.now() - currentSpeechItemRef.current.startTime + 1000) / 1000;
+        const audioData = await audioContext.current.decodeAudioData(
+          audioArrayBuffer,
+        );
+
+        /** @type {Float32Array} */
+        const lastNSeconds = audioData
+          .getChannelData(0)
+          .slice(-Math.floor(audioData.sampleRate * duration));
+
+        // Create a new AudioBuffer to hold our sliced data
+        /** @type {AudioBuffer} */
+        const newAudioBuffer = audioContext.current.createBuffer(
+          1, // mono channel
+          lastNSeconds.length,
+          audioData.sampleRate,
+        );
+
+        // Copy the data to the new buffer
+        newAudioBuffer.getChannelData(0).set(lastNSeconds);
+        resolve([newAudioBuffer, newAudioBuffer.duration]);
+
+        // start recording again
+        startRecording();
       };
 
-      mediaRecorderRef.current.stop();
+      // Add the one-time event listener
+      iAudioRecorderRef.current.addEventListener(
+        "dataavailable",
+        handleDataAvailable,
+      );
+
+      // stopping the recording, which will trigger the dataavailable event
+      stopRecording();
     });
   };
 
@@ -257,26 +314,22 @@ export default function App() {
             // Start recording when speech is detected
             currentSpeechItemRef.current = {
               id: crypto.randomUUID(),
-              startTime: event.audio_start_ms,
+              startTime: Date.now(),
               eventId: event.event_id,
               item_id: event.item_id,
             };
-            startRecording();
             break;
 
           case "input_audio_buffer.speech_stopped":
             // Stop recording when speech ends and add to messages
             if (currentSpeechItemRef.current?.startTime) {
-              const audioUrl = await stopRecording();
-              if (!audioUrl) {
+              const [audioBuffer, duration] = await getRecording();
+              if (!audioBuffer) {
                 console.error(
-                  "error: input_audio_buffer.speech_stopped - No audio URL found",
+                  "error: input_audio_buffer.speech_stopped - No audio buffer found",
                 );
                 break;
               }
-
-              const duration =
-                event.audio_end_ms - currentSpeechItemRef.current.startTime;
 
               // if we were to directly use currentSpeechItemRef.current in setMessages callback,
               // that would fail even tho we're setting it to null AFTER setMessages() since
@@ -289,7 +342,7 @@ export default function App() {
                   id: currentSpeechItem.id,
                   role: "user",
                   type: "audio",
-                  content: audioUrl,
+                  content: audioBuffer, // No longer using URL-based content
                   duration: duration,
                   timestamp: new Date().toLocaleTimeString(),
                 },
@@ -429,10 +482,10 @@ export default function App() {
   function stopWebrtcSession() {
     // Stop recording if active
     if (
-      mediaRecorderRef.current &&
-      mediaRecorderRef.current.state !== "inactive"
+      iAudioRecorderRef.current &&
+      iAudioRecorderRef.current.state !== "inactive"
     ) {
-      mediaRecorderRef.current.stop();
+      iAudioRecorderRef.current.stop();
     }
 
     if (dcRef.current) {
@@ -462,8 +515,7 @@ export default function App() {
     setLoadingModel(false);
     pcRef.current = null;
     dcRef.current = null;
-    mediaRecorderRef.current = null;
-    audioChunksRef.current = [];
+    iAudioRecorderRef.current = null;
     currentSpeechItemRef.current = null;
 
     // Cleanup signaling WebSocket
@@ -482,8 +534,6 @@ export default function App() {
       audioContext.current.close();
       audioContext.current = null;
     }
-    audioQueue.current = [];
-    isPlaying.current = false;
   }
 
   function handleConnectionError() {
