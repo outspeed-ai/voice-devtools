@@ -17,7 +17,7 @@ import SessionControls from "./SessionControls";
 export default function App() {
   const { selectedModel } = useModel();
   const [isSessionActive, setIsSessionActive] = useState(false);
-  const [loadingModel, setLoadingModal] = useState(false);
+  const [loadingModel, setLoadingModel] = useState(false);
   const [events, setEvents] = useState([]);
   const pcRef = useRef(null);
   const dcRef = useRef(null);
@@ -198,7 +198,7 @@ export default function App() {
 
         switch (event.type) {
           case "session.created":
-            setLoadingModal(false); // modal is now loaded
+            setLoadingModel(false); // model is now loaded
 
             // enable the audio track after the model is ready
             pcRef.current.getSenders().forEach((sender) => {
@@ -427,7 +427,7 @@ export default function App() {
         }),
       );
 
-      setLoadingModal(true); // data channel will open first and then the modal will be loaded
+      setLoadingModel(true); // data channel will open first and then the model will be loaded
     } catch (error) {
       console.error("Failed to start WebRTC session:", error);
       handleConnectionError();
@@ -467,7 +467,7 @@ export default function App() {
 
   function cleanup() {
     setIsSessionActive(false);
-    setLoadingModal(false);
+    setLoadingModel(false);
     pcRef.current = null;
     dcRef.current = null;
     mediaRecorderRef.current = null;
@@ -561,7 +561,7 @@ export default function App() {
         <div className="flex-1 h-full min-h-0 rounded-xl bg-white overflow-y-auto">
           <EventLog
             events={events}
-            loadingModal={loadingModel}
+            loadingModel={loadingModel}
             costData={costData}
             cumulativeCost={cumulativeCost}
           />
@@ -569,7 +569,7 @@ export default function App() {
       </div>
       <section className="shrink-0">
         <SessionControls
-          loadingModal={loadingModel}
+          loadingModel={loadingModel}
           startWebrtcSession={startWebrtcSession}
           stopWebrtcSession={stopWebrtcSession}
           sendClientEvent={sendClientEvent}

@@ -36,7 +36,7 @@ function Event({ event, timestamp }) {
 
 export default function EventLog({
   events,
-  loadingModal = false,
+  loadingModel = false,
   costData = null,
   cumulativeCost = null,
 }) {
@@ -71,12 +71,12 @@ export default function EventLog({
           <CostDisplay costData={costData} cumulativeCost={cumulativeCost} />
         )}
 
-        {loadingModal && (
+        {loadingModel && (
           <div className="text-gray-500">
-            loading modal to GPU. please wait a moment...
+            loading model to GPU. please wait a moment...
           </div>
         )}
-        {!loadingModal && events.length === 0 ? (
+        {!loadingModel && events.length === 0 ? (
           <div className="text-gray-500">Awaiting events...</div>
         ) : (
           eventsToDisplay

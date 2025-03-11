@@ -75,19 +75,19 @@ export default function SessionControls({
   stopWebrtcSession,
   events,
   isSessionActive,
-  loadingModal = false,
+  loadingModel = false,
 }) {
   return (
     <div className="flex">
-      {loadingModal && (
+      {loadingModel && (
         <p className="text-gray-500 w-full flex justify-center items-center h-full text-center">
           loading model to GPU. please wait a moment...
         </p>
       )}
-      {!loadingModal && isSessionActive && (
+      {!loadingModel && isSessionActive && (
         <SessionActive stopSession={{ stopWebrtcSession }} events={events} />
       )}
-      {!loadingModal && !isSessionActive && (
+      {!loadingModel && !isSessionActive && (
         <SessionStopped startWebrtcSession={startWebrtcSession} />
       )}
     </div>

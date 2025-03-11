@@ -65,14 +65,14 @@ function FunctionCallOutput({ functionCallOutput }) {
 
 export default function SessionDetailsPanel({
   isSessionActive,
-  loadingModal,
+  loadingModel,
   sendClientEvent,
 }) {
   return (
     <section className="h-full w-full flex flex-col gap-4">
       <div className="h-full bg-gray-50 rounded-md p-4">
         <h2 className="text-lg font-bold">session details</h2>
-        {isSessionActive && !loadingModal ? (
+        {isSessionActive && !loadingModel ? (
           <>
             <SessionDetails sendClientEvent={sendClientEvent} />
           </>
