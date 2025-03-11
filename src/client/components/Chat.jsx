@@ -39,7 +39,6 @@ const Chat = ({ messages, isSessionActive, loadingModel, sendTextMessage }) => {
         container.clientHeight + 100; // 100px threshold
 
       if (!isAtBottom) {
-        console.log("scrolledManually.current", scrolledManually.current);
         scrolledManually.current = true;
       } else {
         scrolledManually.current = false;
