@@ -24,7 +24,10 @@ function SessionStopped({ startWebrtcSession }) {
 
   return (
     <div className="w-full h-full flex items-center justify-center gap-8">
-      <div className="flex items-center gap-4 justify-center">
+      <fieldset
+        disabled={activatingSession}
+        className="flex items-center gap-4 justify-center"
+      >
         <span className="text-gray-700">Select Model:</span>
         <select
           value={selectedModel.sessionConfig.model}
@@ -43,11 +46,10 @@ function SessionStopped({ startWebrtcSession }) {
         <Button
           onClick={handleStartWebrtcSession}
           icon={<CloudLightning height={16} />}
-          disabled={activatingSession}
         >
           {activatingSession ? "Connecting..." : "Connect"}
         </Button>
-      </div>
+      </fieldset>
     </div>
   );
 }

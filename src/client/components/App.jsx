@@ -23,6 +23,7 @@ export default function App() {
   const dcRef = useRef(null);
   const signallingWsRef = useRef(null);
   const [messages, setMessages] = useState([]);
+  const [botStreamingText, setBotStreamingText] = useState(null);
 
   // states for cost calculation
   const [costState, setCostState] = useState(getInitialCostState());
@@ -82,6 +83,7 @@ export default function App() {
       stopBotRecording();
       if (audioContext.current) {
         audioContext.current.close();
+        audioContext.current = null;
       }
     };
   }, [isSessionActive, loadingModel]);
@@ -178,6 +180,11 @@ export default function App() {
     return new Promise((resolve) => {
       // Create a one-time event listener for dataavailable
       const handleDataAvailable = async (e) => {
+        if (!iAudioRecorderRef.current) {
+          console.error("No input audio recorder found");
+          return;
+        }
+
         // Remove the event listener to avoid memory leaks
         iAudioRecorderRef.current.removeEventListener(
           "dataavailable",
@@ -238,6 +245,11 @@ export default function App() {
     return new Promise((resolve) => {
       // Create a one-time event listener for dataavailable
       const handleDataAvailable = async (e) => {
+        if (!oAudioRecorderRef.current) {
+          console.error("No bot audio recorder found");
+          return;
+        }
+
         // Remove the event listener to avoid memory leaks
         oAudioRecorderRef.current.removeEventListener(
           "dataavailable",
@@ -283,11 +295,10 @@ export default function App() {
   };
 
   async function startWebrtcSession() {
-    // Reset costs when starting a new session
-    setCostState(getInitialCostState());
-    setSessionStartTime(Date.now());
-
     try {
+      // Reset when starting a new session
+      setCostState(getInitialCostState());
+      setSessionStartTime(Date.now());
       setEvents([]);
       setMessages([]);
 
@@ -350,21 +361,18 @@ export default function App() {
 
         switch (event.type) {
           case "session.created":
-            setLoadingModel(false); // model is now loaded
-
-            // enable the audio track after the model is ready
+            setLoadingModel(false);
             pcRef.current.getSenders().forEach((sender) => {
               sender.track.enabled = true;
             });
             break;
 
           case "response.done":
-            // Calculate cost for OpenAI API usage
+            // Calculate cost for OpenAI Realtime API based on  usage
             if (
               selectedModel.provider === providers.OpenAI &&
               event.response?.usage
             ) {
-              // Use our utility functions to calculate costs
               const newCostData = calculateOpenAICosts(
                 event.response.usage,
                 selectedModel.cost,
@@ -376,18 +384,42 @@ export default function App() {
             break;
 
           case "response.audio_transcript.done":
-            setMessages((prev) => [
-              ...prev,
-              {
-                id: crypto.randomUUID(),
-                role: "assistant",
-                type: "text",
-                content: event.transcript,
-                timestamp: new Date().toLocaleTimeString(),
-                item_id: event.item_id,
-                event_id: event.event_id,
-              },
-            ]);
+            setBotStreamingText(null);
+            setMessages((prev) => {
+              return [
+                ...prev,
+                {
+                  id: event.item_id || crypto.randomUUID(),
+                  role: "assistant",
+                  type: "text",
+                  content: event.transcript,
+                  timestamp: new Date().toLocaleTimeString(),
+                  item_id: event.item_id,
+                  event_id: event.event_id,
+                },
+              ];
+            });
+            break;
+
+          case "response.audio_transcript.delta":
+            setBotStreamingText((prev) => {
+              if (prev) {
+                return {
+                  ...prev,
+                  content: prev.content + event.delta,
+                };
+              } else {
+                return {
+                  id: event.item_id || crypto.randomUUID(),
+                  role: "assistant",
+                  type: "text",
+                  content: event.delta,
+                  timestamp: new Date().toLocaleTimeString(),
+                  item_id: event.item_id,
+                  event_id: event.event_id,
+                };
+              }
+            });
             break;
 
           case "error":
@@ -409,7 +441,6 @@ export default function App() {
             break;
 
           case "input_audio_buffer.speech_started":
-            // Start recording when speech is detected
             currentSpeechItemRef.current = {
               id: crypto.randomUUID(),
               startTime: Date.now(),
@@ -741,7 +772,7 @@ export default function App() {
         <div className="flex-1 h-full min-h-0 rounded-xl bg-white overflow-y-auto">
           <Chat
             messages={messages}
-            setMessages={setMessages}
+            botStreamingText={botStreamingText}
             isSessionActive={isSessionActive}
             loadingModel={loadingModel}
             sendTextMessage={sendTextMessage}
