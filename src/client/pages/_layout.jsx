@@ -14,7 +14,7 @@ export default function RootLayout() {
         <div className="flex items-center gap-4 w-full m-4 pb-2 border-0 border-b border-solid border-gray-200">
           <img style={{ width: "24px" }} src={logo} />
           <h1>
-            Outspeed Realtime Console 🏎️{" "}
+            <span className="font-semibold">Outspeed Realtime Console 🏎️ </span>
             <span className="bg-gray-800 text-white p-1 rounded text-xs">
               v0.0.1
             </span>

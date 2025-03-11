@@ -17,7 +17,7 @@ import SessionControls from "./SessionControls";
 export default function App() {
   const { selectedModel } = useModel();
   const [isSessionActive, setIsSessionActive] = useState(false);
-  const [loadingModel, setLoadingModal] = useState(false);
+  const [loadingModel, setLoadingModel] = useState(false);
   const [events, setEvents] = useState([]);
   const pcRef = useRef(null);
   const dcRef = useRef(null);
@@ -26,8 +26,7 @@ export default function App() {
   const audioContext = useRef(null);
   const audioQueue = useRef([]);
   const isPlaying = useRef(false);
-  const [costData, setCostData] = useState(null);
-  const [cumulativeCost, setCumulativeCost] = useState(getInitialCostState());
+  const [costState, setCostState] = useState(getInitialCostState());
   const [sessionStartTime, setSessionStartTime] = useState(null);
   const sessionDurationInterval = useRef(null);
 
@@ -54,14 +53,13 @@ export default function App() {
           selectedModel.cost.perMinute,
         );
 
-        setCostData(timeCosts);
-
-        // Update cumulative cost for Outspeed
-        setCumulativeCost({
-          inputTokens: 0,
-          outputTokens: 0,
+        // Update cost state for Outspeed (time-based)
+        setCostState({
+          ...getInitialCostState(),
           durationInSeconds,
+          costPerMinute: selectedModel.cost.perMinute,
           totalCost: timeCosts.totalCost,
+          timestamp: timeCosts.timestamp,
         });
       }
     }, 1000);
@@ -69,7 +67,7 @@ export default function App() {
     return () => {
       clearInterval(sessionDurationInterval.current);
     };
-  }, [isSessionActive, sessionStartTime, selectedModel, loadingModel]);
+  }, [loadingModel, isSessionActive, sessionStartTime, selectedModel]);
 
   // Function to start recording audio
   const startRecording = () => {
@@ -131,8 +129,7 @@ export default function App() {
 
   async function startWebrtcSession() {
     // Reset costs when starting a new session
-    setCostData(null);
-    setCumulativeCost(getInitialCostState());
+    setCostState(getInitialCostState());
     setSessionStartTime(Date.now());
 
     try {
@@ -198,7 +195,7 @@ export default function App() {
 
         switch (event.type) {
           case "session.created":
-            setLoadingModal(false); // modal is now loaded
+            setLoadingModel(false); // model is now loaded
 
             // enable the audio track after the model is ready
             pcRef.current.getSenders().forEach((sender) => {
@@ -218,13 +215,8 @@ export default function App() {
                 selectedModel.cost,
               );
 
-              // Update current cost data
-              setCostData(newCostData);
-
-              // Update cumulative cost
-              setCumulativeCost((prev) =>
-                updateCumulativeCost(prev, newCostData),
-              );
+              // Update cost state by incorporating the new data into cumulative
+              setCostState((prev) => updateCumulativeCost(prev, newCostData));
             }
             break;
 
@@ -427,7 +419,7 @@ export default function App() {
         }),
       );
 
-      setLoadingModal(true); // data channel will open first and then the modal will be loaded
+      setLoadingModel(true); // data channel will open first and then the model will be loaded
     } catch (error) {
       console.error("Failed to start WebRTC session:", error);
       handleConnectionError();
@@ -467,7 +459,7 @@ export default function App() {
 
   function cleanup() {
     setIsSessionActive(false);
-    setLoadingModal(false);
+    setLoadingModel(false);
     pcRef.current = null;
     dcRef.current = null;
     mediaRecorderRef.current = null;
@@ -561,15 +553,14 @@ export default function App() {
         <div className="flex-1 h-full min-h-0 rounded-xl bg-white overflow-y-auto">
           <EventLog
             events={events}
-            loadingModal={loadingModel}
-            costData={costData}
-            cumulativeCost={cumulativeCost}
+            loadingModel={loadingModel}
+            costState={costState}
           />
         </div>
       </div>
       <section className="shrink-0">
         <SessionControls
-          loadingModal={loadingModel}
+          loadingModel={loadingModel}
           startWebrtcSession={startWebrtcSession}
           stopWebrtcSession={stopWebrtcSession}
           sendClientEvent={sendClientEvent}

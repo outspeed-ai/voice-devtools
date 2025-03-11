@@ -12,5 +12,6 @@ export default {
       "@src": join(dirname(path), "src"),
     },
   },
+  envPrefix: "OUTSPEED_",
   plugins: [react()],
 };
