@@ -54,7 +54,12 @@ const Chat = ({ messages, isSessionActive, loadingModel, sendTextMessage }) => {
       return;
     }
 
-    sendTextMessage(message);
+    const trimmedMessage = message.trim();
+    if (trimmedMessage.length === 0) {
+      return;
+    }
+
+    sendTextMessage(trimmedMessage);
     setMessage("");
     // Reset scroll position when sending a new message
     scrolledManually.current = false;

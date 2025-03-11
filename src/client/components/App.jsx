@@ -32,7 +32,9 @@ export default function App() {
   // refs for speech recording
   const audioContext = useRef(null);
   const iAudioRecorderRef = useRef(null); // input audio recorder
+  const oAudioRecorderRef = useRef(null); // output audio recorder
   const currentSpeechItemRef = useRef(null);
+  const currentBotSpeechItemRef = useRef(null); // Reference for bot's speech
 
   // Update session duration every second when active
   useEffect(() => {
@@ -70,13 +72,14 @@ export default function App() {
 
   useEffect(() => {
     if (loadingModel || !isSessionActive) {
-      stopRecording();
+      stopInputRecording();
       return;
     }
 
-    startRecording();
+    startInputRecording();
     return () => {
-      stopRecording();
+      stopInputRecording();
+      stopBotRecording();
       if (audioContext.current) {
         audioContext.current.close();
       }
@@ -84,12 +87,14 @@ export default function App() {
   }, [isSessionActive, loadingModel]);
 
   // Function to start recording audio
-  const startRecording = () => {
+  const startInputRecording = () => {
     if (!pcRef.current) {
       return;
     }
 
-    audioContext.current = new AudioContext();
+    if (!audioContext.current) {
+      audioContext.current = new AudioContext();
+    }
 
     // Get the audio track from the peer connection
     const senders = pcRef.current.getSenders();
@@ -114,7 +119,7 @@ export default function App() {
   };
 
   // Function to stop recording and create audio blob
-  const stopRecording = () => {
+  const stopInputRecording = () => {
     if (
       !iAudioRecorderRef.current ||
       iAudioRecorderRef.current.state === "inactive"
@@ -123,6 +128,50 @@ export default function App() {
     }
 
     iAudioRecorderRef.current.stop();
+  };
+
+  // Function to start recording bot's audio output
+  const startBotRecording = () => {
+    if (!pcRef.current) {
+      return;
+    }
+
+    if (!audioContext.current) {
+      audioContext.current = new AudioContext();
+    }
+
+    // Get the audio track from the peer connection's receivers (bot's audio)
+    const receivers = pcRef.current.getReceivers();
+    const audioReceiver = receivers.find(
+      (receiver) => receiver.track && receiver.track.kind === "audio",
+    );
+
+    if (!audioReceiver || !audioReceiver.track) {
+      console.error("No bot audio track found");
+      return;
+    }
+
+    // Create a MediaStream with the audio track
+    const stream = new MediaStream([audioReceiver.track]);
+
+    // Create a MediaRecorder
+    const mediaRecorder = new MediaRecorder(stream);
+    oAudioRecorderRef.current = mediaRecorder;
+
+    // Start recording
+    mediaRecorder.start();
+  };
+
+  // Function to stop bot recording
+  const stopBotRecording = () => {
+    if (
+      !oAudioRecorderRef.current ||
+      oAudioRecorderRef.current.state === "inactive"
+    ) {
+      return;
+    }
+
+    oAudioRecorderRef.current.stop();
   };
 
   const getRecording = () => {
@@ -170,7 +219,7 @@ export default function App() {
         resolve([newAudioBuffer, newAudioBuffer.duration]);
 
         // start recording again
-        startRecording();
+        startInputRecording();
       };
 
       // Add the one-time event listener
@@ -180,7 +229,56 @@ export default function App() {
       );
 
       // stopping the recording, which will trigger the dataavailable event
-      stopRecording();
+      stopInputRecording();
+    });
+  };
+
+  // Function to get bot's recording
+  const getBotRecording = () => {
+    return new Promise((resolve) => {
+      // Create a one-time event listener for dataavailable
+      const handleDataAvailable = async (e) => {
+        // Remove the event listener to avoid memory leaks
+        oAudioRecorderRef.current.removeEventListener(
+          "dataavailable",
+          handleDataAvailable,
+        );
+
+        const audioBlob = new Blob([e.data], {
+          type: "audio/webm",
+        });
+
+        const audioArrayBuffer = await audioBlob.arrayBuffer();
+
+        if (!currentBotSpeechItemRef.current.startTime) {
+          console.error("No bot start time found");
+          return;
+        }
+
+        const duration =
+          (Date.now() - currentBotSpeechItemRef.current.startTime + 1000) /
+          1000;
+        const audioBuffer = await audioContext.current.decodeAudioData(
+          audioArrayBuffer,
+        );
+
+        resolve([audioBuffer, audioBuffer.duration]);
+      };
+
+      // Add the one-time event listener
+      oAudioRecorderRef.current.addEventListener(
+        "dataavailable",
+        handleDataAvailable,
+      );
+
+      // stopping the recording, which will trigger the dataavailable event
+      // manually causing a delay to ensure the audio is fully recorded
+      // for some reason, a few milliseconds is getting cut off otherwise
+      // which means that when we receive the output_audio_buffer.stopped event,
+      // the audio didn't fully stop
+      setTimeout(() => {
+        stopBotRecording();
+      }, 400);
     });
   };
 
@@ -351,6 +449,45 @@ export default function App() {
               currentSpeechItemRef.current = null;
             }
             break;
+
+          case "output_audio_buffer.started":
+            startBotRecording();
+            currentBotSpeechItemRef.current = {
+              id: crypto.randomUUID(),
+              startTime: Date.now(),
+              eventId: event.event_id,
+              item_id: event.item_id,
+            };
+            break;
+
+          case "output_audio_buffer.stopped":
+            // Stop recording when bot stops speaking and add to messages
+            if (currentBotSpeechItemRef.current?.startTime) {
+              const [audioBuffer, duration] = await getBotRecording();
+              if (!audioBuffer) {
+                console.error(
+                  "error: output_audio_buffer.stopped - No audio buffer found",
+                );
+                break;
+              }
+
+              const currentBotSpeechItem = currentBotSpeechItemRef.current;
+
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: currentBotSpeechItem.id,
+                  role: "assistant",
+                  type: "audio",
+                  content: audioBuffer,
+                  duration: duration,
+                  timestamp: new Date().toLocaleTimeString(),
+                },
+              ]);
+
+              currentBotSpeechItemRef.current = null;
+            }
+            break;
         }
 
         setEvents((prev) => [event, ...prev]);
@@ -488,6 +625,14 @@ export default function App() {
       iAudioRecorderRef.current.stop();
     }
 
+    // Stop bot recording if active
+    if (
+      oAudioRecorderRef.current &&
+      oAudioRecorderRef.current.state !== "inactive"
+    ) {
+      oAudioRecorderRef.current.stop();
+    }
+
     if (dcRef.current) {
       dcRef.current.close();
     }
@@ -516,7 +661,9 @@ export default function App() {
     pcRef.current = null;
     dcRef.current = null;
     iAudioRecorderRef.current = null;
+    oAudioRecorderRef.current = null; // Clean up bot audio recorder
     currentSpeechItemRef.current = null;
+    currentBotSpeechItemRef.current = null; // Clean up bot speech reference
 
     // Cleanup signaling WebSocket
     const signalingWs = signallingWsRef.current;
