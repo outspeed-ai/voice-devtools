@@ -21,9 +21,9 @@ if (!OPENAI_API_KEY) {
   console.log("⚠️ OPENAI_API_KEY is not set");
 }
 
-const OUTSPEED_API_KEY = process.env.VITE_OUTSPEED_API_KEY;
+const OUTSPEED_API_KEY = process.env.OUTSPEED_API_KEY;
 if (!OUTSPEED_API_KEY) {
-  console.log("⚠️ VITE_OUTSPEED_API_KEY is not set");
+  console.log("⚠️ OUTSPEED_API_KEY is not set");
 }
 
 const apiKeys = {};
