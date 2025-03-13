@@ -91,11 +91,7 @@ export default function MetricDetail() {
         <h1 className="text-2xl font-bold">Metric Details</h1>
       </div>
 
-      {error && (
-        <Alert type="error">
-          Failed to load metric details. Please try again later.
-        </Alert>
-      )}
+      {error && <Alert type="error">Failed to load metric details. Please try again later.</Alert>}
 
       {isLoading ? (
         <div className="flex justify-center items-center h-64">
@@ -106,12 +102,8 @@ export default function MetricDetail() {
           <Card>
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h2 className="text-xl font-semibold">
-                  {metric.label || "Unlabeled Session"}
-                </h2>
-                <p className="text-gray-500 text-sm">
-                  {formatTimestamp(metric.created_at)}
-                </p>
+                <h2 className="text-xl font-semibold">{metric.label || "Unlabeled Session"}</h2>
+                <p className="text-gray-500 text-sm">{formatTimestamp(metric.created_at)}</p>
               </div>
               <Badge
                 label={metric.interrupted ? "Interrupted" : "Completed"}
@@ -122,44 +114,30 @@ export default function MetricDetail() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
               <div className="bg-gray-50 p-3 rounded-md">
                 <p className="text-sm text-gray-500">Time to First Response</p>
-                <p className="text-lg font-medium">
-                  {metric.time_to_first_response?.toFixed(3) || "N/A"} s
-                </p>
+                <p className="text-lg font-medium">{metric.time_to_first_response?.toFixed(3) || "N/A"} s</p>
               </div>
               <div className="bg-gray-50 p-3 rounded-md">
                 <p className="text-sm text-gray-500">Total Generation Time</p>
-                <p className="text-lg font-medium">
-                  {metric.total_generation_time?.toFixed(3) || "N/A"} s
-                </p>
+                <p className="text-lg font-medium">{metric.total_generation_time?.toFixed(3) || "N/A"} s</p>
               </div>
               <div className="bg-gray-50 p-3 rounded-md">
-                <p className="text-sm text-gray-500">
-                  Avg Inter-Response Delay
-                </p>
-                <p className="text-lg font-medium">
-                  {metric.average_inter_response_delay?.toFixed(3) || "N/A"} s
-                </p>
+                <p className="text-sm text-gray-500">Avg Inter-Response Delay</p>
+                <p className="text-lg font-medium">{metric.average_inter_response_delay?.toFixed(3) || "N/A"} s</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div className="bg-gray-50 p-3 rounded-md">
                 <p className="text-sm text-gray-500">Total Responses</p>
-                <p className="text-lg font-medium">
-                  {metric.total_responses || 0}
-                </p>
+                <p className="text-lg font-medium">{metric.total_responses || 0}</p>
               </div>
               <div className="bg-gray-50 p-3 rounded-md">
                 <p className="text-sm text-gray-500">Text Responses</p>
-                <p className="text-lg font-medium">
-                  {metric.text_responses || 0}
-                </p>
+                <p className="text-lg font-medium">{metric.text_responses || 0}</p>
               </div>
               <div className="bg-gray-50 p-3 rounded-md">
                 <p className="text-sm text-gray-500">Audio Responses</p>
-                <p className="text-lg font-medium">
-                  {metric.audio_responses || 0}
-                </p>
+                <p className="text-lg font-medium">{metric.audio_responses || 0}</p>
               </div>
             </div>
 
@@ -170,16 +148,10 @@ export default function MetricDetail() {
                 <div className="flex flex-wrap gap-4">
                   {metric.input_audio_s3_url && (
                     <Button
-                      onClick={() =>
-                        playAudio(
-                          metric.input_audio_s3_url,
-                          `input-${metric._id}`,
-                        )
-                      }
+                      onClick={() => playAudio(metric.input_audio_s3_url, `input-${metric._id}`)}
                       disabled={audioLoading}
                       icon={
-                        audioLoading &&
-                        playingAudio === `input-${metric._id}` ? (
+                        audioLoading && playingAudio === `input-${metric._id}` ? (
                           <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
                         ) : (
                           <svg
@@ -211,16 +183,10 @@ export default function MetricDetail() {
 
                   {metric.output_audio_s3_url && (
                     <Button
-                      onClick={() =>
-                        playAudio(
-                          metric.output_audio_s3_url,
-                          `output-${metric._id}`,
-                        )
-                      }
+                      onClick={() => playAudio(metric.output_audio_s3_url, `output-${metric._id}`)}
                       disabled={audioLoading}
                       icon={
-                        audioLoading &&
-                        playingAudio === `output-${metric._id}` ? (
+                        audioLoading && playingAudio === `output-${metric._id}` ? (
                           <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
                         ) : (
                           <svg
@@ -273,61 +239,28 @@ export default function MetricDetail() {
             {metric.responses && metric.responses.length > 0 && (
               <div className="mt-6">
                 <h3 className="text-lg font-medium mb-3">Response Timeline</h3>
-                <Table
-                  headers={[
-                    "Timestamp",
-                    "Delay (ms)",
-                    "Type",
-                    "Jitter",
-                    "Text",
-                  ]}
-                >
+                <Table headers={["Timestamp", "Delay (ms)", "Type", "Jitter", "Text"]}>
                   {metric.responses.map((response, index) => {
-                    const prevTimestamp =
-                      index > 0
-                        ? new Date(
-                            metric.responses[index - 1].timestamp,
-                          ).getTime()
-                        : null;
-                    const currentTimestamp = new Date(
-                      response.timestamp,
-                    ).getTime();
-                    const delay = prevTimestamp
-                      ? currentTimestamp - prevTimestamp
-                      : null;
-
                     return (
                       <tr key={index} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {formatTimestamp(response.timestamp)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {delay !== null ? `${delay} ms` : "N/A"}
+                          {`${response.delay_from_prev || 0} ms`}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-gray-500 flex gap-2 text-xs">
-                          {response.audio && (
-                            <span className="bg-blue-500 text-white px-2 py-1 rounded-md">
-                              audio
-                            </span>
-                          )}
-                          {response.text && (
-                            <span className="bg-green-500 text-white px-2 py-1 rounded-md">
-                              text
-                            </span>
-                          )}
+                          {response.audio && <span className="bg-blue-500 text-white px-2 py-1 rounded-md">audio</span>}
+                          {response.text && <span className="bg-green-500 text-white px-2 py-1 rounded-md">text</span>}
                         </td>
                         <td>
                           {response.audio_jitter ? (
-                            <span className="text-red-500">
-                              {response.audio_jitter.toFixed(4)}s
-                            </span>
+                            <span className="text-red-500">{response.audio_jitter.toFixed(4)}s</span>
                           ) : (
                             <span className="text-green-500">-</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
-                          {response.text || "N/A"}
-                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">{response.text || "N/A"}</td>
                       </tr>
                     );
                   })}
