@@ -1,38 +1,61 @@
-# OpenAI Realtime Console
+# Outspeed Realtime Console
 
-This is an example application showing how to use the [OpenAI Realtime API](https://platform.openai.com/docs/guides/realtime) with [WebRTC](https://platform.openai.com/docs/guides/realtime-webrtc).
+A sophisticated debug console for real-time AI interactions, providing enhanced monitoring and debugging capabilities for AI model interactions. Inspired by [openai-realtime-console](https://github.com/openai/openai-realtime-console.git) and [openai-realtime-agents](https://github.com/openai/openai-realtime-agents).
 
-## Installation and usage
+## Features
 
-Before you begin, you'll need an OpenAI API key - [create one in the dashboard here](https://platform.openai.com/settings/api-keys). Create a `.env` file from the example file and set your API key in there:
+- 🎯 **Enhanced Chat UI**
+  - Modern chat interface for text and audio interactions
+  - Real-time audio playback transcripts and downloadable recordings
+- 🤖 **Model Support**
 
-```bash
-cp .env.example .env
-```
+  - [MiniCPM-o](https://github.com/OpenBMB/MiniCPM-o) (hosted by Outspeed)
+  - OpenAI Realtime models
+  - More models coming soon
 
-Running this application locally requires [Node.js](https://nodejs.org/) to be installed. Install dependencies for the application with:
+- 💰 **Cost Tracking**
 
-```bash
-npm install
-```
+  - Real-time session cost monitoring
+  - Token usage analytics
+  - Time-based pricing calculations
 
-Start the application server with:
+- 📊 **Advanced Metrics**
+  - Response timelines
+  - Performance analytics
+  - Errors
 
-```bash
-npm run dev
-```
+## Quick Start
 
-This should start the console application on [http://localhost:3000](http://localhost:3000).
+1. Get your API keys:
 
-This application is a minimal template that uses [express](https://expressjs.com/) to serve the React frontend contained in the [`/client`](./client) folder. The server is configured to use [vite](https://vitejs.dev/) to build the React frontend.
+   - [Outspeed API key](https://dashboard.outspeed.com)
+   - [OpenAI API key](https://platform.openai.com/settings/api-keys)
 
-This application shows how to send and receive Realtime API events over the WebRTC data channel and configure client-side function calling. You can also view the JSON payloads for client and server events using the logging panel in the UI.
+2. Set up environment:
 
-For a more comprehensive example, see the [OpenAI Realtime Agents](https://github.com/openai/openai-realtime-agents) demo built with Next.js, using an agentic architecture inspired by [OpenAI Swarm](https://github.com/openai/swarm).
+   ```bash
+   cp .env.example .env
+   # Add your API keys to .env:
+   # OPENAI_API_KEY="<your-openai-key>"
+   # OUTSPEED_API_KEY="<your-outspeed-key>"
+   ```
 
-## Previous WebSockets version
+3. Install and run:
+   ```bash
+   npm install
+   npm run dev
+   ```
 
-The previous version of this application that used WebSockets on the client (not recommended in browsers) [can be found here](https://github.com/openai/openai-realtime-console/tree/websockets).
+Visit [http://localhost:3000](http://localhost:3000) to access the console.
+
+## Tech Stack
+
+- React (Frontend)
+- Express.js (Backend)
+- WebRTC (Real-time communication)
+- Web Audio API
+- React Query
+- TailwindCSS
 
 ## License
 
