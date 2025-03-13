@@ -679,6 +679,8 @@ export default function App() {
       audioContext.current.close();
       audioContext.current = null;
     }
+
+    botStreamingTextRef.current = null;
   }
 
   function handleConnectionError() {

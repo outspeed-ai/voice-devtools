@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Pause, Play } from "react-feather";
+import { Download, Pause, Play } from "react-feather";
+
+import { audioBufferToWav } from "@/utils/audio";
 
 // Simplified Audio player component for AudioBuffer playback
 const AudioPlayer = ({ duration, audioBuffer }) => {
@@ -17,15 +19,12 @@ const AudioPlayer = ({ duration, audioBuffer }) => {
   const actualDuration = audioBuffer?.duration || duration / 1000;
   const formattedDuration = actualDuration ? Math.round(actualDuration) : 0;
   const formattedCurrentTime = Math.round(currentTime);
-  const progress = formattedDuration
-    ? (formattedCurrentTime / formattedDuration) * 100
-    : 0;
+  const progress = formattedDuration ? (formattedCurrentTime / formattedDuration) * 100 : 0;
 
   // Initialize AudioContext for buffer playback
   useEffect(() => {
     if (audioBuffer && !audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext ||
-        window.webkitAudioContext)();
+      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
     }
 
     return () => {
@@ -53,8 +52,7 @@ const AudioPlayer = ({ duration, audioBuffer }) => {
       // Start a timer to update currentTime
       intervalRef.current = setInterval(() => {
         if (audioContextRef.current) {
-          const elapsed =
-            audioContextRef.current.currentTime - startTimeRef.current;
+          const elapsed = audioContextRef.current.currentTime - startTimeRef.current;
           const newTime = offsetTimeRef.current + elapsed;
 
           if (newTime >= formattedDuration) {
@@ -131,11 +129,7 @@ const AudioPlayer = ({ duration, audioBuffer }) => {
       };
 
       // Start playback from current position
-      const startTime = reset ? 0 : currentTime;
-      const offsetTime = Math.min(
-        reset ? 0 : currentTime,
-        formattedDuration - 0.1,
-      );
+      const offsetTime = Math.min(reset ? 0 : currentTime, formattedDuration - 0.1);
 
       // Store references for progress tracking
       startTimeRef.current = audioContextRef.current.currentTime;
@@ -166,6 +160,24 @@ const AudioPlayer = ({ duration, audioBuffer }) => {
     }
   };
 
+  const handleDownload = () => {
+    if (!audioBuffer) return;
+
+    // Convert to WAV format
+    const wav = audioBufferToWav(audioBuffer);
+    const blob = new Blob([wav], { type: "audio/wav" });
+
+    // Create download link
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "audio.wav";
+    a.click();
+
+    // Cleanup
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="flex flex-col gap-2 w-full">
       <div className="flex items-center gap-2">
@@ -174,6 +186,13 @@ const AudioPlayer = ({ duration, audioBuffer }) => {
           className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-700 text-white hover:bg-gray-600 transition-colors"
         >
           {isPlaying ? <Pause size={16} /> : <Play size={16} />}
+        </button>
+        <button
+          onClick={handleDownload}
+          className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-700 text-white hover:bg-gray-600 transition-colors"
+          title="Download audio"
+        >
+          <Download size={16} />
         </button>
 
         <div className="flex-1 flex flex-col gap-1">

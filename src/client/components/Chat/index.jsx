@@ -128,10 +128,7 @@ const Chat = memo(({ messages, isSessionActive, loadingModel, sendTextMessage })
     <div className="flex flex-col h-full">
       <section ref={containerRef} className="overflow-auto p-4 flex flex-col gap-y-4 flex-1">
         {Array.from(messages.entries()).map(([id, message]) => (
-          <div key={id}>
-            <span className="birajlog">{id}</span>
-            <MessageBubble key={id} {...message} />
-          </div>
+          <MessageBubble key={id} {...message} />
         ))}
         {/* Invisible element to scroll to */}
         <div ref={messagesEndRef} />
