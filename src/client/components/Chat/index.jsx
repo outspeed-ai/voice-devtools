@@ -9,31 +9,37 @@ import styles from "./style.module.css";
 // use memo to prevent unnecessary re-renders . without memo, it re-renders all
 // messages even when the user just types each character of a new message because
 // the message state in <Chat /> gets updated every time the user types a new character
-const MessageBubble = memo(
-  ({ id, role, type, content, timestamp, duration, streaming = false }) => {
-    const isUser = role === "user";
-    const baseContainer = "flex justify-end flex-col";
-    const containerClasses = `${baseContainer} ${
-      isUser ? "items-end" : "items-start"
-    }`;
-    const bubbleBase = `max-w-lg p-3 rounded-xl ${
-      isUser ? "bg-gray-900 text-gray-100" : "bg-gray-100 text-black"
-    }`;
+const MessageBubble = memo(({ text, audio }) => {
+  const isUser = text?.role === "user" || audio?.role === "user";
+  const baseContainer = "flex justify-end flex-col";
+  const containerClasses = `${baseContainer} ${isUser ? "items-end" : "items-start"}`;
+  const bubbleBase = `max-w-lg p-3 rounded-xl ${isUser ? "bg-gray-900 text-gray-100" : "bg-gray-100 text-black"}`;
 
-    if (type === "text") {
-      return (
-        <div className={containerClasses}>
-          <div className={bubbleBase}>
-            <div
-              className={`text-xs ${
-                isUser ? "text-gray-400" : "text-gray-500"
-              } font-mono`}
-            >
-              {timestamp}
-            </div>
-            <div className="whitespace-pre-wrap">{content}</div>
-            {/* Add a typing indicator for partial messages */}
-            {!isUser && streaming && (
+  // If this is an error message
+  if (text?.type === "error") {
+    const errorBubble = "max-w-lg p-3 rounded-xl bg-red-50 border border-red-200 text-red-800";
+
+    return (
+      <div className={containerClasses}>
+        <div className={errorBubble}>
+          <div className="text-xs text-red-500 font-mono">{text.timestamp}</div>
+          <div className="flex items-start gap-2 mt-1">
+            <AlertCircle size={16} className="text-red-500 mt-0.5 flex-shrink-0" />
+            <div className="whitespace-pre-wrap">{text.content}</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={containerClasses}>
+      <div className={bubbleBase}>
+        {text && (
+          <>
+            <div className={`text-xs ${isUser ? "text-gray-400" : "text-gray-500"} font-mono`}>{text.timestamp}</div>
+            <div className="whitespace-pre-wrap">{text.content}</div>
+            {text.streaming && (
               <div className="flex mt-1">
                 <span className={styles.typingIndicator}>
                   <span className={styles.dot}></span>
@@ -42,55 +48,22 @@ const MessageBubble = memo(
                 </span>
               </div>
             )}
-          </div>
-        </div>
-      );
-    } else if (type === "audio") {
-      return (
-        <div className={containerClasses}>
-          <div className={`${bubbleBase} min-w-[200px]`}>
-            <div
-              className={`text-xs ${
-                isUser ? "text-gray-400" : "text-gray-500"
-              } font-mono mb-2`}
-            >
-              {timestamp}
+          </>
+        )}
+        {audio && (
+          <div className="min-w-[200px] mt-2">
+            <div className={`text-xs ${isUser ? "text-gray-400" : "text-gray-500"} font-mono mb-2`}>
+              {audio.timestamp}
             </div>
-            <AudioPlayer audioBuffer={content} duration={duration} />
+            <AudioPlayer audioBuffer={audio.content} duration={audio.duration} />
           </div>
-        </div>
-      );
-    } else if (type === "error") {
-      const errorBubble =
-        "max-w-lg p-3 rounded-xl bg-red-50 border border-red-200 text-red-800";
+        )}
+      </div>
+    </div>
+  );
+});
 
-      return (
-        <div className={containerClasses}>
-          <div className={errorBubble}>
-            <div className="text-xs text-red-500 font-mono">{timestamp}</div>
-            <div className="flex items-start gap-2 mt-1">
-              <AlertCircle
-                size={16}
-                className="text-red-500 mt-0.5 flex-shrink-0"
-              />
-              <div className="whitespace-pre-wrap">{content}</div>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    return null;
-  },
-);
-
-const Chat = ({
-  messages,
-  botStreamingText,
-  isSessionActive,
-  loadingModel,
-  sendTextMessage,
-}) => {
+const Chat = memo(({ messages, isSessionActive, loadingModel, sendTextMessage }) => {
   const [message, setMessage] = useState("");
 
   const scrolledManually = useRef(false);
@@ -108,7 +81,7 @@ const Chat = ({
     if (!scrolledManually.current) {
       scrollToBottom();
     } else if (messages.length === 0) {
-      // reset the scrolledManually ref when starting a new stream
+      // reset the scrolledManually ref when starting anew
       scrolledManually.current = false;
     }
   }, [messages]);
@@ -120,9 +93,7 @@ const Chat = ({
 
     const handleScroll = () => {
       // Check if scrolled away from bottom
-      const isAtBottom =
-        container.scrollHeight - container.scrollTop <=
-        container.clientHeight + 100; // 100px threshold
+      const isAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100; // 100px threshold
 
       if (!isAtBottom) {
         scrolledManually.current = true;
@@ -147,6 +118,7 @@ const Chat = ({
 
     sendTextMessage(trimmedMessage);
     setMessage("");
+
     // Reset scroll position when sending a new message
     scrolledManually.current = false;
     scrollToBottom();
@@ -154,20 +126,13 @@ const Chat = ({
 
   return (
     <div className="flex flex-col h-full">
-      <section
-        ref={containerRef}
-        className="overflow-auto p-4 flex flex-col gap-y-4 flex-1"
-      >
-        {messages.map((message) => (
-          <MessageBubble key={message.id} {...message} />
+      <section ref={containerRef} className="overflow-auto p-4 flex flex-col gap-y-4 flex-1">
+        {Array.from(messages.entries()).map(([id, message]) => (
+          <div key={id}>
+            <span className="birajlog">{id}</span>
+            <MessageBubble key={id} {...message} />
+          </div>
         ))}
-        {botStreamingText && (
-          <MessageBubble
-            key={botStreamingText.id}
-            {...botStreamingText}
-            streaming
-          />
-        )}
         {/* Invisible element to scroll to */}
         <div ref={messagesEndRef} />
       </section>
@@ -194,6 +159,6 @@ const Chat = ({
       </div>
     </div>
   );
-};
+});
 
 export default Chat;

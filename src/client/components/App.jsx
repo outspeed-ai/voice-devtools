@@ -3,12 +3,7 @@ import { toast } from "sonner";
 
 import { ICE_SERVERS } from "@/constants";
 import { useModel } from "@/contexts/model";
-import {
-  calculateOpenAICosts,
-  calculateTimeCosts,
-  getInitialCostState,
-  updateCumulativeCost,
-} from "@/utils/cost-calc";
+import { calculateOpenAICosts, calculateTimeCosts, getInitialCostState, updateCumulativeCost } from "@/utils/cost-calc";
 import { providers } from "@src/session-config";
 import Chat from "./Chat";
 import EventLog from "./EventLog";
@@ -22,8 +17,10 @@ export default function App() {
   const pcRef = useRef(null);
   const dcRef = useRef(null);
   const signallingWsRef = useRef(null);
-  const [messages, setMessages] = useState([]);
-  const [botStreamingText, setBotStreamingText] = useState(null);
+  const [messages, setMessages] = useState(new Map());
+
+  /** response id of message that is currently being streamed */
+  const botStreamingTextRef = useRef(null);
 
   // states for cost calculation
   const [costState, setCostState] = useState(getInitialCostState());
@@ -44,16 +41,11 @@ export default function App() {
     }
 
     sessionDurationInterval.current = setInterval(() => {
-      const durationInSeconds = Math.floor(
-        (Date.now() - sessionStartTime) / 1000,
-      );
+      const durationInSeconds = Math.floor((Date.now() - sessionStartTime) / 1000);
 
       // Update Outspeed cost if using that provider
       if (selectedModel.provider === providers.Outspeed) {
-        const timeCosts = calculateTimeCosts(
-          durationInSeconds,
-          selectedModel.cost.perMinute,
-        );
+        const timeCosts = calculateTimeCosts(durationInSeconds, selectedModel.cost.perMinute);
 
         // Update cost state for Outspeed (time-based)
         setCostState({
@@ -100,9 +92,7 @@ export default function App() {
 
     // Get the audio track from the peer connection
     const senders = pcRef.current.getSenders();
-    const audioSender = senders.find(
-      (sender) => sender.track && sender.track.kind === "audio",
-    );
+    const audioSender = senders.find((sender) => sender.track && sender.track.kind === "audio");
 
     if (!audioSender || !audioSender.track) {
       console.error("No audio track found");
@@ -122,10 +112,7 @@ export default function App() {
 
   // Function to stop recording and create audio blob
   const stopInputRecording = () => {
-    if (
-      !iAudioRecorderRef.current ||
-      iAudioRecorderRef.current.state === "inactive"
-    ) {
+    if (!iAudioRecorderRef.current || iAudioRecorderRef.current.state === "inactive") {
       return;
     }
 
@@ -144,9 +131,7 @@ export default function App() {
 
     // Get the audio track from the peer connection's receivers (bot's audio)
     const receivers = pcRef.current.getReceivers();
-    const audioReceiver = receivers.find(
-      (receiver) => receiver.track && receiver.track.kind === "audio",
-    );
+    const audioReceiver = receivers.find((receiver) => receiver.track && receiver.track.kind === "audio");
 
     if (!audioReceiver || !audioReceiver.track) {
       console.error("No bot audio track found");
@@ -166,10 +151,7 @@ export default function App() {
 
   // Function to stop bot recording
   const stopBotRecording = () => {
-    if (
-      !oAudioRecorderRef.current ||
-      oAudioRecorderRef.current.state === "inactive"
-    ) {
+    if (!oAudioRecorderRef.current || oAudioRecorderRef.current.state === "inactive") {
       return;
     }
 
@@ -186,10 +168,7 @@ export default function App() {
         }
 
         // Remove the event listener to avoid memory leaks
-        iAudioRecorderRef.current.removeEventListener(
-          "dataavailable",
-          handleDataAvailable,
-        );
+        iAudioRecorderRef.current.removeEventListener("dataavailable", handleDataAvailable);
 
         const audioBlob = new Blob([e.data], {
           type: "audio/webm",
@@ -202,16 +181,11 @@ export default function App() {
           return;
         }
 
-        const duration =
-          (Date.now() - currentSpeechItemRef.current.startTime + 1000) / 1000;
-        const audioData = await audioContext.current.decodeAudioData(
-          audioArrayBuffer,
-        );
+        const duration = (Date.now() - currentSpeechItemRef.current.startTime + 1000) / 1000;
+        const audioData = await audioContext.current.decodeAudioData(audioArrayBuffer);
 
         /** @type {Float32Array} */
-        const lastNSeconds = audioData
-          .getChannelData(0)
-          .slice(-Math.floor(audioData.sampleRate * duration));
+        const lastNSeconds = audioData.getChannelData(0).slice(-Math.floor(audioData.sampleRate * duration));
 
         // Create a new AudioBuffer to hold our sliced data
         /** @type {AudioBuffer} */
@@ -230,10 +204,7 @@ export default function App() {
       };
 
       // Add the one-time event listener
-      iAudioRecorderRef.current.addEventListener(
-        "dataavailable",
-        handleDataAvailable,
-      );
+      iAudioRecorderRef.current.addEventListener("dataavailable", handleDataAvailable);
 
       // stopping the recording, which will trigger the dataavailable event
       stopInputRecording();
@@ -251,10 +222,7 @@ export default function App() {
         }
 
         // Remove the event listener to avoid memory leaks
-        oAudioRecorderRef.current.removeEventListener(
-          "dataavailable",
-          handleDataAvailable,
-        );
+        oAudioRecorderRef.current.removeEventListener("dataavailable", handleDataAvailable);
 
         const audioBlob = new Blob([e.data], {
           type: "audio/webm",
@@ -267,21 +235,14 @@ export default function App() {
           return;
         }
 
-        const duration =
-          (Date.now() - currentBotSpeechItemRef.current.startTime + 1000) /
-          1000;
-        const audioBuffer = await audioContext.current.decodeAudioData(
-          audioArrayBuffer,
-        );
+        const duration = (Date.now() - currentBotSpeechItemRef.current.startTime + 1000) / 1000;
+        const audioBuffer = await audioContext.current.decodeAudioData(audioArrayBuffer);
 
         resolve([audioBuffer, audioBuffer.duration]);
       };
 
       // Add the one-time event listener
-      oAudioRecorderRef.current.addEventListener(
-        "dataavailable",
-        handleDataAvailable,
-      );
+      oAudioRecorderRef.current.addEventListener("dataavailable", handleDataAvailable);
 
       // stopping the recording, which will trigger the dataavailable event
       // manually causing a delay to ensure the audio is fully recorded
@@ -294,13 +255,29 @@ export default function App() {
     });
   };
 
+  const handleErrorEvent = (errorMessage, eventId) => {
+    const id = eventId || crypto.randomUUID();
+    setMessages((prev) => {
+      const newMessages = new Map(prev);
+      newMessages.set(id, {
+        text: {
+          role: "assistant",
+          type: "error",
+          content: errorMessage,
+          timestamp: new Date().toLocaleTimeString(),
+        },
+      });
+      return newMessages;
+    });
+  };
+
   async function startWebrtcSession() {
     try {
       // Reset when starting a new session
       setCostState(getInitialCostState());
       setSessionStartTime(Date.now());
       setEvents([]);
-      setMessages([]);
+      setMessages(new Map());
 
       const { sessionConfig } = selectedModel;
 
@@ -318,8 +295,7 @@ export default function App() {
         if (data.code === "NO_API_KEY") {
           toastOptions.action = {
             label: "Get API Key",
-            onClick: () =>
-              window.open(selectedModel.provider.apiKeyUrl, "_blank"),
+            onClick: () => window.open(selectedModel.provider.apiKeyUrl, "_blank"),
           };
         }
 
@@ -369,126 +345,108 @@ export default function App() {
 
           case "response.done":
             // Calculate cost for OpenAI Realtime API based on  usage
-            if (
-              selectedModel.provider === providers.OpenAI &&
-              event.response?.usage
-            ) {
-              const newCostData = calculateOpenAICosts(
-                event.response.usage,
-                selectedModel.cost,
-              );
+            if (selectedModel.provider === providers.OpenAI && event.response?.usage) {
+              const newCostData = calculateOpenAICosts(event.response.usage, selectedModel.cost);
 
               // Update cost state by incorporating the new data into cumulative
               setCostState((prev) => updateCumulativeCost(prev, newCostData));
             }
-            break;
 
-          case "response.audio_transcript.done":
-            setBotStreamingText(null);
-            setMessages((prev) => {
-              return [
-                ...prev,
-                {
-                  id: event.item_id || crypto.randomUUID(),
-                  role: "assistant",
-                  type: "text",
-                  content: event.transcript,
-                  timestamp: new Date().toLocaleTimeString(),
-                  item_id: event.item_id,
-                  event_id: event.event_id,
-                },
-              ];
-            });
+            if (event.response.status == "failed") {
+              handleErrorEvent(event.response.status_details?.error?.message || "server error", event.event_id);
+            }
             break;
 
           case "response.audio_transcript.delta":
-            setBotStreamingText((prev) => {
-              if (prev) {
-                return {
-                  ...prev,
-                  content: prev.content + event.delta,
-                };
-              } else {
-                return {
-                  id: event.item_id || crypto.randomUUID(),
+            botStreamingTextRef.current = event.response_id;
+            setMessages((prev) => {
+              const newMessages = new Map(prev);
+              const currentMessage = prev.get(event.response_id) || { text: null, audio: null };
+              newMessages.set(event.response_id, {
+                ...currentMessage,
+                text: {
                   role: "assistant",
-                  type: "text",
-                  content: event.delta,
-                  timestamp: new Date().toLocaleTimeString(),
-                  item_id: event.item_id,
-                  event_id: event.event_id,
-                };
-              }
+                  content: (currentMessage.text?.content || "") + event.delta,
+                  timestamp: !currentMessage.text?.timestamp
+                    ? new Date().toLocaleTimeString()
+                    : currentMessage.text.timestamp,
+                  streaming: true,
+                },
+              });
+              return newMessages;
+            });
+            break;
+
+          case "response.audio_transcript.done":
+            botStreamingTextRef.current = null;
+            setMessages((prev) => {
+              const newMessages = new Map(prev);
+              const currentMessage = prev.get(event.response_id) || {
+                text: null,
+                audio: null,
+              };
+              newMessages.set(event.response_id, {
+                ...currentMessage,
+                text: {
+                  role: "assistant",
+                  content: event.transcript,
+                  timestamp: !currentMessage.text?.timestamp
+                    ? new Date().toLocaleTimeString()
+                    : currentMessage.text.timestamp,
+                  streaming: false,
+                },
+              });
+              return newMessages;
             });
             break;
 
           case "error":
-            const errorMessage = event.error.message;
-            if (!errorMessage) {
-              break;
-            }
-
-            setMessages((prev) => [
-              ...prev,
-              {
-                id: crypto.randomUUID(),
-                role: "assistant",
-                type: "error",
-                content: errorMessage,
-                timestamp: new Date().toLocaleTimeString(),
-                event_id: event.event_id,
-              },
-            ]);
+            handleErrorEvent(event.error.message || "an error occurred", event.event_id);
             break;
 
           case "input_audio_buffer.speech_started":
             currentSpeechItemRef.current = {
               id: crypto.randomUUID(),
               startTime: Date.now(),
-              eventId: event.event_id,
-              item_id: event.item_id,
             };
             break;
 
           case "input_audio_buffer.speech_stopped":
             // Stop recording when speech ends and add to messages
-            if (currentSpeechItemRef.current?.startTime) {
-              const [audioBuffer, duration] = await getRecording();
-              if (!audioBuffer) {
-                console.error(
-                  "error: input_audio_buffer.speech_stopped - No audio buffer found",
-                );
-                break;
-              }
 
-              // if we were to directly use currentSpeechItemRef.current in setMessages callback,
-              // that would fail even tho we're setting it to null AFTER setMessages() since
-              // state update is an async operation
-              const currentSpeechItem = currentSpeechItemRef.current;
+            const currentSpeechItem = currentSpeechItemRef.current;
+            if (!currentSpeechItem) {
+              console.error("error: input_audio_buffer.speech_stopped - No speech item found");
+              break;
+            }
 
-              setMessages((prev) => [
-                ...prev,
-                {
-                  id: currentSpeechItem.id,
-                  role: "user",
-                  type: "audio",
-                  content: audioBuffer, // No longer using URL-based content
+            const [audioBuffer, duration] = await getRecording();
+            if (!audioBuffer) {
+              console.error("error: input_audio_buffer.speech_stopped - No audio buffer found");
+              break;
+            }
+
+            setMessages((prev) => {
+              const newMessages = new Map(prev);
+              newMessages.set(currentSpeechItem.id, {
+                audio: {
+                  content: audioBuffer,
                   duration: duration,
                   timestamp: new Date().toLocaleTimeString(),
+                  role: "user",
                 },
-              ]);
+              });
+              return newMessages;
+            });
 
-              currentSpeechItemRef.current = null;
-            }
+            currentSpeechItemRef.current = null; // reset the ref
             break;
 
           case "output_audio_buffer.started":
             startBotRecording();
             currentBotSpeechItemRef.current = {
-              id: crypto.randomUUID(),
+              id: event.response_id,
               startTime: Date.now(),
-              eventId: event.event_id,
-              item_id: event.item_id,
             };
             break;
 
@@ -497,25 +455,41 @@ export default function App() {
             if (currentBotSpeechItemRef.current?.startTime) {
               const [audioBuffer, duration] = await getBotRecording();
               if (!audioBuffer) {
-                console.error(
-                  "error: output_audio_buffer.stopped - No audio buffer found",
-                );
+                console.error("error: output_audio_buffer.stopped - No audio buffer found");
                 break;
               }
 
               const currentBotSpeechItem = currentBotSpeechItemRef.current;
 
-              setMessages((prev) => [
-                ...prev,
-                {
-                  id: currentBotSpeechItem.id,
-                  role: "assistant",
-                  type: "audio",
-                  content: audioBuffer,
-                  duration: duration,
-                  timestamp: new Date().toLocaleTimeString(),
-                },
-              ]);
+              setMessages((prev) => {
+                const newMessages = new Map(prev);
+                const responseId = currentBotSpeechItem.id;
+
+                if (responseId && prev.has(responseId)) {
+                  const currentMessage = prev.get(responseId);
+                  newMessages.set(responseId, {
+                    ...currentMessage,
+                    audio: {
+                      content: audioBuffer,
+                      duration: duration,
+                      timestamp: new Date().toLocaleTimeString(),
+                      role: "assistant",
+                    },
+                  });
+                } else {
+                  // If we can't find the matching text message, create a new message with just audio
+                  const newId = crypto.randomUUID();
+                  newMessages.set(newId, {
+                    audio: {
+                      content: audioBuffer,
+                      duration: duration,
+                      timestamp: new Date().toLocaleTimeString(),
+                      role: "assistant",
+                    },
+                  });
+                }
+                return newMessages;
+              });
 
               currentBotSpeechItemRef.current = null;
             }
@@ -563,9 +537,7 @@ export default function App() {
       }
 
       // Outspeed WebRTC signalling of  SDPs and ICE candidates via WebSocket
-      const ws = new WebSocket(
-        `wss://${selectedModel.provider.url}/v1/realtime/ws?client_secret=${ephemeralKey}`,
-      );
+      const ws = new WebSocket(`wss://${selectedModel.provider.url}/v1/realtime/ws?client_secret=${ephemeralKey}`);
 
       signallingWsRef.current = ws;
 
@@ -650,18 +622,12 @@ export default function App() {
 
   function stopWebrtcSession() {
     // Stop recording if active
-    if (
-      iAudioRecorderRef.current &&
-      iAudioRecorderRef.current.state !== "inactive"
-    ) {
+    if (iAudioRecorderRef.current && iAudioRecorderRef.current.state !== "inactive") {
       iAudioRecorderRef.current.stop();
     }
 
     // Stop bot recording if active
-    if (
-      oAudioRecorderRef.current &&
-      oAudioRecorderRef.current.state !== "inactive"
-    ) {
+    if (oAudioRecorderRef.current && oAudioRecorderRef.current.state !== "inactive") {
       oAudioRecorderRef.current.stop();
     }
 
@@ -752,16 +718,18 @@ export default function App() {
       },
     };
 
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        role: "user",
-        type: "text",
-        content: message,
-        timestamp: new Date().toLocaleTimeString(),
-      },
-    ]);
+    const messageId = crypto.randomUUID();
+    setMessages((prev) => {
+      const newMessages = new Map(prev);
+      newMessages.set(messageId, {
+        text: {
+          content: message,
+          timestamp: new Date().toLocaleTimeString(),
+          role: "user",
+        },
+      });
+      return newMessages;
+    });
 
     sendClientEvent(event);
     sendClientEvent({ type: "response.create" });
@@ -773,18 +741,13 @@ export default function App() {
         <div className="flex-1 h-full min-h-0 rounded-xl bg-white overflow-y-auto">
           <Chat
             messages={messages}
-            botStreamingText={botStreamingText}
             isSessionActive={isSessionActive}
             loadingModel={loadingModel}
             sendTextMessage={sendTextMessage}
           />
         </div>
         <div className="flex-1 h-full min-h-0 rounded-xl bg-white overflow-y-auto">
-          <EventLog
-            events={events}
-            loadingModel={loadingModel}
-            costState={costState}
-          />
+          <EventLog events={events} loadingModel={loadingModel} costState={costState} />
         </div>
       </div>
       <section className="shrink-0">
