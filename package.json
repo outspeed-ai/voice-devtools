@@ -1,4 +1,5 @@
 {
+  "version": "0.0.1",
   "type": "module",
   "scripts": {
     "dev": "nodemon src/server.js --dev",
