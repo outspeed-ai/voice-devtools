@@ -86,8 +86,8 @@ const AudioPlayer = ({ duration, audioBuffer }) => {
     if (audioSourceRef.current && isPlaying) {
       try {
         audioSourceRef.current.stop();
-      } catch (error) {
-        console.error("Safe cleanup: AudioNode was not playing");
+      } catch (err) {
+        console.error("Safe cleanup: AudioNode was not playing", err);
       }
       audioSourceRef.current = null;
     }
@@ -146,6 +146,8 @@ const AudioPlayer = ({ duration, audioBuffer }) => {
 
     const rect = progressBarRef.current.getBoundingClientRect();
     const clickPosition = (e.clientX - rect.left) / rect.width;
+
+    console.log("clickPosition", clickPosition);
     const newTime = clickPosition * formattedDuration;
 
     setCurrentTime(newTime);
@@ -156,7 +158,7 @@ const AudioPlayer = ({ duration, audioBuffer }) => {
       safeStopPlayback();
       setIsPlaying(false);
       // Use setTimeout to ensure state updates before toggling play
-      setTimeout(() => togglePlayPause(), 10);
+      // setTimeout(() => togglePlayPause(), 10);
     }
   };
 

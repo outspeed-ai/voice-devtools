@@ -18,6 +18,7 @@ export const formatTimestamp = (timestamp) => {
       return date.toLocaleString();
     }
   } catch (e) {
+    console.error("error: formatTimestamp - Invalid timestamp", e);
     return timestamp;
   }
 };

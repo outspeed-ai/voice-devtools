@@ -35,23 +35,6 @@ for (const model in MODELS) {
   }
 }
 
-const providerConfigs = {
-  "api.outspeed.com": {
-    apiKey: OUTSPEED_API_KEY,
-    body: {
-      model: "MiniCPM-o-2_6",
-      voice: "male",
-    },
-  },
-  "api.openai.com": {
-    apiKey: OPENAI_API_KEY,
-    body: {
-      model: "gpt-4o-realtime-preview-2024-12-17",
-      voice: "verse",
-    },
-  },
-};
-
 // Configure Vite middleware for React client
 const vite = await createViteServer({
   server: { middlewareMode: true },
@@ -70,17 +53,13 @@ app.post("/token", express.json(), async (req, res) => {
 
     const modelData = MODELS[model];
     if (!modelData) {
-      res
-        .status(400)
-        .json({ error: `no model found for ${model}`, code: "NO_MODEL" });
+      res.status(400).json({ error: `no model found for ${model}`, code: "NO_MODEL" });
       return;
     }
 
     const apiKey = apiKeys[model];
     if (!apiKey) {
-      res
-        .status(400)
-        .json({ error: `no API key found for ${model}`, code: "NO_API_KEY" });
+      res.status(400).json({ error: `no API key found for ${model}`, code: "NO_API_KEY" });
       return;
     }
 
@@ -115,14 +94,9 @@ app.use("*", async (req, res, next) => {
   const url = req.originalUrl;
 
   try {
-    const template = await vite.transformIndexHtml(
-      url,
-      fs.readFileSync("./index.html", "utf-8"),
-    );
+    const template = await vite.transformIndexHtml(url, fs.readFileSync("./index.html", "utf-8"));
 
-    const { render } = await vite.ssrLoadModule(
-      path.join(__dirname, "./client/entry-server.jsx"),
-    );
+    const { render } = await vite.ssrLoadModule(path.join(__dirname, "./client/entry-server.jsx"));
     const appHtml = await render(url);
     const html = template.replace(`<!--ssr-outlet-->`, appHtml?.html);
     res.status(200).set({ "Content-Type": "text/html" }).end(html);

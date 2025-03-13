@@ -235,7 +235,6 @@ export default function App() {
           return;
         }
 
-        const duration = (Date.now() - currentBotSpeechItemRef.current.startTime + 1000) / 1000;
         const audioBuffer = await audioContext.current.decodeAudioData(audioArrayBuffer);
 
         resolve([audioBuffer, audioBuffer.duration]);
@@ -411,7 +410,7 @@ export default function App() {
             };
             break;
 
-          case "input_audio_buffer.speech_stopped":
+          case "input_audio_buffer.speech_stopped": {
             // Stop recording when speech ends and add to messages
 
             const currentSpeechItem = currentSpeechItemRef.current;
@@ -441,6 +440,7 @@ export default function App() {
 
             currentSpeechItemRef.current = null; // reset the ref
             break;
+          }
 
           case "output_audio_buffer.started":
             startBotRecording();
