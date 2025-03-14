@@ -1,12 +1,16 @@
 import { Link, Outlet } from "react-router-dom";
 
+import Button from "@/components/ui/Button";
 import { useModel } from "@/contexts/model";
+import { useUpdateCheck } from "@/utils/update-check";
+import { version as consoleVersion } from "@src/../package.json";
 import { providers } from "@src/session-config";
 
 import logo from "/outspeed-logo-dark.png";
 
 export default function RootLayout() {
   const { selectedModel } = useModel();
+  const { data: updateInfo } = useUpdateCheck(consoleVersion);
 
   return (
     <div className="h-full flex flex-col">
@@ -15,20 +19,24 @@ export default function RootLayout() {
           <img style={{ width: "24px" }} src={logo} />
           <h1>
             <span className="font-semibold">Outspeed Realtime Console 🏎️ </span>
-            <span className="bg-gray-800 text-white p-1 rounded text-xs">
-              v0.0.1
-            </span>
+            <span className="bg-gray-800 text-white p-1 rounded text-xs">v{consoleVersion}</span>
           </h1>
 
-          <div className="ml-auto flex gap-4">
+          <div className="ml-auto flex gap-4 items-center">
+            {updateInfo?.hasUpdate && (
+              <Button
+                variant="outline"
+                className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 text-xs py-1"
+                onClick={() => window.open("https://github.com/outspeed-ai/realtime-console", "_blank")}
+              >
+                Update Available: v{updateInfo.version}
+              </Button>
+            )}
             <Link to="/" className="text-blue-600 hover:text-blue-800">
               Home
             </Link>
             {selectedModel.provider === providers.Outspeed && (
-              <Link
-                to="/sessions"
-                className="text-blue-600 hover:text-blue-800"
-              >
+              <Link to="/sessions" className="text-blue-600 hover:text-blue-800">
                 Sessions
               </Link>
             )}
