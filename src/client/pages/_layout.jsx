@@ -1,11 +1,11 @@
 import { Link, Outlet } from "react-router-dom";
-import { version as consoleVersion } from "../../../package.json";
 
 import Button from "@/components/ui/Button";
-import { providers } from "@src/session-config";
-
 import { useModel } from "@/contexts/model";
 import { useUpdateCheck } from "@/utils/update-check";
+import { version as consoleVersion } from "@src/../package.json";
+import { providers } from "@src/session-config";
+
 import logo from "/outspeed-logo-dark.png";
 
 export default function RootLayout() {
@@ -19,9 +19,7 @@ export default function RootLayout() {
           <img style={{ width: "24px" }} src={logo} />
           <h1>
             <span className="font-semibold">Outspeed Realtime Console 🏎️ </span>
-            <span className="bg-gray-800 text-white p-1 rounded text-xs">
-              v{consoleVersion}
-            </span>
+            <span className="bg-gray-800 text-white p-1 rounded text-xs">v{consoleVersion}</span>
           </h1>
 
           <div className="ml-auto flex gap-4 items-center">
@@ -38,10 +36,7 @@ export default function RootLayout() {
               Home
             </Link>
             {selectedModel.provider === providers.Outspeed && (
-              <Link
-                to="/sessions"
-                className="text-blue-600 hover:text-blue-800"
-              >
+              <Link to="/sessions" className="text-blue-600 hover:text-blue-800">
                 Sessions
               </Link>
             )}

@@ -2,8 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import semver from "semver";
 
-
-const UPDATE_ENDPOINT = "raw.githubusercontent.com/outspeed-ai/realtime-console/refs/heads/main/package.json";
+const UPDATE_ENDPOINT = "https://raw.githubusercontent.com/outspeed-ai/realtime-console/refs/heads/main/package.json";
 
 /**
  * Custom hook to check for console updates
@@ -16,15 +15,16 @@ export function useUpdateCheck(consoleVersion) {
     refetchInterval: 1000 * 60 * 60, // Check once per hour
     queryFn: async () => {
       try {
-        const { version } = await axios.get(UPDATE_ENDPOINT).then(r => r.data);
-        if (semver.lt(consoleVersion, version))
-            return { hasUpdate: true, version }
-        else
-            return { hasUpdate: false }
+        const { version } = await axios.get(UPDATE_ENDPOINT).then((r) => r.data);
+        if (semver.lt(consoleVersion, version)) {
+          return { hasUpdate: true, version };
+        } else {
+          return { hasUpdate: false };
+        }
       } catch (error) {
         console.error("Failed to check for updates:", error);
         return { hasUpdate: false };
       }
-    }
+    },
   });
-} 
+}
