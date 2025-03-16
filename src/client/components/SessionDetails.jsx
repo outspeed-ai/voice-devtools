@@ -1,4 +1,5 @@
 import { useModel } from "@/contexts/model";
+import { agent } from "@src/agentConfig";
 
 export default function SessionDetailsPanel({ isSessionActive, loadingModel, sendClientEvent }) {
   return (
@@ -22,36 +23,41 @@ function SessionDetails() {
     selectedModel: { sessionConfig },
   } = useModel();
 
+  let concatSessionConfig = {
+    ...sessionConfig,
+    ...agent
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <p>session is active</p>
 
       <div className="flex flex-col gap-1">
         <label htmlFor="model">model</label>
-        <input readOnly value={sessionConfig.model} className="border p-2" />
+        <input readOnly value={concatSessionConfig.model} className="border p-2" />
       </div>
       <div className="flex flex-col gap-1">
         <label htmlFor="instructions">instructions</label>
-        <textarea readOnly value={sessionConfig.instructions} className="border p-2" rows={7} />
+        <textarea readOnly value={concatSessionConfig.instructions} className="border p-2" rows={7} />
       </div>
       <div className="flex flex-col gap-1">
-        <label htmlFor="temperature">temperature: {sessionConfig.temperature.toFixed(1)}</label>
+        <label htmlFor="temperature">temperature: {concatSessionConfig.temperature.toFixed(1)}</label>
       </div>
       <div className="flex flex-col gap-1">
         <label htmlFor="modalities">modalities</label>
         <div className="flex flex-col gap-2">
-          {Array.from(sessionConfig.modalities).map((modality) => (
+          {Array.from(concatSessionConfig.modalities).map((modality) => (
             <label key={modality} className="flex items-center gap-2">
-              <input type="checkbox" checked={sessionConfig.modalities.includes(modality)} />
+              <input type="checkbox" checked={concatSessionConfig.modalities.includes(modality)} />
               {modality}
             </label>
           ))}
         </div>
       </div>
-      {sessionConfig.modalities.includes("audio") && (
+      {concatSessionConfig.modalities.includes("audio") && (
         <div className="flex flex-col gap-1">
           <label htmlFor="voice">voice</label>
-          <input readOnly value={sessionConfig.voice} className="border p-2" />
+          <input readOnly value={concatSessionConfig.voice} className="border p-2" />
         </div>
       )}
     </div>
