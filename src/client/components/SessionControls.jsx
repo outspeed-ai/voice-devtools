@@ -37,7 +37,7 @@ function SessionStopped({ startWebrtcSession }) {
           {Object.values(models).map(
             ({ label, provider, sessionConfig: { model } }) => (
               <option key={model} value={model}>
-                {label} ({provider.name}) {provider}
+                {label} ({provider.name})
               </option>
             ),
           )}

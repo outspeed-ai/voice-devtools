@@ -27,7 +27,6 @@ if (!OUTSPEED_API_KEY) {
 }
 
 const apiKeys = {};
-console.log(models)
 for (const model in models) {
   if (models[model].provider === providers.OpenAI) {
     apiKeys[model] = OPENAI_API_KEY;

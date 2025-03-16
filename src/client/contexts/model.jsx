@@ -6,7 +6,6 @@ const ModelContext = createContext(null);
 
 
 export function ModelProvider({ children }) {
-  console.log(models["MiniCPM-o-2_6"])
   const [selectedModel, setSelectedModel] = useState(models["MiniCPM-o-2_6"]);
 
   return <ModelContext.Provider value={{ selectedModel, setSelectedModel }}>{children}</ModelContext.Provider>;
