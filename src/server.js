@@ -7,7 +7,7 @@ import "dotenv/config";
 import express from "express";
 import { createServer as createViteServer } from "vite";
 
-import { MODELS, providers } from "./session-config.js";
+import { models, providers } from "./settings.js";
 
 // Get the directory name properly
 const __filename = fileURLToPath(import.meta.url);
@@ -27,10 +27,11 @@ if (!OUTSPEED_API_KEY) {
 }
 
 const apiKeys = {};
-for (const model in MODELS) {
-  if (MODELS[model].provider === providers.OpenAI) {
+console.log(models)
+for (const model in models) {
+  if (models[model].provider === providers.OpenAI) {
     apiKeys[model] = OPENAI_API_KEY;
-  } else if (MODELS[model].provider === providers.Outspeed) {
+  } else if (models[model].provider === providers.Outspeed) {
     apiKeys[model] = OUTSPEED_API_KEY;
   }
 }
@@ -51,7 +52,7 @@ app.post("/token", express.json(), async (req, res) => {
       return;
     }
 
-    const modelData = MODELS[model];
+    const modelData = models[model];
     if (!modelData) {
       res.status(400).json({ error: `no model found for ${model}`, code: "NO_MODEL" });
       return;

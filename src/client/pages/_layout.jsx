@@ -4,7 +4,7 @@ import Button from "@/components/ui/Button";
 import { useModel } from "@/contexts/model";
 import { useUpdateCheck } from "@/utils/update-check";
 import { version as consoleVersion } from "@src/../package.json";
-import { providers } from "@src/session-config";
+import { providers } from "@src/settings";
 
 import logo from "/outspeed-logo-dark.png";
 

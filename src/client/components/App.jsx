@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { ICE_SERVERS } from "@/constants";
 import { useModel } from "@/contexts/model";
 import { calculateOpenAICosts, calculateTimeCosts, getInitialCostState, updateCumulativeCost } from "@/utils/cost-calc";
-import { providers } from "@src/session-config";
+import { providers } from "@src/settings";
 import Chat from "./Chat";
 import EventLog from "./EventLog";
 import SessionControls from "./SessionControls";
