@@ -1,5 +1,5 @@
 import { useModel } from "@/contexts/model";
-import { agent } from "@src/agentConfig";
+import { agent } from "@src/agent-config";
 
 export default function SessionDetailsPanel({ isSessionActive, loadingModel, sendClientEvent }) {
   return (
