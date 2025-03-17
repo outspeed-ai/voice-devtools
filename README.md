@@ -58,6 +58,12 @@ export { message_agent as agent }
 
 Play around with the prompts, or add your own voice agent to give it a spin.
 
+### Supported Models
+  - [MiniCPM-o](https://github.com/OpenBMB/MiniCPM-o) (hosted by Outspeed)
+  - OpenAI Realtime models
+  - Moshi (Coming Soon)
+  - Gemini Multimodal Live (Coming Soon)
+
 ## License
 
 MIT
