@@ -2,7 +2,7 @@ import { useState } from "react";
 import { CloudLightning, CloudOff } from "react-feather";
 
 import { useModel } from "@/contexts/model";
-import { MODELS } from "@src/session-config";
+import { models } from "@src/settings";
 import Button from "./ui/Button";
 
 function SessionStopped({ startWebrtcSession }) {
@@ -31,10 +31,10 @@ function SessionStopped({ startWebrtcSession }) {
         <span className="text-gray-700">Select Model:</span>
         <select
           value={selectedModel.sessionConfig.model}
-          onChange={(e) => setSelectedModel(MODELS[e.target.value])}
+          onChange={(e) => setSelectedModel(models[e.target.value])}
           className="px-3 py-2 rounded-md border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
-          {Object.values(MODELS).map(
+          {Object.values(models).map(
             ({ label, provider, sessionConfig: { model } }) => (
               <option key={model} value={model}>
                 {label} ({provider.name})

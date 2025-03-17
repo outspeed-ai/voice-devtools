@@ -4,7 +4,8 @@ import { toast } from "sonner";
 import { ICE_SERVERS } from "@/constants";
 import { useModel } from "@/contexts/model";
 import { calculateOpenAICosts, calculateTimeCosts, getInitialCostState, updateCumulativeCost } from "@/utils/cost-calc";
-import { providers } from "@src/session-config";
+import { agent } from "@src/agent-config";
+import { providers } from "@src/settings";
 import Chat from "./Chat";
 import EventLog from "./EventLog";
 import SessionControls from "./SessionControls";
@@ -279,12 +280,17 @@ export default function App() {
       setMessages(new Map());
 
       const { sessionConfig } = selectedModel;
+      let concatSessionConfig = {
+        ...sessionConfig,
+        instructions: agent.instructions
+      }
 
+      console.log(concatSessionConfig)
       // Get an ephemeral key from the server with selected provider
       const tokenResponse = await fetch(`/token`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(sessionConfig),
+        body: JSON.stringify(concatSessionConfig),
       });
       const data = await tokenResponse.json();
       if (!tokenResponse.ok) {
