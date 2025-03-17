@@ -1,4 +1,4 @@
-import { models as modelConfig } from "./modelConfig.js";
+import { models as modelConfig } from "./model-config.js";
 /**
  * Provider-specific defaults
  */
