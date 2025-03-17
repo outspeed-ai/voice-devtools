@@ -7,7 +7,7 @@ This UI provides a debug console for real-time AI voice interactions. It works w
 3. Metrics Support: Track errors, response timelines, and performance
 4. Voice and Chat UI
 
-Inspired by [openai-realtime-agents](https://github.com/openai/openai-realtime-agents).
+Inspired by [openai-realtime-console](https://github.com/openai/openai-realtime-console) and [openai-realtime-agents](https://github.com/openai/openai-realtime-agents).
 
 ## Quick Start
 
