@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import { ICE_SERVERS } from "@/constants";
@@ -35,6 +36,8 @@ export default function App() {
   const oAudioRecorderRef = useRef(null); // output audio recorder
   const currentSpeechItemRef = useRef(null);
   const currentBotSpeechItemRef = useRef(null); // Reference for bot's speech
+
+  const navigate = useNavigate();
 
   // Update session duration every second when active
   useEffect(() => {
@@ -658,6 +661,15 @@ export default function App() {
     }
 
     cleanup();
+
+    if (selectedModel.provider === providers.Outspeed) {
+      toast.info("Session stopped.", {
+        action: {
+          label: "View Details",
+          onClick: () => navigate("/sessions"),
+        },
+      });
+    }
   }
 
   function cleanup() {
@@ -745,7 +757,7 @@ export default function App() {
   }
 
   return (
-    <main className="h-full flex flex-col p-4 gap-4">
+    <main className="h-full flex flex-col px-4 pb-4 gap-4">
       <div className="flex grow gap-4 overflow-hidden">
         <div className="flex-1 h-full min-h-0 rounded-xl bg-white overflow-y-auto">
           <Chat
