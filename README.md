@@ -1,4 +1,4 @@
-# Outspeed Speech Console
+# Voice DevTools
 
 This UI provides a debug console for real-time AI voice interactions. It works with multiple realtime models ([View supported models](https://docs.outspeed.com/models)). 
 
