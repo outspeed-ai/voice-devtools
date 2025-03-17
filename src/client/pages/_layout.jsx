@@ -27,7 +27,7 @@ export default function RootLayout() {
               <Button
                 variant="outline"
                 className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 text-xs py-1"
-                onClick={() => window.open("https://github.com/outspeed-ai/realtime-console", "_blank")}
+                onClick={() => window.open("https://github.com/outspeed-ai/voice-devtools", "_blank")}
               >
                 Update Available: v{updateInfo.version}
               </Button>

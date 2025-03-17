@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import semver from "semver";
 
-const UPDATE_ENDPOINT = "https://raw.githubusercontent.com/outspeed-ai/realtime-console/refs/heads/main/package.json";
+const UPDATE_ENDPOINT = "https://raw.githubusercontent.com/outspeed-ai/voice-devtools/refs/heads/main/package.json";
 
 /**
  * Custom hook to check for console updates
