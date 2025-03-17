@@ -47,7 +47,7 @@ function SessionDetails() {
         <div className="flex flex-col gap-2">
           {Array.from(concatSessionConfig.modalities).map((modality) => (
             <label key={modality} className="flex items-center gap-2">
-              <input type="checkbox" checked={concatSessionConfig.modalities.includes(modality)} />
+              <input readOnly type="checkbox" checked={concatSessionConfig.modalities.includes(modality)} />
               {modality}
             </label>
           ))}
