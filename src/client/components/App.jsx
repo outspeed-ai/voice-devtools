@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import { ICE_SERVERS } from "@/constants";
@@ -9,6 +10,7 @@ import { providers } from "@src/settings";
 import Chat from "./Chat";
 import EventLog from "./EventLog";
 import SessionControls from "./SessionControls";
+import SessionDetailsPanel from "./SessionDetails";
 
 export default function App() {
   const { selectedModel } = useModel();
@@ -34,6 +36,8 @@ export default function App() {
   const oAudioRecorderRef = useRef(null); // output audio recorder
   const currentSpeechItemRef = useRef(null);
   const currentBotSpeechItemRef = useRef(null); // Reference for bot's speech
+
+  const navigate = useNavigate();
 
   // Update session duration every second when active
   useEffect(() => {
@@ -282,10 +286,10 @@ export default function App() {
       const { sessionConfig } = selectedModel;
       let concatSessionConfig = {
         ...sessionConfig,
-        instructions: agent.instructions
-      }
+        instructions: agent.instructions,
+      };
 
-      console.log(concatSessionConfig)
+      console.log(concatSessionConfig);
       // Get an ephemeral key from the server with selected provider
       const tokenResponse = await fetch(`/token`, {
         method: "POST",
@@ -466,6 +470,10 @@ export default function App() {
               }
 
               const currentBotSpeechItem = currentBotSpeechItemRef.current;
+              if (!currentBotSpeechItem) {
+                console.error("error: output_audio_buffer.stopped - No bot speech item found");
+                break;
+              }
 
               setMessages((prev) => {
                 const newMessages = new Map(prev);
@@ -549,12 +557,16 @@ export default function App() {
 
       const wsConnectedPromise = new Promise((resolve, reject) => {
         ws.onopen = () => {
+          ws.onopen = null;
+          ws.onerror = null;
           console.log("WebSocket connected for WebRTC signaling");
           ws.send(JSON.stringify({ type: "ping" }));
           resolve();
         };
 
         ws.onerror = (event) => {
+          ws.onopen = null;
+          ws.onerror = null;
           console.error("WebSocket error:", event);
           handleConnectionError();
           reject(event);
@@ -566,9 +578,24 @@ export default function App() {
       ws.onmessage = async (message) => {
         const data = JSON.parse(message.data);
         switch (data.type) {
-          case "pong":
-            console.log("pong received");
+          case "pong": {
+            console.log("pong received. creating offer....");
+
+            // Create and send offer
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+
+            console.log("sending offer....");
+            ws.send(
+              JSON.stringify({
+                type: "offer",
+                sdp: pc.localDescription.sdp,
+              }),
+            );
+
+            setLoadingModel(true); // data channel will open first and then the model will be loaded
             break;
+          }
           case "answer":
             await pc.setRemoteDescription(new RTCSessionDescription(data));
             break;
@@ -595,6 +622,20 @@ export default function App() {
         }
       };
 
+      ws.onclose = (e) => {
+        console.log("WebSocket closed", e.code, e.reason);
+
+        // https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent/code#value
+        if (e.code !== 1000) {
+          handleConnectionError();
+        }
+      };
+
+      ws.onerror = (event) => {
+        console.error("WebSocket error after WS connection:", event);
+        handleConnectionError();
+      };
+
       // ICE candidate handling
       pc.onicecandidate = (event) => {
         if (event.candidate) {
@@ -608,18 +649,6 @@ export default function App() {
           );
         }
       };
-
-      // Create and send offer
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      ws.send(
-        JSON.stringify({
-          type: "offer",
-          sdp: pc.localDescription.sdp,
-        }),
-      );
-
-      setLoadingModel(true); // data channel will open first and then the model will be loaded
     } catch (error) {
       console.error("Failed to start WebRTC session:", error);
       handleConnectionError();
@@ -657,6 +686,23 @@ export default function App() {
     }
 
     cleanup();
+
+    // if this function was called because of a connection error, don't show a toast
+    if (!isSessionActive) {
+      return;
+    }
+
+    const toastOptions = { richColors: false };
+
+    // only show this action if the provider is Outspeed
+    if (selectedModel.provider === providers.Outspeed) {
+      toastOptions.action = {
+        label: "View Details",
+        onClick: () => navigate("/sessions"),
+      };
+    }
+
+    toast.info("Session stopped.", toastOptions);
   }
 
   function cleanup() {
@@ -690,6 +736,7 @@ export default function App() {
   }
 
   function handleConnectionError() {
+    stopWebrtcSession();
     cleanup();
     toast.error("Connection error! Check the console for details.");
   }
@@ -744,7 +791,7 @@ export default function App() {
   }
 
   return (
-    <main className="h-full flex flex-col p-4 gap-4">
+    <main className="h-full flex flex-col px-4 pb-4 gap-4">
       <div className="flex grow gap-4 overflow-hidden">
         <div className="flex-1 h-full min-h-0 rounded-xl bg-white overflow-y-auto">
           <Chat
@@ -755,7 +802,13 @@ export default function App() {
           />
         </div>
         <div className="flex-1 h-full min-h-0 rounded-xl bg-white overflow-y-auto">
-          <EventLog events={events} loadingModel={loadingModel} costState={costState} />
+          <RightSide
+            isSessionActive={isSessionActive}
+            loadingModel={loadingModel}
+            events={events}
+            costState={costState}
+            sendClientEvent={sendClientEvent}
+          />
         </div>
       </div>
       <section className="shrink-0">
@@ -772,3 +825,34 @@ export default function App() {
     </main>
   );
 }
+
+const RightSide = ({ isSessionActive, loadingModel, events, costState, sendClientEvent }) => {
+  const [activeTab, setActiveTab] = useState("events"); // "events" | "session-details"
+
+  let heading;
+  if (activeTab === "events") {
+    heading = "Event Logs";
+  } else if (activeTab === "session-details") {
+    heading = "Session Details";
+  }
+
+  return (
+    <div>
+      <div className="sticky top-0 z-10 text-base border-b bg-white p-4 flex items-center justify-between">
+        <h3 className="font-semibold">{heading}</h3>
+        <select className="border rounded-md p-2" onChange={(e) => setActiveTab(e.target.value)}>
+          <option value="events">Event Logs</option>
+          <option value="session-details">Session Details</option>
+        </select>
+      </div>
+      {activeTab === "events" && <EventLog events={events} loadingModel={loadingModel} costState={costState} />}
+      {activeTab === "session-details" && (
+        <SessionDetailsPanel
+          isSessionActive={isSessionActive}
+          loadingModel={loadingModel}
+          sendClientEvent={sendClientEvent}
+        />
+      )}
+    </div>
+  );
+};

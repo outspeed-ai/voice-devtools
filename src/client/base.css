@@ -29,3 +29,8 @@ body {
   height: 100%;
   width: 100%;
 }
+
+input:read-only,
+textarea:read-only {
+  @apply bg-gray-50 outline-none rounded;
+}
