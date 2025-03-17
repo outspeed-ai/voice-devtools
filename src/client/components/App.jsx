@@ -9,6 +9,7 @@ import { providers } from "@src/settings";
 import Chat from "./Chat";
 import EventLog from "./EventLog";
 import SessionControls from "./SessionControls";
+import SessionDetailsPanel from "./SessionDetails";
 
 export default function App() {
   const { selectedModel } = useModel();
@@ -282,10 +283,10 @@ export default function App() {
       const { sessionConfig } = selectedModel;
       let concatSessionConfig = {
         ...sessionConfig,
-        instructions: agent.instructions
-      }
+        instructions: agent.instructions,
+      };
 
-      console.log(concatSessionConfig)
+      console.log(concatSessionConfig);
       // Get an ephemeral key from the server with selected provider
       const tokenResponse = await fetch(`/token`, {
         method: "POST",
@@ -755,7 +756,13 @@ export default function App() {
           />
         </div>
         <div className="flex-1 h-full min-h-0 rounded-xl bg-white overflow-y-auto">
-          <EventLog events={events} loadingModel={loadingModel} costState={costState} />
+          <RightSide
+            isSessionActive={isSessionActive}
+            loadingModel={loadingModel}
+            events={events}
+            costState={costState}
+            sendClientEvent={sendClientEvent}
+          />
         </div>
       </div>
       <section className="shrink-0">
@@ -772,3 +779,34 @@ export default function App() {
     </main>
   );
 }
+
+const RightSide = ({ isSessionActive, loadingModel, events, costState, sendClientEvent }) => {
+  const [activeTab, setActiveTab] = useState("events"); // "events" | "session-details"
+
+  let heading;
+  if (activeTab === "events") {
+    heading = "Event Logs";
+  } else if (activeTab === "session-details") {
+    heading = "Session Details";
+  }
+
+  return (
+    <div>
+      <div className="sticky top-0 z-10 text-base border-b bg-white p-4 flex items-center justify-between">
+        <h3 className="font-semibold">{heading}</h3>
+        <select className="border rounded-md p-2" onChange={(e) => setActiveTab(e.target.value)}>
+          <option value="events">Event Logs</option>
+          <option value="session-details">Session Details</option>
+        </select>
+      </div>
+      {activeTab === "events" && <EventLog events={events} loadingModel={loadingModel} costState={costState} />}
+      {activeTab === "session-details" && (
+        <SessionDetailsPanel
+          isSessionActive={isSessionActive}
+          loadingModel={loadingModel}
+          sendClientEvent={sendClientEvent}
+        />
+      )}
+    </div>
+  );
+};
