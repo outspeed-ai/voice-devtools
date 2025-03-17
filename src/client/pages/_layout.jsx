@@ -16,11 +16,13 @@ export default function RootLayout() {
     <div className="h-full flex flex-col">
       <nav className="absolute top-0 left-0 right-0 h-16 flex items-center bg-[var(--color-bg)]">
         <div className="flex items-center gap-4 w-full m-4 pb-2 border-0 border-b border-solid border-gray-200">
-          <img style={{ width: "24px" }} src={logo} />
-          <h1>
-            <span className="font-semibold">Outspeed Voice DevTools 🏎️ </span>
-            <span className="bg-gray-800 text-white p-1 rounded text-xs">v{consoleVersion}</span>
-          </h1>
+          <Link to="/" className="inline-flex items-center gap-2">
+            <img style={{ width: "24px" }} src={logo} />
+            <h1>
+              <span className="font-semibold">Outspeed Voice DevTools 🏎️ </span>
+              <span className="bg-gray-800 text-white p-1 rounded text-xs">v{consoleVersion}</span>
+            </h1>
+          </Link>
 
           <div className="ml-auto flex gap-4 items-center">
             {updateInfo?.hasUpdate && (
