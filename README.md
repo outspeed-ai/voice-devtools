@@ -1,29 +1,13 @@
 # Voice DevTools
 
-This UI provides a debug console for real-time AI voice interactions. It works with multiple realtime models ([View supported models](https://docs.outspeed.com/models)). 
+This UI provides a debug console for real-time AI voice interactions. It works with multiple realtime models ([View supported models](https://docs.outspeed.com/models)). Features include:
+
+1. Cost Tracking: Know how much you've spent
+2. Model Support: Supports open-source (MiniCPM-o) and closed-source S2S models (adding more soon!)
+3. Metrics Support: Track errors, response timelines, and performance
+4. Voice and Chat UI
 
 Inspired by [openai-realtime-agents](https://github.com/openai/openai-realtime-agents).
-
-## Features
-
-- 🎯 **Enhanced Chat UI**
-  - Modern chat interface for text and audio interactions
-  - Real-time audio playback transcripts and downloadable recordings
-
-- 🤖 **Model Support**
-  - [MiniCPM-o](https://github.com/OpenBMB/MiniCPM-o) (hosted by Outspeed)
-  - OpenAI Realtime models
-  - More models coming soon
-
-- 💰 **Cost Tracking**
-  - Real-time session cost monitoring
-  - Token usage analytics
-  - Time-based pricing calculations
-
-- 📊 **Advanced Metrics**
-  - Response timelines
-  - Performance analytics
-  - Errors
 
 ## Quick Start
 
