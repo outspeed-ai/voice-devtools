@@ -2,7 +2,7 @@
 
 This UI provides a debug console for real-time AI voice interactions. It works with multiple realtime models ([View supported models](https://docs.outspeed.com/models)). Features include:
 
-1. Cost Tracking: Know how much you've spent
+1. Cost Tracking: Know how much you've spent per voice interaction
 2. Model Support: Supports open-source (MiniCPM-o) and closed-source S2S models (adding more soon!)
 3. Metrics Support: Track errors, response timelines, and performance
 4. Voice and Chat UI
