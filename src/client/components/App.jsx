@@ -470,6 +470,10 @@ export default function App() {
               }
 
               const currentBotSpeechItem = currentBotSpeechItemRef.current;
+              if (!currentBotSpeechItem) {
+                console.error("error: output_audio_buffer.stopped - No bot speech item found");
+                break;
+              }
 
               setMessages((prev) => {
                 const newMessages = new Map(prev);
