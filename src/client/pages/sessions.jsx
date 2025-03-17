@@ -29,11 +29,7 @@ export default function Sessions() {
     <div className="container h-full overflow-y-auto mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Your Sessions</h1>
 
-      {error && (
-        <Alert type="error">
-          {error.message || "Failed to load sessions. Please try again later."}
-        </Alert>
-      )}
+      {error && <Alert type="error">{error.message || "Failed to load sessions. Please try again later."}</Alert>}
 
       {isLoading ? (
         <div className="flex justify-center items-center h-64">
@@ -45,41 +41,60 @@ export default function Sessions() {
             <Alert type="info">No sessions found.</Alert>
           ) : (
             sessions.map((session) => (
-              <Card key={session.id} title={`Session ID: ${session.id}`}>
-                <p>
-                  <strong>Created At:</strong>{" "}
-                  {formatTimestamp(session.created)}
-                </p>
-                <p>
-                  <strong>Model:</strong> {session.model}
-                </p>
-                <p>
-                  <strong>Modalities:</strong> {session.modalities.join(", ")}
-                </p>
-                <p>
-                  <strong>Instructions:</strong> {session.instructions}
-                </p>
-                <p>
-                  <strong>Voice:</strong> {session.voice}
-                </p>
-                <p>
-                  <strong>Temperature:</strong> {session.temperature}
-                </p>
-                <p>
-                  <strong>Input Audio Format:</strong>{" "}
-                  {session.input_audio_format}
-                </p>
-                <p>
-                  <strong>Output Audio Format:</strong>{" "}
-                  {session.output_audio_format}
-                </p>
-                <Button
-                  variant="outline"
-                  onClick={() => navigate(`/metrics?session_id=${session.id}`)}
-                  className="ml-auto mt-2"
-                >
-                  View Metrics
-                </Button>
+              <Card key={session.id} title={`Session ID: ${session.id}`} className="mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="mb-2">
+                      <strong className="text-gray-700">Created At:</strong>{" "}
+                      <span className="text-gray-900">{formatTimestamp(session.created)}</span>
+                    </p>
+                    <p className="mb-2">
+                      <strong className="text-gray-700">Model:</strong>{" "}
+                      <span className="text-gray-900">{session.model}</span>
+                    </p>
+                    <p className="mb-2">
+                      <strong className="text-gray-700">Modalities:</strong>{" "}
+                      <span className="text-gray-900">{session.modalities.join(", ")}</span>
+                    </p>
+                    <p className="mb-2">
+                      <strong className="text-gray-700">Voice:</strong>{" "}
+                      <span className="text-gray-900">{session.voice}</span>
+                    </p>
+                  </div>
+                  <div>
+                    <p className="mb-2">
+                      <strong className="text-gray-700">Temperature:</strong>{" "}
+                      <span className="text-gray-900">{session.temperature}</span>
+                    </p>
+                    <p className="mb-2">
+                      <strong className="text-gray-700">Input Audio Format:</strong>{" "}
+                      <span className="text-gray-900">{session.input_audio_format}</span>
+                    </p>
+                    <p className="mb-2">
+                      <strong className="text-gray-700">Output Audio Format:</strong>{" "}
+                      <span className="text-gray-900">{session.output_audio_format}</span>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <p className="mb-1">
+                    <strong className="text-gray-700">Instructions:</strong>
+                  </p>
+                  <div className="bg-gray-50 p-3 rounded-md max-h-40 overflow-y-auto text-sm text-gray-800 border border-gray-200 whitespace-pre-line">
+                    {session.instructions}
+                  </div>
+                </div>
+
+                <div className="flex justify-end mt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate(`/metrics?session_id=${session.id}`)}
+                    className="hover:bg-blue-50"
+                  >
+                    View Metrics
+                  </Button>
+                </div>
               </Card>
             ))
           )}
@@ -92,9 +107,7 @@ export default function Sessions() {
                   onClick={() => handlePageChange(1)}
                   disabled={page === 1}
                   className={`mx-1 px-3 py-2 rounded-md ${
-                    page === 1
-                      ? "text-gray-400 cursor-not-allowed"
-                      : "text-blue-600 hover:bg-blue-50"
+                    page === 1 ? "text-gray-400 cursor-not-allowed" : "text-blue-600 hover:bg-blue-50"
                   }`}
                 >
                   First
@@ -103,9 +116,7 @@ export default function Sessions() {
                   onClick={() => handlePageChange(page - 1)}
                   disabled={page === 1}
                   className={`mx-1 px-3 py-2 rounded-md ${
-                    page === 1
-                      ? "text-gray-400 cursor-not-allowed"
-                      : "text-blue-600 hover:bg-blue-50"
+                    page === 1 ? "text-gray-400 cursor-not-allowed" : "text-blue-600 hover:bg-blue-50"
                   }`}
                 >
                   Previous
@@ -119,9 +130,7 @@ export default function Sessions() {
                   onClick={() => handlePageChange(page + 1)}
                   disabled={page === totalPages}
                   className={`mx-1 px-3 py-2 rounded-md ${
-                    page === totalPages
-                      ? "text-gray-400 cursor-not-allowed"
-                      : "text-blue-600 hover:bg-blue-50"
+                    page === totalPages ? "text-gray-400 cursor-not-allowed" : "text-blue-600 hover:bg-blue-50"
                   }`}
                 >
                   Next
@@ -130,9 +139,7 @@ export default function Sessions() {
                   onClick={() => handlePageChange(totalPages)}
                   disabled={page === totalPages}
                   className={`mx-1 px-3 py-2 rounded-md ${
-                    page === totalPages
-                      ? "text-gray-400 cursor-not-allowed"
-                      : "text-blue-600 hover:bg-blue-50"
+                    page === totalPages ? "text-gray-400 cursor-not-allowed" : "text-blue-600 hover:bg-blue-50"
                   }`}
                 >
                   Last
