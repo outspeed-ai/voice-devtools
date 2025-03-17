@@ -553,12 +553,16 @@ export default function App() {
 
       const wsConnectedPromise = new Promise((resolve, reject) => {
         ws.onopen = () => {
+          ws.onopen = null;
+          ws.onerror = null;
           console.log("WebSocket connected for WebRTC signaling");
           ws.send(JSON.stringify({ type: "ping" }));
           resolve();
         };
 
         ws.onerror = (event) => {
+          ws.onopen = null;
+          ws.onerror = null;
           console.error("WebSocket error:", event);
           handleConnectionError();
           reject(event);
@@ -570,9 +574,24 @@ export default function App() {
       ws.onmessage = async (message) => {
         const data = JSON.parse(message.data);
         switch (data.type) {
-          case "pong":
-            console.log("pong received");
+          case "pong": {
+            console.log("pong received. creating offer....");
+
+            // Create and send offer
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+
+            console.log("sending offer....");
+            ws.send(
+              JSON.stringify({
+                type: "offer",
+                sdp: pc.localDescription.sdp,
+              }),
+            );
+
+            setLoadingModel(true); // data channel will open first and then the model will be loaded
             break;
+          }
           case "answer":
             await pc.setRemoteDescription(new RTCSessionDescription(data));
             break;
@@ -599,6 +618,20 @@ export default function App() {
         }
       };
 
+      ws.onclose = (e) => {
+        console.log("WebSocket closed", e.code, e.reason);
+
+        // https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent/code#value
+        if (e.code !== 1000) {
+          handleConnectionError();
+        }
+      };
+
+      ws.onerror = (event) => {
+        console.error("WebSocket error after WS connection:", event);
+        handleConnectionError();
+      };
+
       // ICE candidate handling
       pc.onicecandidate = (event) => {
         if (event.candidate) {
@@ -612,18 +645,6 @@ export default function App() {
           );
         }
       };
-
-      // Create and send offer
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      ws.send(
-        JSON.stringify({
-          type: "offer",
-          sdp: pc.localDescription.sdp,
-        }),
-      );
-
-      setLoadingModel(true); // data channel will open first and then the model will be loaded
     } catch (error) {
       console.error("Failed to start WebRTC session:", error);
       handleConnectionError();
@@ -662,14 +683,22 @@ export default function App() {
 
     cleanup();
 
-    if (selectedModel.provider === providers.Outspeed) {
-      toast.info("Session stopped.", {
-        action: {
-          label: "View Details",
-          onClick: () => navigate("/sessions"),
-        },
-      });
+    // if this function was called because of a connection error, don't show a toast
+    if (!isSessionActive) {
+      return;
     }
+
+    const toastOptions = { richColors: false };
+
+    // only show this action if the provider is Outspeed
+    if (selectedModel.provider === providers.Outspeed) {
+      toastOptions.action = {
+        label: "View Details",
+        onClick: () => navigate("/sessions"),
+      };
+    }
+
+    toast.info("Session stopped.", toastOptions);
   }
 
   function cleanup() {
@@ -703,6 +732,7 @@ export default function App() {
   }
 
   function handleConnectionError() {
+    stopWebrtcSession();
     cleanup();
     toast.error("Connection error! Check the console for details.");
   }
