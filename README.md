@@ -1,20 +1,21 @@
-# Outspeed Realtime Console
+# Outspeed Speech Console
 
-A sophisticated debug console for real-time AI interactions, providing enhanced monitoring and debugging capabilities for AI model interactions. Inspired by [openai-realtime-console](https://github.com/openai/openai-realtime-console.git) and [openai-realtime-agents](https://github.com/openai/openai-realtime-agents).
+This UI provides a debug console for real-time AI voice interactions. It works with multiple realtime models ([View supported models](https://docs.outspeed.com/models)). 
+
+Inspired by [openai-realtime-agents](https://github.com/openai/openai-realtime-agents).
 
 ## Features
 
 - 🎯 **Enhanced Chat UI**
   - Modern chat interface for text and audio interactions
   - Real-time audio playback transcripts and downloadable recordings
-- 🤖 **Model Support**
 
+- 🤖 **Model Support**
   - [MiniCPM-o](https://github.com/OpenBMB/MiniCPM-o) (hosted by Outspeed)
   - OpenAI Realtime models
   - More models coming soon
 
 - 💰 **Cost Tracking**
-
   - Real-time session cost monitoring
   - Token usage analytics
   - Time-based pricing calculations
@@ -48,14 +49,30 @@ A sophisticated debug console for real-time AI interactions, providing enhanced 
 
 Visit [http://localhost:3000](http://localhost:3000) to access the console.
 
-## Tech Stack
+### Usage
 
-- React (Frontend)
-- Express.js (Backend)
-- WebRTC (Real-time communication)
-- Web Audio API
-- React Query
-- TailwindCSS
+To modify agent prompt and tools, modify `agent-config.js`.
+
+To modify the model parameters like (voice, version, etc.), edit `model-config.js`
+
+
+### Agents
+
+There are two voice agent examples already present in `agent-config.js`:
+1. Dental Agent: Answers callers' questions about working hours of a dental clinic
+2. Message Agent: Takes callers' messages for a person
+
+You can modify the export in the file to activate an agent:
+
+```js
+// agent-config.js
+export { dental_agent as agent }
+
+// for message_agent
+export { message_agent as agent }
+```
+
+Play around with the prompts, or add your own voice agent to give it a spin.
 
 ## License
 
