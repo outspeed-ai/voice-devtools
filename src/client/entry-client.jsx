@@ -4,6 +4,7 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { Toaster } from "sonner";
 
+import { AuthProvider } from "./contexts/auth";
 import { ModelProvider } from "./contexts/model";
 import Router from "./router";
 
@@ -25,10 +26,12 @@ ReactDOM.hydrateRoot(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <ModelProvider>
-          <Toaster richColors position="top-right" />
-          <Router />
-        </ModelProvider>
+        <AuthProvider>
+          <ModelProvider>
+            <Toaster richColors position="top-right" />
+            <Router />
+          </ModelProvider>
+        </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>
   </StrictMode>,

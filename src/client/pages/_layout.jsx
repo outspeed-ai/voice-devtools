@@ -6,7 +6,7 @@ import { useUpdateCheck } from "@/utils/update-check";
 import { version as consoleVersion } from "@src/../package.json";
 import { providers } from "@src/settings";
 
-import logo from "/outspeed-logo-dark.png";
+import logo from "/outspeed-logo.png";
 
 export default function RootLayout() {
   const { selectedModel } = useModel();

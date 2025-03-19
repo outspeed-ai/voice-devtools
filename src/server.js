@@ -68,7 +68,9 @@ app.post("/token", express.json(), async (req, res) => {
     const response = await fetch(url, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        ...(modelData.provider === providers.Outspeed
+          ? { "X-API-KEY": apiKey }
+          : { Authorization: `Bearer ${apiKey}` }),
         "Content-Type": "application/json",
       },
       body: JSON.stringify(req.body),

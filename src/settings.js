@@ -7,7 +7,7 @@ export const providers = {
     name: "Outspeed",
     url: "api.outspeed.com",
     apiKeyUrl: "https://dashboard.outspeed.com/dashboard",
-    costStructure: "per-minute", 
+    costStructure: "per-minute",
     defaultVoice: "male", // Options: male, female
   },
   OpenAI: {
@@ -19,15 +19,14 @@ export const providers = {
   },
 };
 
-
 export const models = {
   "MiniCPM-o-2_6": {
-    ...modelConfig['MiniCPM-o-2_6'],
+    ...modelConfig["MiniCPM-o-2_6"],
     cost: { perMinute: 0.01 },
-    provider: providers.Outspeed
+    provider: providers.Outspeed,
   },
   "gpt-4o-realtime-preview-2024-12-17": {
-    ...modelConfig['gpt-4o-realtime-preview-2024-12-17'],
+    ...modelConfig["gpt-4o-realtime-preview-2024-12-17"],
     cost: {
       input: {
         text: 5.0, // $ per million tokens
@@ -42,10 +41,10 @@ export const models = {
         audio: 80.0, // $ per million tokens
       },
     },
-    provider: providers.OpenAI
+    provider: providers.OpenAI,
   },
   "gpt-4o-mini-realtime-preview-2024-12-17": {
-    ...modelConfig['gpt-4o-mini-realtime-preview-2024-12-17'],
+    ...modelConfig["gpt-4o-mini-realtime-preview-2024-12-17"],
     cost: {
       input: {
         text: 0.6, // $ per million tokens
@@ -60,6 +59,6 @@ export const models = {
         audio: 20.0, // $ per million tokens
       },
     },
-    provider: providers.OpenAI
+    provider: providers.OpenAI,
   },
 };
