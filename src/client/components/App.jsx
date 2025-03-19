@@ -259,7 +259,11 @@ export default function App() {
     });
   };
 
-  const handleErrorEvent = (errorMessage, eventId) => {
+  const handleErrorEvent = (errorMessage, eventId, fullError) => {
+    if (fullError) {
+      console.error("error event:", fullError);
+    }
+
     const id = eventId || crypto.randomUUID();
     setMessages((prev) => {
       const newMessages = new Map(prev);
@@ -362,7 +366,7 @@ export default function App() {
             }
 
             if (event.response.status == "failed") {
-              handleErrorEvent(event.response.status_details?.error?.message || "server error", event.event_id);
+              handleErrorEvent(event.response.status_details?.error?.message || "server error", event.event_id, event);
             }
             break;
 
@@ -410,7 +414,7 @@ export default function App() {
             break;
 
           case "error":
-            handleErrorEvent(event.error.message || "an error occurred", event.event_id);
+            handleErrorEvent(event.error?.message || "an error occurred", event.event_id, event);
             break;
 
           case "input_audio_buffer.speech_started":
