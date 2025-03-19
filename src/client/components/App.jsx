@@ -261,7 +261,7 @@ export default function App() {
 
   const handleErrorEvent = (errorMessage, eventId, fullError) => {
     if (fullError) {
-      console.error(fullError);
+      console.error("error event:", fullError);
     }
 
     const id = eventId || crypto.randomUUID();
