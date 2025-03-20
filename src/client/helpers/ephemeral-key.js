@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 export const getEphemeralKey = async (provider, sessionConfig) => {
   if (provider === providers.OpenAI || !env.OUTSPEED_HOSTED) {
-    return getEphemeralKeyServer(sessionConfig);
+    return getEphemeralKeyServer(sessionConfig, provider);
   }
 
   // since it's hosted, we will use the JWT token to fetch the ephemeral key
@@ -21,13 +21,13 @@ export const getEphemeralKey = async (provider, sessionConfig) => {
   const data = await tokenResponse.json();
 
   if (!tokenResponse.ok) {
-    return handleEphemeralKeyError(data);
+    return handleEphemeralKeyError(data, provider);
   }
 
   return data.client_secret.value;
 };
 
-const getEphemeralKeyServer = async (config) => {
+const getEphemeralKeyServer = async (config, provider) => {
   const tokenResponse = await fetch(`/token`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -36,21 +36,21 @@ const getEphemeralKeyServer = async (config) => {
 
   const data = await tokenResponse.json();
   if (!tokenResponse.ok) {
-    return handleEphemeralKeyError(data);
+    return handleEphemeralKeyError(data, provider);
   }
 
   return data.client_secret.value;
 };
 
 // Helper function to handle errors
-const handleEphemeralKeyError = (data) => {
+const handleEphemeralKeyError = (data, provider) => {
   console.error("Failed to get ephemeral key", data);
 
   const toastOptions = {};
   if (data.code === "NO_API_KEY") {
     toastOptions.action = {
       label: "Get API Key",
-      onClick: () => window.open(selectedModel.provider.apiKeyUrl, "_blank"),
+      onClick: () => window.open(provider.apiKeyUrl, "_blank"),
     };
   }
 
