@@ -21,7 +21,6 @@ export function AuthProvider({ children }) {
   const supabase = getSupabase();
   if (!supabase) {
     console.error("Supabase client not found");
-    return;
   }
 
   useEffect(() => {
