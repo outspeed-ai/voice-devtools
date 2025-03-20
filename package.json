@@ -2,11 +2,11 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "dev": "nodemon --watch src/server.js --watch .env",
-    "start": "node src/server.js",
+    "dev": "tsx watch --include '.env' src/server.ts",
+    "start": "tsx src/server.ts",
     "build": "npm run build:client && npm run build:server",
-    "build:client": "vite build --outDir dist/client --ssrManifest",
-    "build:server": "vite build --outDir dist/server --ssr ./src/client/entry-server.jsx",
+    "build:client": "tsc -b && vite build --outDir dist/client --ssrManifest",
+    "build:server": "tsc -b && vite build --outDir dist/server --ssr ./src/client/entry-server.jsx",
     "devinstall": "zx ../../devinstall.mjs -- node src/server.js --dev",
     "lint": "eslint . --ext .js,.jsx --fix"
   },
@@ -29,7 +29,11 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.22.0",
+    "@types/express": "^5.0.1",
     "@types/node": "^22.13.10",
+    "@types/react": "^19.0.12",
+    "@types/react-dom": "^19.0.4",
+    "@types/semver": "^7.5.8",
     "@vitejs/plugin-react": "^4.3.4",
     "eslint": "^9.22.0",
     "eslint-plugin-react-hooks": "^5.2.0",
@@ -40,6 +44,9 @@
     "postcss-nesting": "^12.0.2",
     "postcss-preset-env": "^7.7.1",
     "tailwindcss": "^3.4.1",
-    "vite": "^5.0.2"
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.27.0",
+    "vite": "^6.2.2"
   }
 }
