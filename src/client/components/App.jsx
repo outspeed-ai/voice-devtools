@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 import { ICE_SERVERS } from "@/constants";
 import { useModel } from "@/contexts/model";
+import { getEphemeralKey } from "@/helpers/ephemeral-key";
 import { calculateOpenAICosts, calculateTimeCosts, getInitialCostState, updateCumulativeCost } from "@/utils/cost-calc";
 import { agent } from "@src/agent-config";
 import { providers } from "@src/settings";
@@ -293,30 +294,10 @@ export default function App() {
         instructions: agent.instructions,
       };
 
-      console.log(concatSessionConfig);
-      // Get an ephemeral key from the server with selected provider
-      const tokenResponse = await fetch(`/token`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(concatSessionConfig),
-      });
-      const data = await tokenResponse.json();
-      if (!tokenResponse.ok) {
-        console.error("Failed to get ephemeral key", data);
-
-        const toastOptions = {};
-        if (data.code === "NO_API_KEY") {
-          toastOptions.action = {
-            label: "Get API Key",
-            onClick: () => window.open(selectedModel.provider.apiKeyUrl, "_blank"),
-          };
-        }
-
-        toast.error(data.error || "Failed to get ephemeral key", toastOptions);
+      const ephemeralKey = await getEphemeralKey(selectedModel.provider, concatSessionConfig);
+      if (!ephemeralKey) {
         return;
       }
-
-      const ephemeralKey = data.client_secret.value;
 
       // Create a peer connection
       const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });

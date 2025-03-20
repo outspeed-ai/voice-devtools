@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { CloudLightning, CloudOff } from "react-feather";
 
+import { env } from "@/config/env";
 import { useModel } from "@/contexts/model";
-import { models } from "@src/settings";
+import { models, providers } from "@src/settings";
 import Button from "./ui/Button";
 
 function SessionStopped({ startWebrtcSession }) {
@@ -24,6 +25,10 @@ function SessionStopped({ startWebrtcSession }) {
     }
   }
 
+  const availableModels = Object.values(models).filter((model) =>
+    env.OUTSPEED_HOSTED ? model.provider === providers.Outspeed : true,
+  );
+
   return (
     <div className="w-full h-full flex items-center justify-center gap-8">
       <fieldset disabled={activatingSession} className="flex items-center gap-4 justify-center">
@@ -33,7 +38,7 @@ function SessionStopped({ startWebrtcSession }) {
           onChange={(e) => setSelectedModel(models[e.target.value])}
           className="px-3 py-2 rounded-md border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
-          {Object.values(models).map(({ label, provider, sessionConfig: { model } }) => (
+          {Object.values(availableModels).map(({ label, provider, sessionConfig: { model } }) => (
             <option key={model} value={model}>
               {label} ({provider.name})
             </option>

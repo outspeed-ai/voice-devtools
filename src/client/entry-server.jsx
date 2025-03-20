@@ -4,6 +4,7 @@ import { renderToString } from "react-dom/server";
 import { StaticRouter } from "react-router-dom/server";
 import { Toaster } from "sonner";
 
+import { AuthProvider } from "./contexts/auth";
 import { ModelProvider } from "./contexts/model";
 import Router from "./router";
 
@@ -21,12 +22,14 @@ export function render(url) {
   const html = renderToString(
     <StrictMode>
       <QueryClientProvider client={queryClient}>
-        <StaticRouter location={url}>
-          <ModelProvider>
-            <Toaster richColors position="top-right" />
-            <Router />
-          </ModelProvider>
-        </StaticRouter>
+        <AuthProvider>
+          <StaticRouter location={url}>
+            <ModelProvider>
+              <Toaster richColors position="top-right" />
+              <Router />
+            </ModelProvider>
+          </StaticRouter>
+        </AuthProvider>
       </QueryClientProvider>
     </StrictMode>,
   );
