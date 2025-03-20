@@ -23,6 +23,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     if (!env.OUTSPEED_HOSTED) {
+      setIsLoading(false);
       return;
     }
 
