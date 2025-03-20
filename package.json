@@ -2,7 +2,7 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "dev": "nodemon src/server.js --dev",
+    "dev": "nodemon --watch src/server.js --watch .env",
     "start": "node src/server.js",
     "build": "npm run build:client && npm run build:server",
     "build:client": "vite build --outDir dist/client --ssrManifest",
