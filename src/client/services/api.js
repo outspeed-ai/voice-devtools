@@ -18,7 +18,7 @@ apiClient.interceptors.request.use(async (config) => {
     throw new Error("OUTSPEED_API_KEY is not set");
   }
 
-  config.headers["X-API-KEY"] = OUTSPEED_API_KEY;
+  config.headers.Authorization = `Bearer ${OUTSPEED_API_KEY}`;
   return config;
 });
 
