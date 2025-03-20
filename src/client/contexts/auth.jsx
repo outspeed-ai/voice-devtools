@@ -19,11 +19,14 @@ export function AuthProvider({ children }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const supabase = getSupabase();
-  if (!supabase) {
-    console.error("Supabase client not found");
-  }
 
   useEffect(() => {
+    if (!supabase) {
+      console.error("Supabase client not found");
+      setIsLoading(false);
+      return;
+    }
+
     const initializeAuth = async () => {
       try {
         const {
