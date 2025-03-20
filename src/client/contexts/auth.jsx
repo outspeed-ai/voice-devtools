@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import Loader from "@/components/ui/Loader";
+import { env } from "@/config/env";
 import { getSupabase } from "@/config/supabase";
 
 const AuthContext = createContext(null);
@@ -21,6 +22,10 @@ export function AuthProvider({ children }) {
   const supabase = getSupabase();
 
   useEffect(() => {
+    if (!env.OUTSPEED_HOSTED) {
+      return;
+    }
+
     if (!supabase) {
       console.error("Supabase client not found");
       setIsLoading(false);

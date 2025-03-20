@@ -8,6 +8,10 @@ import { env } from "./env";
 let supabase;
 
 export const getSupabase = () => {
+  if (!env.OUTSPEED_HOSTED) {
+    return;
+  }
+
   if (supabase) {
     return supabase;
   }
