@@ -92,22 +92,22 @@ export default function CostDisplay({ costState }: CostDisplayProps) {
               <div className="text-gray-500 text-right">Tokens</div>
               <div className="text-gray-500 text-right">Cost ($)</div>
 
-              <div className="text-gray-600">Text:</div>
-              <div className="text-right">{costState.tokenCounts?.input?.text?.toLocaleString() || "0"}</div>
+              <div className="text-gray-600">Uncached Text:</div>
+              <div className="text-right">{costState.tokenCounts?.input?.uncached?.text?.toLocaleString() || "0"}</div>
               <div className="text-right font-medium">
-                ${costState.costBreakdown.input?.text?.toFixed(6) || "0.000000"}
-              </div>
-
-              <div className="text-gray-600">Audio:</div>
-              <div className="text-right">{costState.tokenCounts?.input?.audio?.toLocaleString() || "0"}</div>
-              <div className="text-right font-medium">
-                ${costState.costBreakdown.input?.audio?.toFixed(6) || "0.000000"}
+                ${costState.costBreakdown.input?.uncached?.text?.toFixed(6) || "0.000000"}
               </div>
 
               <div className="text-gray-600">Cached Text:</div>
               <div className="text-right">{costState.tokenCounts?.input?.cached?.text?.toLocaleString() || "0"}</div>
               <div className="text-right font-medium">
                 ${costState.costBreakdown.input?.cached?.text?.toFixed(6) || "0.000000"}
+              </div>
+
+              <div className="text-gray-600">Uncached Audio:</div>
+              <div className="text-right">{costState.tokenCounts?.input?.uncached?.audio?.toLocaleString() || "0"}</div>
+              <div className="text-right font-medium">
+                ${costState.costBreakdown.input?.uncached?.audio?.toFixed(6) || "0.000000"}
               </div>
 
               <div className="text-gray-600">Cached Audio:</div>

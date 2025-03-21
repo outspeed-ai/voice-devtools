@@ -48,8 +48,10 @@ export function calculateOpenAICosts(usage: OpenAIUsage, costRates: OpenAICosts)
   // Initialize the cost breakdown structure
   const costBreakdown = {
     input: {
-      text: 0,
-      audio: 0,
+      uncached: {
+        text: 0,
+        audio: 0,
+      },
       cached: {
         text: 0,
         audio: 0,
@@ -64,8 +66,10 @@ export function calculateOpenAICosts(usage: OpenAIUsage, costRates: OpenAICosts)
   // Initialize token counts structure
   const tokenCounts = {
     input: {
-      text: 0,
-      audio: 0,
+      uncached: {
+        text: 0,
+        audio: 0,
+      },
       cached: {
         text: 0,
         audio: 0,
@@ -82,51 +86,41 @@ export function calculateOpenAICosts(usage: OpenAIUsage, costRates: OpenAICosts)
 
   // Calculate input costs and update token counts
   if (tokenDetails.input) {
-    // Text tokens
-    if (tokenDetails.input.text_tokens !== undefined) {
-      costBreakdown.input.text = (tokenDetails.input.text_tokens / MILLION) * inputCostRates.text;
-      inputCostValue += costBreakdown.input.text;
-      tokenCounts.input.text = tokenDetails.input.text_tokens;
-    }
+    // Get total text and audio tokens
+    const totalTextTokens = tokenDetails.input.text_tokens || 0;
+    const totalAudioTokens = tokenDetails.input.audio_tokens || 0;
 
-    // Audio tokens
-    if (tokenDetails.input.audio_tokens !== undefined) {
-      costBreakdown.input.audio = (tokenDetails.input.audio_tokens / MILLION) * inputCostRates.audio;
-      inputCostValue += costBreakdown.input.audio;
-      tokenCounts.input.audio = tokenDetails.input.audio_tokens;
-    }
+    // Get cached text and audio tokens
+    const cachedTextTokens = tokenDetails.input.cached_tokens_details?.text_tokens || 0;
+    const cachedAudioTokens = tokenDetails.input.cached_tokens_details?.audio_tokens || 0;
 
-    // Cached tokens
-    if (tokenDetails.input.cached_tokens !== undefined) {
-      // Check if there's a detailed breakdown of cached tokens
-      if (tokenDetails.input.cached_tokens_details) {
-        // Calculate costs for cached text tokens
-        if (tokenDetails.input.cached_tokens_details.text_tokens !== undefined) {
-          costBreakdown.input.cached.text =
-            (tokenDetails.input.cached_tokens_details.text_tokens / MILLION) * inputCostRates.cached.text;
-          inputCostValue += costBreakdown.input.cached.text;
-          tokenCounts.input.cached.text = tokenDetails.input.cached_tokens_details.text_tokens;
-        }
+    // Calculate uncached tokens by subtracting cached from total
+    const uncachedTextTokens = Math.max(0, totalTextTokens - cachedTextTokens);
+    const uncachedAudioTokens = Math.max(0, totalAudioTokens - cachedAudioTokens);
 
-        // Calculate costs for cached audio tokens
-        if (tokenDetails.input.cached_tokens_details.audio_tokens !== undefined) {
-          costBreakdown.input.cached.audio =
-            (tokenDetails.input.cached_tokens_details.audio_tokens / MILLION) * inputCostRates.cached.audio;
-          inputCostValue += costBreakdown.input.cached.audio;
-          tokenCounts.input.cached.audio = tokenDetails.input.cached_tokens_details.audio_tokens;
-        }
-      } else {
-        // If no detailed breakdown, apply text cache rate as fallback
-        costBreakdown.input.cached.text = (tokenDetails.input.cached_tokens / MILLION) * inputCostRates.cached.text;
-        inputCostValue += costBreakdown.input.cached.text;
-        tokenCounts.input.cached.text = tokenDetails.input.cached_tokens;
-      }
-    }
+    // Update token counts
+    tokenCounts.input.uncached.text = uncachedTextTokens;
+    tokenCounts.input.uncached.audio = uncachedAudioTokens;
+    tokenCounts.input.cached.text = cachedTextTokens;
+    tokenCounts.input.cached.audio = cachedAudioTokens;
+
+    // Calculate costs
+    costBreakdown.input.uncached.text = (uncachedTextTokens / MILLION) * inputCostRates.text;
+    costBreakdown.input.uncached.audio = (uncachedAudioTokens / MILLION) * inputCostRates.audio;
+    costBreakdown.input.cached.text = (cachedTextTokens / MILLION) * inputCostRates.cached.text;
+    costBreakdown.input.cached.audio = (cachedAudioTokens / MILLION) * inputCostRates.cached.audio;
+
+    // Sum up input costs
+    inputCostValue =
+      costBreakdown.input.uncached.text +
+      costBreakdown.input.uncached.audio +
+      costBreakdown.input.cached.text +
+      costBreakdown.input.cached.audio;
   } else {
-    // Fallback if detailed breakdown not available
-    costBreakdown.input.text = (inputTokens / MILLION) * inputCostRates.text;
-    inputCostValue = costBreakdown.input.text;
-    tokenCounts.input.text = inputTokens;
+    // Fallback if detailed breakdown not available - treat all as uncached text
+    costBreakdown.input.uncached.text = (inputTokens / MILLION) * inputCostRates.text;
+    inputCostValue = costBreakdown.input.uncached.text;
+    tokenCounts.input.uncached.text = inputTokens;
   }
 
   // Calculate output costs and update token counts
@@ -192,10 +186,12 @@ export function updateCumulativeCostOpenAI(prev: CostState, newCostData: OpenAIC
       // Copy over tokenCounts if they exist, otherwise initialize them
       tokenCounts: newCostData.tokenCounts || {
         input: {
-          text: tokenDetails?.input?.text_tokens || 0,
-          audio: tokenDetails?.input?.audio_tokens || 0,
+          uncached: {
+            text: tokenDetails?.input?.text_tokens || 0,
+            audio: tokenDetails?.input?.audio_tokens || 0,
+          },
           cached: {
-            text: tokenDetails?.input?.cached_tokens_details?.text_tokens || tokenDetails?.input?.cached_tokens || 0,
+            text: tokenDetails?.input?.cached_tokens_details?.text_tokens || 0,
             audio: tokenDetails?.input?.cached_tokens_details?.audio_tokens || 0,
           },
         },
@@ -218,8 +214,10 @@ export function updateCumulativeCostOpenAI(prev: CostState, newCostData: OpenAIC
     costPerMinute: prev.costPerMinute,
     costBreakdown: {
       input: {
-        text: prev.costBreakdown?.input?.text || 0,
-        audio: prev.costBreakdown?.input?.audio || 0,
+        uncached: {
+          text: prev.costBreakdown?.input?.uncached?.text || 0,
+          audio: prev.costBreakdown?.input?.uncached?.audio || 0,
+        },
         cached: {
           text: prev.costBreakdown?.input?.cached?.text || 0,
           audio: prev.costBreakdown?.input?.cached?.audio || 0,
@@ -232,8 +230,10 @@ export function updateCumulativeCostOpenAI(prev: CostState, newCostData: OpenAIC
     },
     tokenCounts: {
       input: {
-        text: prev.tokenCounts?.input?.text || 0,
-        audio: prev.tokenCounts?.input?.audio || 0,
+        uncached: {
+          text: prev.tokenCounts?.input?.uncached?.text || 0,
+          audio: prev.tokenCounts?.input?.uncached?.audio || 0,
+        },
         cached: {
           text: prev.tokenCounts?.input?.cached?.text || 0,
           audio: prev.tokenCounts?.input?.cached?.audio || 0,
@@ -251,19 +251,13 @@ export function updateCumulativeCostOpenAI(prev: CostState, newCostData: OpenAIC
   if (newCostData.costBreakdown) {
     const { costBreakdown } = newCostData;
 
-    // Input costs
-    newCumulative.costBreakdown.input.text += costBreakdown.input?.text || 0;
-    newCumulative.costBreakdown.input.audio += costBreakdown.input?.audio || 0;
+    // Input costs - uncached
+    newCumulative.costBreakdown.input.uncached.text += costBreakdown.input?.uncached?.text || 0;
+    newCumulative.costBreakdown.input.uncached.audio += costBreakdown.input?.uncached?.audio || 0;
 
-    // Handle cached breakdown structure
-    if (costBreakdown.input?.cached) {
-      if (typeof costBreakdown.input.cached === "object") {
-        newCumulative.costBreakdown.input.cached.text += costBreakdown.input.cached?.text || 0;
-        newCumulative.costBreakdown.input.cached.audio += costBreakdown.input.cached?.audio || 0;
-      } else {
-        newCumulative.costBreakdown.input.cached.text += costBreakdown.input.cached || 0;
-      }
-    }
+    // Input costs - cached
+    newCumulative.costBreakdown.input.cached.text += costBreakdown.input?.cached?.text || 0;
+    newCumulative.costBreakdown.input.cached.audio += costBreakdown.input?.cached?.audio || 0;
 
     // Output costs
     newCumulative.costBreakdown.output.text += costBreakdown.output?.text || 0;
@@ -274,41 +268,27 @@ export function updateCumulativeCostOpenAI(prev: CostState, newCostData: OpenAIC
   if (tokenDetails) {
     // Input token counts
     if (tokenDetails.input) {
-      // Text tokens
-      if (tokenDetails.input.text_tokens !== undefined) {
-        newCumulative.tokenCounts.input.text += tokenDetails.input.text_tokens;
-      }
+      const totalTextTokens = tokenDetails.input.text_tokens || 0;
+      const totalAudioTokens = tokenDetails.input.audio_tokens || 0;
+      const cachedTextTokens = tokenDetails.input.cached_tokens_details?.text_tokens || 0;
+      const cachedAudioTokens = tokenDetails.input.cached_tokens_details?.audio_tokens || 0;
 
-      // Audio tokens
-      if (tokenDetails.input.audio_tokens !== undefined) {
-        newCumulative.tokenCounts.input.audio += tokenDetails.input.audio_tokens;
-      }
+      // Calculate uncached tokens
+      const uncachedTextTokens = Math.max(0, totalTextTokens - cachedTextTokens);
+      const uncachedAudioTokens = Math.max(0, totalAudioTokens - cachedAudioTokens);
 
-      // Cached tokens
-      if (tokenDetails.input.cached_tokens_details) {
-        // Cached text tokens
-        if (tokenDetails.input.cached_tokens_details.text_tokens !== undefined) {
-          newCumulative.tokenCounts.input.cached.text += tokenDetails.input.cached_tokens_details.text_tokens;
-        }
-
-        // Cached audio tokens
-        if (tokenDetails.input.cached_tokens_details.audio_tokens !== undefined) {
-          newCumulative.tokenCounts.input.cached.audio += tokenDetails.input.cached_tokens_details.audio_tokens;
-        }
-      } else if (tokenDetails.input.cached_tokens !== undefined) {
-        // If no detailed breakdown, add to cached text as fallback
-        newCumulative.tokenCounts.input.cached.text += tokenDetails.input.cached_tokens;
-      }
+      // Update token counts
+      newCumulative.tokenCounts.input.uncached.text += uncachedTextTokens;
+      newCumulative.tokenCounts.input.uncached.audio += uncachedAudioTokens;
+      newCumulative.tokenCounts.input.cached.text += cachedTextTokens;
+      newCumulative.tokenCounts.input.cached.audio += cachedAudioTokens;
     }
 
     // Output token counts
     if (tokenDetails.output) {
-      // Text tokens
       if (tokenDetails.output.text_tokens !== undefined) {
         newCumulative.tokenCounts.output.text += tokenDetails.output.text_tokens;
       }
-
-      // Audio tokens
       if (tokenDetails.output.audio_tokens !== undefined) {
         newCumulative.tokenCounts.output.audio += tokenDetails.output.audio_tokens;
       }
@@ -360,8 +340,10 @@ export function getInitialCostState() {
     outputTokens: 0,
     costBreakdown: {
       input: {
-        text: 0,
-        audio: 0,
+        uncached: {
+          text: 0,
+          audio: 0,
+        },
         cached: {
           text: 0,
           audio: 0,
@@ -375,8 +357,10 @@ export function getInitialCostState() {
     // for OpenAI Realtime API
     tokenCounts: {
       input: {
-        text: 0,
-        audio: 0,
+        uncached: {
+          text: 0,
+          audio: 0,
+        },
         cached: {
           text: 0,
           audio: 0,
