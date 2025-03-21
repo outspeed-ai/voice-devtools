@@ -308,12 +308,6 @@ export default function App() {
 
   async function startSession() {
     try {
-      // Reset when starting a new session
-      setCostState(getInitialCostState());
-      setSessionStartTime(Date.now());
-      setEvents([]);
-      setMessages(new Map());
-
       const { sessionConfig } = selectedModel;
       let concatSessionConfig = {
         ...sessionConfig,
@@ -333,8 +327,10 @@ export default function App() {
 
       dc.addEventListener("open", () => {
         console.log("data channel opened");
-        setIsSessionActive(true);
+        setMessages(new Map());
         setEvents([]);
+        setCostState(getInitialCostState());
+        setIsSessionActive(true);
         setSessionStartTime(Date.now());
       });
 
