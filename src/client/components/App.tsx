@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+import { type ExternalToast, toast } from "sonner";
 
-import { ICE_SERVERS } from "@/constants";
 import { useModel } from "@/contexts/model";
 import { getEphemeralKey } from "@/helpers/ephemeral-key";
+import { startWebrtcSession } from "@/helpers/webrtc";
 import { OaiEvent } from "@/types";
 import {
   calculateOpenAICosts,
@@ -15,7 +15,6 @@ import {
 } from "@/utils/cost-calc";
 import { agent } from "@src/agent-config";
 import { providers } from "@src/settings";
-import { ExternalToast } from "sonner";
 import Chat from "./Chat";
 import EventLog from "./EventLog";
 import SessionControls from "./SessionControls";
@@ -28,7 +27,6 @@ export default function App() {
   const [events, setEvents] = useState<OaiEvent[]>([]);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dcRef = useRef<RTCDataChannel | null>(null);
-  const signallingWsRef = useRef<WebSocket | null>(null);
   const [messages, setMessages] = useState(new Map());
 
   /** response id of message that is currently being streamed */
@@ -308,7 +306,7 @@ export default function App() {
     });
   };
 
-  async function startWebrtcSession() {
+  async function startSession() {
     try {
       // Reset when starting a new session
       setCostState(getInitialCostState());
@@ -322,35 +320,25 @@ export default function App() {
         instructions: agent.instructions,
       };
 
+      // step 1. get ephemeral key
       const ephemeralKey = await getEphemeralKey(selectedModel.provider, concatSessionConfig);
       if (!ephemeralKey) {
         return;
       }
 
-      // Create a peer connection
-      const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
-
-      // Set up to play remote audio from the model
-      const audioElement = document.createElement("audio");
-      audioElement.autoplay = true;
-      pc.ontrack = (e) => (audioElement.srcObject = e.streams[0]);
-
-      // Add local audio track for microphone input
-      const ms = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const audioTrack = ms.getTracks()[0];
-      audioTrack.enabled = false; // disable the track initially
-      pc.addTrack(audioTrack);
+      // step 2.start the WebRTC session
+      const { pc, dc } = await startWebrtcSession(ephemeralKey, selectedModel);
       pcRef.current = pc;
-
-      // Set up data channel
-      const dc = pc.createDataChannel("oai-events");
+      dcRef.current = dc;
 
       dc.addEventListener("open", () => {
+        console.log("data channel opened");
         setIsSessionActive(true);
         setEvents([]);
         setSessionStartTime(Date.now());
       });
 
+      // handle events from the data channel
       dc.addEventListener("message", async (e) => {
         const event = JSON.parse(e.data);
 
@@ -360,8 +348,14 @@ export default function App() {
         switch (event.type) {
           case "session.created":
             setLoadingModel(false);
-            pcRef.current!.getSenders().forEach((sender) => {
-              sender.track!.enabled = true;
+            pc.getSenders().forEach((sender) => {
+              if (!sender.track) {
+                console.error("error: session.created - No track found");
+                return;
+              }
+
+              // input track will be muted so we need to unmute it
+              sender.track.enabled = true;
             });
             break;
 
@@ -530,149 +524,26 @@ export default function App() {
         setEvents((prev) => [event, ...prev]);
       });
 
+      // handle errors from the data channel
       dc.addEventListener("error", (e) => {
-        console.error("Data channel error:", e);
+        console.error("data channel error:", e);
         handleConnectionError();
       });
 
+      // handle close events from the data channel
       dc.addEventListener("close", () => {
-        console.log("Data channel closed");
+        console.log("data channel closed");
         cleanup();
       });
 
-      dcRef.current = dc;
-
-      if (selectedModel.provider === providers.OpenAI) {
-        // OpenAI WebRTC signalling with an HTTP POST request
-
-        const noWsOffer = await pc.createOffer();
-        await pc.setLocalDescription(noWsOffer);
-
-        const url = `https://${selectedModel.provider.url}/v1/realtime?model=${sessionConfig.model}`;
-        const sdpResponse = await fetch(url, {
-          method: "POST",
-          body: noWsOffer.sdp,
-          headers: {
-            Authorization: `Bearer ${ephemeralKey}`,
-            "Content-Type": "application/sdp",
-          },
-        });
-
-        const answer: RTCSessionDescriptionInit = {
-          type: "answer",
-          sdp: await sdpResponse.text(),
-        };
-        await pc.setRemoteDescription(answer);
-
-        return;
-      }
-
-      // Outspeed WebRTC signalling of  SDPs and ICE candidates via WebSocket
-      const ws = new WebSocket(`wss://${selectedModel.provider.url}/v1/realtime/ws?client_secret=${ephemeralKey}`);
-
-      signallingWsRef.current = ws;
-
-      const wsConnectedPromise = new Promise((resolve, reject) => {
-        ws.onopen = () => {
-          ws.onopen = null;
-          ws.onerror = null;
-          console.log("WebSocket connected for WebRTC signaling");
-          ws.send(JSON.stringify({ type: "ping" }));
-          resolve(null);
-        };
-
-        ws.onerror = (event) => {
-          ws.onopen = null;
-          ws.onerror = null;
-          console.error("WebSocket error:", event);
-          handleConnectionError();
-          reject(event);
-        };
-      });
-
-      await wsConnectedPromise;
-
-      ws.onmessage = async (message) => {
-        const data = JSON.parse(message.data);
-        switch (data.type) {
-          case "pong": {
-            console.log("pong received. creating offer....");
-
-            // Create and send offer
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
-
-            console.log("sending offer....");
-            ws.send(
-              JSON.stringify({
-                type: "offer",
-                sdp: pc.localDescription?.sdp,
-              }),
-            );
-
-            setLoadingModel(true); // data channel will open first and then the model will be loaded
-            break;
-          }
-          case "answer":
-            await pc.setRemoteDescription(new RTCSessionDescription(data));
-            break;
-          case "candidate":
-            await pc.addIceCandidate(
-              new RTCIceCandidate({
-                candidate: data.candidate,
-                sdpMid: data.sdpMid,
-                sdpMLineIndex: data.sdpMLineIndex,
-              }),
-            );
-            break;
-          case "error":
-            console.error("WebSocket error after WS connection:", data.message);
-            handleConnectionError();
-            break;
-          default:
-            if (data.event_id) {
-              data.server_sent = true;
-              setEvents((prev) => [data, ...prev]);
-            }
-
-            break;
-        }
-      };
-
-      ws.onclose = (e) => {
-        console.log("WebSocket closed", e.code, e.reason);
-
-        // https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent/code#value
-        if (e.code !== 1000) {
-          handleConnectionError();
-        }
-      };
-
-      ws.onerror = (event) => {
-        console.error("WebSocket error after WS connection:", event);
-        handleConnectionError();
-      };
-
       // ICE candidate handling
-      pc.onicecandidate = (event) => {
-        if (event.candidate) {
-          ws.send(
-            JSON.stringify({
-              type: "candidate",
-              candidate: event.candidate.candidate,
-              sdpMid: event.candidate.sdpMid,
-              sdpMLineIndex: event.candidate.sdpMLineIndex,
-            }),
-          );
-        }
-      };
     } catch (error) {
       console.error("Failed to start WebRTC session:", error);
       handleConnectionError();
     }
   }
 
-  function stopWebrtcSession() {
+  function stopSession() {
     // Stop recording if active
     if (iAudioRecorderRef.current && iAudioRecorderRef.current.state !== "inactive") {
       iAudioRecorderRef.current.stop();
@@ -732,17 +603,6 @@ export default function App() {
     currentSpeechItemRef.current = null;
     currentBotSpeechItemRef.current = null; // Clean up bot speech reference
 
-    // Cleanup signaling WebSocket
-    const signalingWs = signallingWsRef.current;
-    if (signalingWs) {
-      signalingWs.onopen = null;
-      signalingWs.onclose = null;
-      signalingWs.onerror = null;
-      signalingWs.onmessage = null;
-      signalingWs.close();
-      signallingWsRef.current = null;
-    }
-
     // Cleanup audio context
     if (audioContext.current) {
       audioContext.current.close();
@@ -753,7 +613,7 @@ export default function App() {
   }
 
   function handleConnectionError() {
-    stopWebrtcSession();
+    stopSession();
     cleanup();
     toast.error("Connection error! Check the console for details.");
   }
@@ -830,8 +690,8 @@ export default function App() {
       <section className="shrink-0">
         <SessionControls
           loadingModel={loadingModel}
-          startWebrtcSession={startWebrtcSession}
-          stopWebrtcSession={stopWebrtcSession}
+          startWebrtcSession={startSession}
+          stopWebrtcSession={stopSession}
           events={events}
           isSessionActive={isSessionActive}
         />
