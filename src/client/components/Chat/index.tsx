@@ -6,21 +6,22 @@ import Button from "@/components/ui/Button";
 
 import styles from "./style.module.css";
 
-interface MessageBubbleProps {
-  text: {
+export interface MessageBubbleProps {
+  text?: {
     role: string;
     content: string;
     timestamp: string;
-    type: "text" | "error";
-    streaming: boolean;
+    type?: "error";
+    streaming?: boolean;
   };
-  audio: {
+  audio?: {
     role: string;
-    content: AudioBuffer;
+    content: string;
     timestamp: string;
-    duration: number;
+    processing?: boolean;
   };
 }
+
 // use memo to prevent unnecessary re-renders . without memo, it re-renders all
 // messages even when the user just types each character of a new message because
 // the message state in <Chat /> gets updated every time the user types a new character
@@ -70,7 +71,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = memo(({ text, audio }) => {
             <div className={`text-xs ${isUser ? "text-gray-400" : "text-gray-500"} font-mono mb-2`}>
               {audio.timestamp}
             </div>
-            <AudioPlayer audioBuffer={audio.content} duration={audio.duration} />
+            {audio.processing ? <p>processing audio...</p> : <AudioPlayer src={audio.content} />}
           </div>
         )}
       </div>
