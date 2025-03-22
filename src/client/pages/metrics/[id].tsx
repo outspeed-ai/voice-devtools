@@ -3,8 +3,8 @@ import { useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { Alert, Badge, Button, Card, Table } from "@/components/ui";
-import { formatTimestamp } from "@/components/ui/utils";
 import { fetchMetricDetail, getAudioUrl } from "@/services/api";
+import { formatTimestamp } from "@/utils/date";
 
 export default function MetricDetail() {
   const { id } = useParams();

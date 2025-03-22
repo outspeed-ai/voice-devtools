@@ -2,7 +2,7 @@ import axios from "axios";
 
 import { env } from "@/config/env";
 import { getSupabaseAuthToken } from "@/config/supabase";
-import { OUTSPEED_API_BASE_URL, OUTSPEED_API_KEY } from "@/constants";
+import { OUTSPEED_API_BASE_URL } from "@/constants";
 
 // Create axios instance with base URL
 const apiClient = axios.create({ baseURL: OUTSPEED_API_BASE_URL });
@@ -15,12 +15,12 @@ apiClient.interceptors.request.use(async (config) => {
     return config;
   }
 
-  if (!OUTSPEED_API_KEY) {
+  if (!env.OUTSPEED_API_KEY) {
     throw new Error("OUTSPEED_API_KEY is not set");
   }
 
   config.headers = config.headers || {};
-  config.headers.Authorization = `Bearer ${OUTSPEED_API_KEY}`;
+  config.headers.Authorization = `Bearer ${env.OUTSPEED_API_KEY}`;
   return config;
 });
 
