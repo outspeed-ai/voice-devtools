@@ -1,12 +1,12 @@
 import { memo, useEffect, useRef, useState } from "react";
 import { AlertCircle, Send } from "react-feather";
 
-import AudioPlayer from "@/components/AudioPlayer";
 import Button from "@/components/ui/Button";
 
 import styles from "./style.module.css";
 
 export interface MessageBubbleProps {
+  interrupted?: boolean;
   text?: {
     role: string;
     content: string;
@@ -25,7 +25,7 @@ export interface MessageBubbleProps {
 // use memo to prevent unnecessary re-renders . without memo, it re-renders all
 // messages even when the user just types each character of a new message because
 // the message state in <Chat /> gets updated every time the user types a new character
-const MessageBubble: React.FC<MessageBubbleProps> = memo(({ text, audio }) => {
+const MessageBubble: React.FC<MessageBubbleProps> = memo(({ text, audio, interrupted }) => {
   const isUser = text?.role === "user" || audio?.role === "user";
   const baseContainer = "flex justify-end flex-col";
   const containerClasses = `${baseContainer} ${isUser ? "items-end" : "items-start"}`;
@@ -50,7 +50,12 @@ const MessageBubble: React.FC<MessageBubbleProps> = memo(({ text, audio }) => {
 
   return (
     <div className={containerClasses}>
-      <div className={bubbleBase}>
+      <div className={`${bubbleBase} relative`}>
+        {interrupted && !isUser && (
+          <p className="w-full text-xs text-gray-400 flex items-center justify-end">
+            •<i>interrupted</i>
+          </p>
+        )}
         {text && (
           <>
             <div className={`text-xs ${isUser ? "text-gray-400" : "text-gray-500"} font-mono`}>{text.timestamp}</div>
@@ -71,7 +76,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = memo(({ text, audio }) => {
             <div className={`text-xs ${isUser ? "text-gray-400" : "text-gray-500"} font-mono mb-2`}>
               {audio.timestamp}
             </div>
-            {audio.processing ? <p>processing audio...</p> : <AudioPlayer src={audio.content} />}
+            {audio.processing ? <p>processing audio...</p> : <audio src={audio.content} controls preload="auto" />}
           </div>
         )}
       </div>

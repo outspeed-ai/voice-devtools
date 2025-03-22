@@ -277,6 +277,7 @@ export default function App() {
         };
         break;
 
+      case "output_audio_buffer.cleared":
       case "output_audio_buffer.stopped":
         {
           const currentBotSpeechItem = currentBotSpeechItemRef.current;
@@ -300,6 +301,8 @@ export default function App() {
             break;
           }
 
+          const interrupted = event.type === "output_audio_buffer.cleared";
+
           setMessages((prev) => {
             const newMessages = new Map(prev);
             const responseId = currentBotSpeechItem.id;
@@ -314,12 +317,13 @@ export default function App() {
               const currentMessage = prev.get(responseId);
               newMessages.set(responseId, {
                 ...currentMessage,
+                interrupted,
                 audio,
               });
             } else {
               // If we can't find the matching text message, create a new message with just audio
               const newId = crypto.randomUUID();
-              newMessages.set(newId, { audio });
+              newMessages.set(newId, { audio, interrupted });
             }
             return newMessages;
           });
