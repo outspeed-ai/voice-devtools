@@ -8,7 +8,6 @@ export default class AudioRecorder {
   /**
    * @param mediaTrack - the media track to record
    * @param timeslice - the timeslice to record the audio in (in milliseconds). no slice if 0.
-   * @param maxBufferSize - the maximum number of chunks to record. older chunks will be truncated. no limit if 0. size of each chunk is dependent on the timeslice.
    */
   constructor(mediaTrack: MediaStreamTrack, timeslice: number = 0) {
     if (mediaTrack.kind !== "audio") {
