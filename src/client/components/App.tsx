@@ -94,7 +94,7 @@ export default function App() {
     };
   }, [isSessionActive]);
 
-  const handleErrorEvent = (errorMessage: string, eventId: string, fullError: any) => {
+  const handleErrorEvent = (errorMessage: string, eventId: string, fullError: unknown) => {
     if (fullError) {
       console.error("error event:", fullError);
     }
@@ -208,8 +208,6 @@ export default function App() {
         break;
 
       case "input_audio_buffer.speech_stopped": {
-        // Stop recording when speech ends and add to messages
-
         const currentUserSpeechItem = currentUserSpeechItemRef.current;
         if (!currentUserSpeechItem) {
           console.error("error: input_audio_buffer.speech_stopped - user speech item not found");
@@ -241,6 +239,10 @@ export default function App() {
 
         const duration = Date.now() - currentUserSpeechItem.startTime + 1000;
         const audioUrl = await iRecorder.stop(duration);
+
+        console.log("starting user input speech recorder again...");
+        iRecorder.start();
+
         if (!audioUrl) {
           console.error("error:input_audio_buffer.speech_stopped - audio url not found");
           break;
@@ -258,9 +260,6 @@ export default function App() {
           });
           return newMessages;
         });
-
-        console.log("starting user input speech recorder again...");
-        iRecorder.start();
 
         break;
       }
@@ -334,7 +333,7 @@ export default function App() {
   async function startSession() {
     try {
       const { sessionConfig } = selectedModel;
-      let concatSessionConfig = {
+      const concatSessionConfig = {
         ...sessionConfig,
         instructions: agent.instructions,
       };
@@ -542,7 +541,6 @@ export default function App() {
           loadingModel={loadingModel}
           startWebrtcSession={startSession}
           stopWebrtcSession={stopSession}
-          events={events}
           isSessionActive={isSessionActive}
         />
       </section>

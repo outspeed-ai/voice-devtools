@@ -34,7 +34,7 @@ export default class AudioRecorder {
     } catch (e) {
       // fallback if the preferred MIME type isn't supported
       try {
-        console.log("_initRecorder(): trying to use fallback");
+        console.log("_initRecorder(): trying to use fallback", e);
         mediaRecorder = new MediaRecorder(this.mediaStream);
       } catch (err) {
         console.error("MediaRecorder is not supported in this browser:", err);
@@ -71,7 +71,7 @@ export default class AudioRecorder {
   stop(duration?: number): Promise<string | null> {
     return new Promise((resolve, reject) => {
       if (this.getState() !== "recording") {
-        reject(new Error("Recording is not active"));
+        reject(new Error("recording is not active"));
         return;
       }
 
@@ -115,9 +115,12 @@ export default class AudioRecorder {
   }
 }
 
+let audioContext: AudioContext;
+
 async function trimAudioBlob(blob: Blob, duration: number): Promise<Blob> {
-  // Create AudioContext
-  const audioContext = new AudioContext();
+  if (!audioContext) {
+    audioContext = new AudioContext();
+  }
 
   // Convert blob to ArrayBuffer
   const arrayBuffer = await blob.arrayBuffer();
@@ -127,6 +130,7 @@ async function trimAudioBlob(blob: Blob, duration: number): Promise<Blob> {
 
   // Calculate the start time based on duration
   const startTime = Math.max(0, audioBuffer.duration * 1000 - duration) / 1000;
+  const startOffset = Math.floor(startTime * audioBuffer.sampleRate);
 
   // Create a new buffer for the trimmed audio
   const trimmedBuffer = audioContext.createBuffer(
@@ -137,25 +141,65 @@ async function trimAudioBlob(blob: Blob, duration: number): Promise<Blob> {
 
   // Copy the desired portion of the audio
   for (let channel = 0; channel < audioBuffer.numberOfChannels; channel++) {
-    const startOffset = Math.floor(startTime * audioBuffer.sampleRate);
     trimmedBuffer.copyToChannel(audioBuffer.getChannelData(channel).slice(startOffset), channel);
   }
 
-  // Convert AudioBuffer back to Blob
-  return new Promise<Blob>((resolve) => {
-    const mediaStreamDest = audioContext.createMediaStreamDestination();
-    const source = audioContext.createBufferSource();
-    source.buffer = trimmedBuffer;
-    source.connect(mediaStreamDest);
+  return audioBufferToWav(trimmedBuffer);
+}
 
-    const mediaRecorder = new MediaRecorder(mediaStreamDest.stream);
-    const chunks: Blob[] = [];
+export function audioBufferToWav(buffer: AudioBuffer) {
+  const numChannels = buffer.numberOfChannels;
+  const sampleRate = buffer.sampleRate;
+  const format = 1; // PCM
+  const bitDepth = 16;
 
-    mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
-    mediaRecorder.onstop = () => resolve(new Blob(chunks, { type: "audio/webm" }));
+  const bytesPerSample = bitDepth / 8;
+  const blockAlign = numChannels * bytesPerSample;
 
-    mediaRecorder.start();
-    source.start();
-    source.onended = () => mediaRecorder.stop();
-  });
+  const wav = new ArrayBuffer(44 + buffer.length * blockAlign);
+  const view = new DataView(wav);
+
+  // Write WAV header
+  writeString(view, 0, "RIFF");
+  view.setUint32(4, 36 + buffer.length * blockAlign, true);
+  writeString(view, 8, "WAVE");
+  writeString(view, 12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, format, true);
+  view.setUint16(22, numChannels, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * blockAlign, true);
+  view.setUint16(32, blockAlign, true);
+  view.setUint16(34, bitDepth, true);
+  writeString(view, 36, "data");
+  view.setUint32(40, buffer.length * blockAlign, true);
+
+  // Write audio data
+  const offset = 44;
+  const channels = [];
+  for (let i = 0; i < numChannels; i++) {
+    channels.push(buffer.getChannelData(i));
+  }
+
+  for (let i = 0; i < buffer.length; i++) {
+    for (let channel = 0; channel < numChannels; channel++) {
+      const sample = Math.max(-1, Math.min(1, channels[channel][i]));
+      const int16 = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
+      view.setInt16(offset + i * blockAlign + channel * bytesPerSample, int16, true);
+    }
+  }
+
+  return new Blob([wav], { type: "audio/wav" });
+}
+
+/**
+ * Writes a string to a DataView at a given offset
+ * @param  view - The DataView to write to
+ * @param offset - The offset to write to
+ * @param string - The string to write
+ */
+function writeString(view: DataView, offset: number, string: string) {
+  for (let i = 0; i < string.length; i++) {
+    view.setUint8(offset + i, string.charCodeAt(i));
+  }
 }
