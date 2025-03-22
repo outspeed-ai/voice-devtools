@@ -122,6 +122,8 @@ export default function App() {
     switch (event.type) {
       case "session.created":
         setLoadingModel(false);
+        setSessionStartTime(Date.now());
+
         pc.getSenders().forEach((sender) => {
           if (!sender.track) {
             console.error("error: session.created - No track found");
@@ -336,6 +338,9 @@ export default function App() {
 
   async function startSession() {
     try {
+      setLoadingModel(true);
+      setIsSessionActive(false);
+
       const { sessionConfig } = selectedModel;
       const concatSessionConfig = {
         ...sessionConfig,
@@ -378,7 +383,6 @@ export default function App() {
         setEvents([]);
         setCostState(getInitialCostState());
         setIsSessionActive(true);
-        setSessionStartTime(Date.now());
       });
 
       // handle events from the data channel
@@ -540,11 +544,11 @@ export default function App() {
           />
         </div>
       </div>
-      <section className="shrink-0">
+      <section className="h-10 shrink-0 ">
         <SessionControls
-          loadingModel={loadingModel}
           startWebrtcSession={startSession}
           stopWebrtcSession={stopSession}
+          loadingModel={loadingModel}
           isSessionActive={isSessionActive}
         />
       </section>
