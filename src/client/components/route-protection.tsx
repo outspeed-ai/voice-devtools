@@ -13,11 +13,11 @@ interface ProtectedRoutesProps {
  * redirected to the page specified by the `redirectTo` prop.
  */
 export const ProtectedRoutes: React.FC<ProtectedRoutesProps> = ({ redirectTo, optional = false }) => {
+  const { currentUser } = useAuth();
+
   if (optional) {
     return <Outlet />;
   }
-
-  const { currentUser } = useAuth();
 
   if (!currentUser) {
     return <Navigate to={redirectTo} />;
@@ -33,11 +33,11 @@ export const ProtectedRoutes: React.FC<ProtectedRoutesProps> = ({ redirectTo, op
  * redirected to the page specified by the `redirectTo` prop.
  */
 export const StrictlyPublicRoutes: React.FC<ProtectedRoutesProps> = ({ redirectTo, optional = false }) => {
+  const { currentUser } = useAuth();
+
   if (optional) {
     return <Outlet />;
   }
-
-  const { currentUser } = useAuth();
 
   if (currentUser) {
     return <Navigate to={redirectTo} />;

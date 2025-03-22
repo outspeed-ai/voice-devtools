@@ -29,7 +29,7 @@ function SessionDetails() {
     selectedModel: { sessionConfig },
   } = useModel();
 
-  let concatSessionConfig = {
+  const concatSessionConfig = {
     ...sessionConfig,
     ...agent,
   };

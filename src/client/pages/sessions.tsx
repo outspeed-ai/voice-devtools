@@ -2,10 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { Alert, Button, Card, utils } from "@/components/ui";
+import { Alert, Button, Card } from "@/components/ui";
 import { fetchSessions } from "@/services/api";
 
-const formatTimestamp = utils.formatTimestamp;
+import { formatTimestamp } from "@/utils/date";
 
 export default function Sessions() {
   const [page, setPage] = useState(1);

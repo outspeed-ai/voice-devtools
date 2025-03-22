@@ -2,10 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
-import { Alert, Badge, Button, Card, utils } from "@/components/ui";
+import { Alert, Badge, Button, Card } from "@/components/ui";
 import { fetchMetricsBySession } from "@/services/api";
 
-const formatTimestamp = utils.formatTimestamp;
+import { formatTimestamp } from "@/utils/date";
 
 export default function Metrics() {
   const [searchParams] = useSearchParams();

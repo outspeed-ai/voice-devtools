@@ -1,7 +1,7 @@
 import { Route, Routes } from "react-router-dom";
 
-import { env } from "@/config/env";
 import { ProtectedRoutes, StrictlyPublicRoutes } from "./components/route-protection";
+import { env } from "./config/env";
 import RootLayout from "./pages/_layout";
 import Index from "./pages/index";
 import Login from "./pages/login";

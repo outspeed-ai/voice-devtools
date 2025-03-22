@@ -1,5 +1,5 @@
 import { type User } from "@supabase/supabase-js";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import Loader from "@/components/ui/Loader";
@@ -28,8 +28,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  const supabase = getSupabase();
+  const supabaseRef = useRef(getSupabase());
 
   useEffect(() => {
     if (!env.OUTSPEED_HOSTED) {
@@ -37,6 +36,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return;
     }
 
+    const supabase = supabaseRef.current;
     if (!supabase) {
       console.error("Supabase client not found");
       setIsLoading(false);
@@ -72,6 +72,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const signOut = async () => {
+    const supabase = supabaseRef.current;
     if (!supabase) {
       console.error("signOut(): Supabase client not found");
       return;

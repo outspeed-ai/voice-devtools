@@ -61,7 +61,6 @@ interface SessionActiveProps {
   stopSession: {
     stopWebrtcSession: () => void;
   };
-  events: any[];
 }
 
 const SessionActive: React.FC<SessionActiveProps> = ({ stopSession }) => {
@@ -81,7 +80,6 @@ const SessionActive: React.FC<SessionActiveProps> = ({ stopSession }) => {
 interface SessionControlsProps {
   startWebrtcSession: () => Promise<void>;
   stopWebrtcSession: () => void;
-  events: any[];
   isSessionActive: boolean;
   loadingModel: boolean;
 }
@@ -89,7 +87,6 @@ interface SessionControlsProps {
 const SessionControls: React.FC<SessionControlsProps> = ({
   startWebrtcSession,
   stopWebrtcSession,
-  events,
   isSessionActive,
   loadingModel = false,
 }) => {
@@ -100,7 +97,7 @@ const SessionControls: React.FC<SessionControlsProps> = ({
           loading model to GPU. please wait a moment...
         </p>
       )}
-      {!loadingModel && isSessionActive && <SessionActive stopSession={{ stopWebrtcSession }} events={events} />}
+      {!loadingModel && isSessionActive && <SessionActive stopSession={{ stopWebrtcSession }} />}
       {!loadingModel && !isSessionActive && <SessionStopped startWebrtcSession={startWebrtcSession} />}
     </div>
   );
