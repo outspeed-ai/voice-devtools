@@ -2,9 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router";
 
+import MetricAudioButton from "@/components/MetricAudioButton";
 import { Alert, Badge, Button, Card } from "@/components/ui";
 import { fetchMetricsBySession } from "@/services/api";
-
 import { formatTimestamp } from "@/utils/date";
 
 export default function Metrics() {
@@ -96,8 +96,12 @@ export default function Metrics() {
                 {/* Audio indicators */}
                 {(metric.input_audio_s3_url || metric.output_audio_s3_url) && (
                   <div className="flex gap-2 mt-4">
-                    {metric.input_audio_s3_url && <Badge label="Has Input Audio" type="success" />}
-                    {metric.output_audio_s3_url && <Badge label="Has Output Audio" type="success" />}
+                    {metric.input_audio_s3_url && (
+                      <MetricAudioButton audioS3Url={metric.input_audio_s3_url} label="Input Audio" />
+                    )}
+                    {metric.output_audio_s3_url && (
+                      <MetricAudioButton audioS3Url={metric.output_audio_s3_url} label="Output Audio" />
+                    )}
                   </div>
                 )}
 
