@@ -41,12 +41,22 @@ interface EventLogProps {
   events: OaiEvent[];
   loadingModel: boolean;
   costState: CostState | null;
+  sessionStartTime: number | null;
+  isSessionActive: boolean;
 }
 
-const EventLog: React.FC<EventLogProps> = ({ events, loadingModel = false, costState = null }) => {
+const EventLog: React.FC<EventLogProps> = ({
+  events,
+  loadingModel = false,
+  costState = null,
+  sessionStartTime,
+  isSessionActive,
+}) => {
   return (
     <div className="flex flex-col gap-2 overflow-x-auto p-4">
-      {costState && costState.totalCost > 0 && <CostDisplay costState={costState} />}
+      {costState && events.length > 0 && sessionStartTime && (
+        <CostDisplay costState={costState} sessionStartTime={sessionStartTime} isSessionActive={isSessionActive} />
+      )}
 
       {loadingModel && <div className="text-gray-500">loading model to GPU. please wait a moment...</div>}
       {!loadingModel && events.length === 0 && <div className="text-gray-500">Awaiting events...</div>}

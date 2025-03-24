@@ -1,21 +1,51 @@
-import { CostState } from "@/utils/cost-calc";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
+import { useModel } from "@/contexts/model";
+import { calculateTimeCosts, CostState } from "@/utils/cost-calc";
+import { providers } from "@src/settings";
 
 interface CostDisplayProps {
   costState: CostState;
+  sessionStartTime: number;
+  isSessionActive: boolean;
 }
 
-export default function CostDisplay({ costState }: CostDisplayProps) {
+export default function CostDisplay({ costState, sessionStartTime, isSessionActive }: CostDisplayProps) {
+  const { selectedModel } = useModel();
   const [showDetails, setShowDetails] = useState(false);
+  const [durationInSeconds, setDurationInSeconds] = useState(0);
+  const intervalRef = useRef<NodeJS.Timeout>(undefined);
 
-  if (!costState?.totalCost) return null;
+  useEffect(() => {
+    if (!isSessionActive) {
+      clearInterval(intervalRef.current);
+      return;
+    }
+
+    intervalRef.current = setInterval(() => {
+      setDurationInSeconds(Math.floor((Date.now() - sessionStartTime) / 1000));
+    }, 1000);
+
+    return () => clearInterval(intervalRef.current);
+  }, [sessionStartTime, isSessionActive]);
 
   // Check if this is a token-based (OpenAI) or duration-based (Outspeed) cost
-  const isDurationBased = costState.durationInSeconds > 0;
+  const isDurationBased = selectedModel.provider === providers.Outspeed;
 
   let displayData;
 
   if (isDurationBased) {
+    if (!("perMinute" in selectedModel.cost)) {
+      throw new Error("perMinute is not defined in the cost object");
+    }
+
+    const costPerMinute = selectedModel.cost.perMinute;
+    const timeCosts = calculateTimeCosts(durationInSeconds, costPerMinute);
+
+    // directly update the costState object
+    costState.totalCost = timeCosts.totalCost;
+    costState.costPerMinute = costPerMinute;
+
     // For duration-based pricing (Outspeed)
     displayData = {
       title: "Outspeed Live API Cost (Time-Based)",
@@ -51,13 +81,14 @@ export default function CostDisplay({ costState }: CostDisplayProps) {
         </div>
       </div>
 
+      <div className="text-gray-600 flex justify-between">
+        Session Duration: <span>{formatDuration(durationInSeconds)}</span>
+      </div>
+
       <div className="grid grid-cols-2 gap-1 text-sm">
         {isDurationBased ? (
           // Duration-based cost display (Outspeed)
           <>
-            <div className="text-gray-600">Session Duration:</div>
-            <div className="text-right font-medium">{formatDuration(costState.durationInSeconds)}</div>
-
             <div className="text-gray-600">Rate:</div>
             <div className="text-right font-medium">${costState.costPerMinute?.toFixed(2) || "0.00"}/minute</div>
 

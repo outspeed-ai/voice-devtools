@@ -7,13 +7,7 @@ import AudioRecorder from "@/helpers/audio-recorder";
 import { getEphemeralKey } from "@/helpers/ephemeral-key";
 import { startWebrtcSession } from "@/helpers/webrtc";
 import { OaiEvent } from "@/types";
-import {
-  calculateOpenAICosts,
-  calculateTimeCosts,
-  CostState,
-  getInitialCostState,
-  updateCumulativeCostOpenAI,
-} from "@/utils/cost-calc";
+import { calculateOpenAICosts, CostState, getInitialCostState, updateCumulativeCostOpenAI } from "@/utils/cost-calc";
 import { agent } from "@src/agent-config";
 import { providers } from "@src/settings";
 import Chat, { MessageBubbleProps } from "./Chat";
@@ -36,7 +30,6 @@ export default function App() {
   // states for cost calculation
   const [costState, setCostState] = useState<CostState>(getInitialCostState());
   const [sessionStartTime, setSessionStartTime] = useState<number | null>(null);
-  const sessionDurationInterval = useRef<NodeJS.Timeout>(undefined);
 
   // refs for speech recording
   const iAudioRecorderRef = useRef<AudioRecorder | null>(null); // input audio recorder
@@ -45,40 +38,6 @@ export default function App() {
   const currentBotSpeechItemRef = useRef<{ startTime: number; id: string } | null>(null);
 
   const navigate = useNavigate();
-
-  // Update session duration every second when active
-  useEffect(() => {
-    if (loadingModel || !isSessionActive || !sessionStartTime) {
-      return;
-    }
-
-    sessionDurationInterval.current = setInterval(() => {
-      const durationInSeconds = Math.floor((Date.now() - sessionStartTime) / 1000);
-
-      // Update Outspeed cost if using that provider
-      if (selectedModel.provider === providers.Outspeed) {
-        if (!("perMinute" in selectedModel.cost)) {
-          throw new Error("perMinute is not defined in the cost object");
-        }
-
-        const costPerMinute = selectedModel.cost.perMinute;
-        const timeCosts = calculateTimeCosts(durationInSeconds, costPerMinute);
-
-        // Update cost state for Outspeed (time-based)
-        setCostState({
-          ...getInitialCostState(),
-          durationInSeconds,
-          costPerMinute,
-          totalCost: timeCosts.totalCost,
-          timestamp: timeCosts.timestamp,
-        });
-      }
-    }, 1000);
-
-    return () => {
-      clearInterval(sessionDurationInterval.current);
-    };
-  }, [loadingModel, isSessionActive, sessionStartTime, selectedModel]);
 
   useEffect(() => {
     if (isSessionActive && iAudioRecorderRef.current) {
@@ -340,6 +299,7 @@ export default function App() {
     try {
       setLoadingModel(true);
       setIsSessionActive(false);
+      setCostState(getInitialCostState());
 
       const { sessionConfig } = selectedModel;
       const concatSessionConfig = {
@@ -378,10 +338,9 @@ export default function App() {
           console.error("error: session.created - No audio track found");
         }
 
-        // reset states
+        // reset remaining states
         setMessages(new Map());
         setEvents([]);
-        setCostState(getInitialCostState());
         setIsSessionActive(true);
       });
 
@@ -428,12 +387,6 @@ export default function App() {
         }
       });
       pcRef.current.close();
-    }
-
-    // Stop the session duration interval
-    if (sessionDurationInterval.current) {
-      clearInterval(sessionDurationInterval.current);
-      sessionDurationInterval.current = undefined;
     }
 
     cleanup();
@@ -541,6 +494,7 @@ export default function App() {
             loadingModel={loadingModel}
             events={events}
             costState={costState}
+            sessionStartTime={sessionStartTime}
           />
         </div>
       </div>
@@ -561,9 +515,16 @@ interface RightSideProps {
   loadingModel: boolean;
   events: OaiEvent[];
   costState: CostState;
+  sessionStartTime: number | null;
 }
 
-const RightSide: React.FC<RightSideProps> = ({ isSessionActive, loadingModel, events, costState }) => {
+const RightSide: React.FC<RightSideProps> = ({
+  isSessionActive,
+  loadingModel,
+  events,
+  costState,
+  sessionStartTime,
+}) => {
   const [activeTab, setActiveTab] = useState("events"); // "events" | "session-details"
 
   let heading;
@@ -582,7 +543,15 @@ const RightSide: React.FC<RightSideProps> = ({ isSessionActive, loadingModel, ev
           <option value="session-details">Session Details</option>
         </select>
       </div>
-      {activeTab === "events" && <EventLog events={events} loadingModel={loadingModel} costState={costState} />}
+      {activeTab === "events" && (
+        <EventLog
+          events={events}
+          loadingModel={loadingModel}
+          costState={costState}
+          sessionStartTime={sessionStartTime}
+          isSessionActive={isSessionActive}
+        />
+      )}
       {activeTab === "session-details" && (
         <SessionDetailsPanel isSessionActive={isSessionActive} loadingModel={loadingModel} />
       )}
