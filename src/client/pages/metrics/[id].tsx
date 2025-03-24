@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router";
 
 import { Alert, Badge, Button, Card, Table } from "@/components/ui";
 import { fetchMetricDetail, getAudioUrl } from "@/services/api";

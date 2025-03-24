@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router";
 
 import { Alert, Badge, Button, Card } from "@/components/ui";
 import { fetchMetricsBySession } from "@/services/api";
