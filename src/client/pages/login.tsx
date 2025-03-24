@@ -3,7 +3,7 @@ import { toast } from "sonner";
 
 import { env } from "@/config/env";
 import { getSupabase } from "@/config/supabase";
-import { Navigate } from "react-router-dom";
+import { Navigate } from "react-router";
 
 export default function Login() {
   const [loading, setLoading] = useState(false);
