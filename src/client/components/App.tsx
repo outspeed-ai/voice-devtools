@@ -301,6 +301,9 @@ export default function App() {
       setIsSessionActive(false);
       setCostState(getInitialCostState());
 
+      iAudioRecorderRef.current?.dispose();
+      oAudioRecorderRef.current?.dispose();
+
       const { sessionConfig } = selectedModel;
       const concatSessionConfig = {
         ...sessionConfig,
@@ -373,8 +376,13 @@ export default function App() {
 
   function stopSession() {
     // Stop recording if active
-    iAudioRecorderRef.current?.dispose();
-    oAudioRecorderRef.current?.dispose();
+    if (iAudioRecorderRef.current?.getState() === "recording") {
+      iAudioRecorderRef.current.stop();
+    }
+
+    if (oAudioRecorderRef.current?.getState() === "recording") {
+      oAudioRecorderRef.current.stop();
+    }
 
     if (dcRef.current) {
       dcRef.current.close();
