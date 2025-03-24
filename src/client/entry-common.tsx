@@ -3,6 +3,7 @@ import { Toaster } from "sonner";
 
 import { AuthProvider } from "./contexts/auth";
 import { ModelProvider } from "./contexts/model";
+import { AudioPlayerProvider } from "./contexts/shared-audio-player";
 import Router from "./router";
 
 const queryClient = new QueryClient({
@@ -20,8 +21,10 @@ export default function EntryCommon() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ModelProvider>
-          <Toaster richColors position="top-right" />
-          <Router />
+          <AudioPlayerProvider>
+            <Toaster richColors position="top-right" />
+            <Router />
+          </AudioPlayerProvider>
         </ModelProvider>
       </AuthProvider>
     </QueryClientProvider>
