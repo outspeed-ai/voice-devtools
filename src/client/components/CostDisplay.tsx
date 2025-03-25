@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-import { useModel } from "@/contexts/model";
+import { useSession } from "@/contexts/session";
 import { calculateTimeCosts, CostState } from "@/utils/cost-calc";
 import { providers } from "@src/settings";
 
@@ -11,7 +11,7 @@ interface CostDisplayProps {
 }
 
 export default function CostDisplay({ costState, sessionStartTime, isSessionActive }: CostDisplayProps) {
-  const { selectedModel } = useModel();
+  const { selectedModel } = useSession();
   const [showDetails, setShowDetails] = useState(false);
   const [durationInSeconds, setDurationInSeconds] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout>(undefined);

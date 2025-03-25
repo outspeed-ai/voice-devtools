@@ -2,21 +2,21 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { type ExternalToast, toast } from "sonner";
 
-import { useModel } from "@/contexts/model";
+import { useSession } from "@/contexts/session";
 import AudioRecorder from "@/helpers/audio-recorder";
 import { getEphemeralKey } from "@/helpers/ephemeral-key";
 import { startWebrtcSession } from "@/helpers/webrtc";
 import { OaiEvent } from "@/types";
 import { calculateOpenAICosts, CostState, getInitialCostState, updateCumulativeCostOpenAI } from "@/utils/cost-calc";
-import { agent } from "@src/agent-config";
-import { providers } from "@src/settings";
+import { type SessionConfig } from "@src/model-config";
+import { Provider, providers } from "@src/settings";
 import Chat, { MessageBubbleProps } from "./Chat";
 import EventLog from "./EventLog";
 import SessionControls from "./SessionControls";
 import SessionDetailsPanel from "./SessionDetails";
 
 export default function App() {
-  const { selectedModel } = useModel();
+  const { selectedModel } = useSession();
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [loadingModel, setLoadingModel] = useState(false);
   const [events, setEvents] = useState<OaiEvent[]>([]);
@@ -295,7 +295,7 @@ export default function App() {
     setEvents((prev) => [event, ...prev]);
   };
 
-  async function startSession() {
+  async function startSession(provider: Provider, config: SessionConfig) {
     try {
       setLoadingModel(true);
       setIsSessionActive(false);
@@ -304,15 +304,10 @@ export default function App() {
       iAudioRecorderRef.current?.dispose();
       oAudioRecorderRef.current?.dispose();
 
-      const { sessionConfig } = selectedModel;
-      const concatSessionConfig = {
-        ...sessionConfig,
-        instructions: agent.instructions,
-      };
-
       // step 1. get ephemeral key
-      const ephemeralKey = await getEphemeralKey(selectedModel.provider, concatSessionConfig);
+      const ephemeralKey = await getEphemeralKey(provider, config);
       if (!ephemeralKey) {
+        cleanup();
         return;
       }
 
@@ -496,7 +491,7 @@ export default function App() {
             sendTextMessage={sendTextMessage}
           />
         </div>
-        <div className="flex-1 h-full min-h-0 rounded-xl bg-white overflow-y-auto">
+        <div className="hidden md:block flex-1 h-full min-h-0 rounded-xl bg-white overflow-y-auto">
           <RightSide
             isSessionActive={isSessionActive}
             loadingModel={loadingModel}

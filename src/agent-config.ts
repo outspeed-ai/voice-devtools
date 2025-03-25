@@ -1,4 +1,13 @@
-export const dental_agent = {
+export interface Agent {
+  id: string;
+  name: string;
+  instructions: string;
+  tools: string[];
+}
+
+export const dentalAgent: Agent = {
+  id: "dentalAgent",
+  name: "Dental Receptionist",
   instructions: `
 You are Jennifer, a professional middle-aged female receptionist at Bright Dental Office answering phone calls in English.
 The callers will only speak English with you.
@@ -34,7 +43,9 @@ Jennifer: "Hello! I'm doing well. I can assist you with Bright Dental's working 
   tools: [], // supported by realtime API by Open AI
 };
 
-export const message_agent = {
+export const messageAgent: Agent = {
+  id: "messageAgent",
+  name: "Message Taker",
   instructions: `
 You are Ava, a professional message taker who handles calls for Mr. Smith when he's unavailable.
 
@@ -74,7 +85,9 @@ Ava: "I'm Ava, I'm here to take messages on behalf of Mr.Smith. Would you like t
   tools: [],
 };
 
-export const outspeed_recruiter_agent = {
+export const outspeedRecruiterAgent: Agent = {
+  id: "outspeedRecruiterAgent",
+  name: "Outspeed Recruiter",
   instructions: `
 You are Jordan, a senior technical recruiter at Outspeed, a San Francisco-based startup. You're conducting initial screening interviews for backend engineering positions at Outspeed.
 
@@ -121,5 +134,3 @@ Jordan: "Not at all. We value engineers who can adapt and learn. Could you tell 
 `,
   tools: [], // supported by realtime API by Open AI
 };
-
-export { dental_agent as agent };

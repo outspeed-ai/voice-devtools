@@ -1,7 +1,7 @@
 import { Link, Outlet } from "react-router";
 
 import Button from "@/components/ui/Button";
-import { useModel } from "@/contexts/model";
+import { useSession } from "@/contexts/session";
 import { useUpdateCheck } from "@/utils/update-check";
 import { version as consoleVersion } from "@src/../package.json";
 import { providers } from "@src/settings";
@@ -9,7 +9,7 @@ import { providers } from "@src/settings";
 import logo from "/outspeed-logo.png";
 
 export default function RootLayout() {
-  const { selectedModel } = useModel();
+  const { selectedModel } = useSession();
   const { data: updateInfo } = useUpdateCheck(consoleVersion);
 
   return (

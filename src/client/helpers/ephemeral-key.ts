@@ -3,11 +3,11 @@ import { toast, type ExternalToast } from "sonner";
 import { env } from "@/config/env";
 import { getSupabaseAuthToken } from "@/config/supabase";
 import { type SessionConfig } from "@src/model-config";
-import { providers, type Provider } from "@src/settings";
+import { type Provider } from "@src/settings";
 
-export const getEphemeralKey = async (provider: Provider, sessionConfig: SessionConfig) => {
-  if (provider === providers.OpenAI || !env.OUTSPEED_HOSTED) {
-    return getEphemeralKeyServer(sessionConfig, provider);
+export const getEphemeralKey = async (provider: Provider, config: SessionConfig) => {
+  if (!env.OUTSPEED_HOSTED) {
+    return getEphemeralKeyServer(provider, config);
   }
 
   // since it's hosted, we will use the JWT token to fetch the ephemeral key
@@ -16,7 +16,7 @@ export const getEphemeralKey = async (provider: Provider, sessionConfig: Session
   const tokenResponse = await fetch(`https://${provider.url}/v1/realtime/sessions`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify(sessionConfig),
+    body: JSON.stringify(config),
   });
 
   const data = await tokenResponse.json();
@@ -28,7 +28,7 @@ export const getEphemeralKey = async (provider: Provider, sessionConfig: Session
   return data.client_secret.value;
 };
 
-const getEphemeralKeyServer = async (config: SessionConfig, provider: Provider) => {
+const getEphemeralKeyServer = async (provider: Provider, config: SessionConfig) => {
   const tokenResponse = await fetch(`/token`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
