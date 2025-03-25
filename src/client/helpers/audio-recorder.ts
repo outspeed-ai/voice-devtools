@@ -83,7 +83,7 @@ export default class AudioRecorder {
 
         try {
           const recordedBlob = new Blob(this.audioChunks, { type: "audio/webm" });
-          const finalBlob = duration ? await trimAudioBlob(recordedBlob, duration) : recordedBlob;
+          const finalBlob = await trimAudioBlobWav(recordedBlob, duration);
           const url = URL.createObjectURL(finalBlob);
           this.audioUrls.push(url);
           resolve(url);
@@ -117,7 +117,14 @@ export default class AudioRecorder {
 
 let audioContext: AudioContext;
 
-async function trimAudioBlob(blob: Blob, duration: number): Promise<Blob> {
+/**
+ * Trims an audio blob to a given duration and returns it as a WAV blob.
+ *
+ * @param blob - the audio blob to trim
+ * @param duration - the duration to trim the audio to (in milliseconds). if not provided or is 0, the entire audio will be returned.
+ * @returns the trimmed audio blob as WAV
+ */
+async function trimAudioBlobWav(blob: Blob, duration?: number): Promise<Blob> {
   if (!audioContext) {
     audioContext = new AudioContext();
   }
@@ -127,6 +134,10 @@ async function trimAudioBlob(blob: Blob, duration: number): Promise<Blob> {
 
   // Decode the audio data
   const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+  if (!duration) {
+    return audioBufferToWav(audioBuffer);
+  }
 
   // Calculate the start time based on duration
   const startTime = Math.max(0, audioBuffer.duration * 1000 - duration) / 1000;
