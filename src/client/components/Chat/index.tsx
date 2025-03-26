@@ -6,16 +6,30 @@ import Button from "@/components/ui/Button";
 import styles from "./style.module.css";
 
 export interface MessageBubbleProps {
+  /**
+   * The role of the message
+   */
+  role: "system" | "user" | "assistant" | "custom:session-recording";
+
+  /**
+   * Whether the message was interrupted by the user by speaking while bot was streaming
+   */
   interrupted?: boolean;
+
+  /**
+   * Text content of the message
+   */
   text?: {
-    role: string;
     content: string;
     timestamp: string;
     type?: "error";
     streaming?: boolean;
   };
+
+  /**
+   * Audio content of the message
+   */
   audio?: {
-    role: string;
     content: string;
     timestamp: string;
     processing?: boolean;
@@ -25,11 +39,18 @@ export interface MessageBubbleProps {
 // use memo to prevent unnecessary re-renders . without memo, it re-renders all
 // messages even when the user just types each character of a new message because
 // the message state in <Chat /> gets updated every time the user types a new character
-const MessageBubble: React.FC<MessageBubbleProps> = memo(({ text, audio, interrupted }) => {
-  const isUser = text?.role === "user" || audio?.role === "user";
+const MessageBubble: React.FC<MessageBubbleProps> = memo(({ text, audio, interrupted, role }) => {
+  const isUser = role !== "assistant" && role !== "custom:session-recording";
+  const isSessionRecording = role === "custom:session-recording";
   const baseContainer = "flex justify-end flex-col";
   const containerClasses = `${baseContainer} ${isUser ? "items-end" : "items-start"}`;
-  const bubbleBase = `max-w-lg p-3 rounded-xl ${isUser ? "bg-gray-900 text-gray-100" : "bg-gray-100 text-black"}`;
+  const bubbleBase = `max-w-lg p-3 rounded-xl ${
+    isSessionRecording
+      ? "bg-purple-50 border border-purple-200 text-purple-900"
+      : isUser
+      ? "bg-gray-900 text-gray-100"
+      : "bg-gray-100 text-black"
+  }`;
 
   // If this is an error message
   if (text?.type === "error") {
@@ -58,7 +79,13 @@ const MessageBubble: React.FC<MessageBubbleProps> = memo(({ text, audio, interru
         )}
         {text && (
           <>
-            <div className={`text-xs ${isUser ? "text-gray-400" : "text-gray-500"} font-mono`}>{text.timestamp}</div>
+            <div className={`text-xs ${
+              isSessionRecording
+                ? "text-purple-500"
+                : isUser
+                ? "text-gray-400"
+                : "text-gray-500"
+            } font-mono`}>{text.timestamp}</div>
             <div className="whitespace-pre-wrap">{text.content}</div>
             {text.streaming && (
               <div className="flex mt-1">

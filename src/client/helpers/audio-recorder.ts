@@ -1,21 +1,54 @@
+let audioContext: AudioContext | null = null;
+
 export default class AudioRecorder {
   private mediaStream: MediaStream;
   private mediaRecorder: MediaRecorder;
   private audioChunks: Blob[] = [];
   private audioUrls: string[] = []; // audio urls for each chunk to revoke them on dispose
   private timeslice: number = 0;
+  private audioContext: AudioContext;
+  private mediaStreamDestination: MediaStreamAudioDestinationNode;
 
   /**
-   * @param mediaTrack - the media track to record
+   * @param mediaTracks - Array of media tracks to record (example WebRTC peer connection sender & receiver)
    * @param timeslice - the timeslice to record the audio in (in milliseconds). no slice if 0.
    */
-  constructor(mediaTrack: MediaStreamTrack, timeslice: number = 0) {
-    if (mediaTrack.kind !== "audio") {
-      throw new Error("MediaTrack is not an audio track");
+  constructor(mediaTracks: MediaStreamTrack[], timeslice: number = 0) {
+    if (mediaTracks.length === 0) {
+      throw new Error("at least one media track is required");
     }
 
-    // create a MediaStream from the track
-    this.mediaStream = new MediaStream([mediaTrack]);
+    mediaTracks.forEach((track) => {
+      if (track.kind !== "audio") {
+        throw new Error("MediaTrack is not an audio track");
+      }
+    });
+
+    /**
+     * from MDN:
+     * It's recommended to create one AudioContext and reuse it instead of initializing a new one each time,
+     * and it's OK to use a single AudioContext for several different audio sources and pipeline concurrently.
+     *
+     * source: https://developer.mozilla.org/en-US/docs/Web/API/AudioContext
+     *
+     * hence we're using a global variable
+     */
+    if (!audioContext) {
+      audioContext = new AudioContext();
+    }
+
+    this.audioContext = audioContext;
+    this.mediaStreamDestination = this.audioContext.createMediaStreamDestination();
+
+    // create audio sources for each track and connect them to the destination
+    mediaTracks.forEach((track) => {
+      const mediaStream = new MediaStream([track]);
+      const source = this.audioContext.createMediaStreamSource(mediaStream);
+      source.connect(this.mediaStreamDestination);
+    });
+
+    // now we can use the combined stream for recording
+    this.mediaStream = this.mediaStreamDestination.stream;
 
     // initialize the recorder
     this.mediaRecorder = this._initRecorder();
@@ -100,7 +133,6 @@ export default class AudioRecorder {
     return this.mediaRecorder.state;
   }
 
-  // clean up resources
   dispose() {
     if (this.getState() === "recording") {
       this.stop();
@@ -114,8 +146,6 @@ export default class AudioRecorder {
     this.audioChunks = [];
   }
 }
-
-let audioContext: AudioContext;
 
 /**
  * Trims an audio blob to a given duration and returns it as a WAV blob.
