@@ -34,6 +34,7 @@ export default function App() {
   // refs for speech recording
   const iAudioRecorderRef = useRef<AudioRecorder | null>(null); // input audio recorder
   const oAudioRecorderRef = useRef<AudioRecorder | null>(null); // output audio recorder
+  const sessionAudioRecorderRef = useRef<AudioRecorder | null>(null); // session audio recorder
   const currentUserSpeechItemRef = useRef<{ startTime: number; id: string } | null>(null);
   const currentBotSpeechItemRef = useRef<{ startTime: number; id: string } | null>(null);
 
@@ -45,10 +46,20 @@ export default function App() {
       iAudioRecorderRef.current.start();
     }
 
+    if (isSessionActive && sessionAudioRecorderRef.current) {
+      console.log("starting session audio recorder");
+      sessionAudioRecorderRef.current.start();
+    }
+
     return () => {
       if (iAudioRecorderRef.current?.getState() === "recording") {
         console.log("stopping user speech audio recorder");
         iAudioRecorderRef.current.stop();
+      }
+
+      if (sessionAudioRecorderRef.current?.getState() === "recording") {
+        console.log("stopping session audio recorder");
+        sessionAudioRecorderRef.current.stop();
       }
     };
   }, [isSessionActive]);
@@ -62,8 +73,8 @@ export default function App() {
     setMessages((prev) => {
       const newMessages = new Map(prev);
       newMessages.set(id, {
+        role: "assistant",
         text: {
-          role: "assistant",
           type: "error",
           content: errorMessage,
           timestamp: new Date().toLocaleTimeString(),
@@ -116,11 +127,12 @@ export default function App() {
         botStreamingTextRef.current = event.response_id;
         setMessages((prev) => {
           const newMessages = new Map(prev);
-          const currentMessage = prev.get(event.response_id) || {};
+          const currentMessage = prev.get(event.response_id) || {
+            role: "assistant",
+          };
           newMessages.set(event.response_id, {
             ...currentMessage,
             text: {
-              role: "assistant",
               content: (currentMessage.text?.content || "") + event.delta,
               timestamp: !currentMessage.text?.timestamp
                 ? new Date().toLocaleTimeString()
@@ -136,11 +148,12 @@ export default function App() {
         botStreamingTextRef.current = null;
         setMessages((prev) => {
           const newMessages = new Map(prev);
-          const currentMessage = prev.get(event.response_id) || {};
+          const currentMessage = prev.get(event.response_id) || {
+            role: "assistant",
+          };
           newMessages.set(event.response_id, {
             ...currentMessage,
             text: {
-              role: "assistant",
               content: event.transcript,
               timestamp: !currentMessage.text?.timestamp
                 ? new Date().toLocaleTimeString()
@@ -188,10 +201,10 @@ export default function App() {
         setMessages((prev) => {
           const newMessages = new Map(prev);
           newMessages.set(currentUserSpeechItem.id, {
+            role: "user",
             audio: {
               content: "",
               timestamp: new Date().toLocaleTimeString(),
-              role: "user",
               processing: true,
             },
           });
@@ -213,10 +226,10 @@ export default function App() {
         setMessages((prev) => {
           const newMessages = new Map(prev);
           newMessages.set(currentUserSpeechItem.id, {
+            role: "user",
             audio: {
               content: audioUrl,
               timestamp: new Date().toLocaleTimeString(),
-              role: "user",
             },
           });
           return newMessages;
@@ -271,20 +284,20 @@ export default function App() {
             const audio = {
               content: audioUrl,
               timestamp: new Date().toLocaleTimeString(),
-              role: "assistant",
             };
 
             if (responseId && prev.has(responseId)) {
               const currentMessage = prev.get(responseId);
               newMessages.set(responseId, {
                 ...currentMessage,
+                role: "assistant",
                 interrupted,
                 audio,
               });
             } else {
               // If we can't find the matching text message, create a new message with just audio
               const newId = crypto.randomUUID();
-              newMessages.set(newId, { audio, interrupted });
+              newMessages.set(newId, { role: "assistant", audio, interrupted });
             }
             return newMessages;
           });
@@ -324,21 +337,32 @@ export default function App() {
       dc.addEventListener("open", () => {
         console.log("data channel opened");
 
+        const tracks: MediaStreamTrack[] = [];
+
         // initialize audio recorders
         const sender = pc.getSenders()[0];
         if (sender?.track?.kind === "audio") {
-          iAudioRecorderRef.current = new AudioRecorder(sender.track);
+          iAudioRecorderRef.current = new AudioRecorder([sender.track]);
           console.log("input audio recorder initialized");
+          tracks.push(sender.track);
         } else {
-          console.error("error: session.created - No audio track found");
+          console.error("error: session.created -  sender audio track not found");
         }
 
         const receiver = pc.getReceivers()[0];
         if (receiver?.track?.kind === "audio") {
-          oAudioRecorderRef.current = new AudioRecorder(receiver.track);
+          oAudioRecorderRef.current = new AudioRecorder([receiver.track]);
           console.log("output audio recorder initialized");
+          tracks.push(receiver.track);
         } else {
-          console.error("error: session.created - No audio track found");
+          console.error("error: session.created - receiver audio track not found");
+        }
+
+        if (tracks.length == 2) {
+          sessionAudioRecorderRef.current = new AudioRecorder(tracks);
+          console.log(`session audio recorder initialized with ${tracks.length} tracks`);
+        } else {
+          console.error(`error: session audio recorder - expected 2 tracks, got ${tracks.length}`);
         }
 
         // reset remaining states
@@ -374,7 +398,7 @@ export default function App() {
     }
   }
 
-  function stopSession() {
+  async function stopSession() {
     // Stop recording if active
     if (iAudioRecorderRef.current?.getState() === "recording") {
       iAudioRecorderRef.current.stop();
@@ -382,6 +406,30 @@ export default function App() {
 
     if (oAudioRecorderRef.current?.getState() === "recording") {
       oAudioRecorderRef.current.stop();
+    }
+
+    if (sessionAudioRecorderRef.current?.getState() === "recording") {
+      const audioUrl = await sessionAudioRecorderRef.current.stop();
+      if (!audioUrl) {
+        console.error("error: session audio recorder stopped but didn't get audio URL");
+      } else {
+        setMessages((prev) => {
+          const newMessages = new Map(prev);
+          const timestamp = new Date().toLocaleTimeString();
+          newMessages.set("session_audio", {
+            role: "custom:session-recording",
+            text: {
+              content: "here's the audio recording of this session.",
+              timestamp,
+            },
+            audio: {
+              content: audioUrl,
+              timestamp,
+            },
+          });
+          return newMessages;
+        });
+      }
     }
 
     if (dcRef.current) {
@@ -472,10 +520,10 @@ export default function App() {
     setMessages((prev) => {
       const newMessages = new Map(prev);
       newMessages.set(messageId, {
+        role: "user",
         text: {
           content: message,
           timestamp: new Date().toLocaleTimeString(),
-          role: "user",
         },
       });
       return newMessages;
