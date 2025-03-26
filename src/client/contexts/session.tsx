@@ -49,7 +49,7 @@ export const ModelProvider: React.FC<SessionProviderProps> = ({ children }) => {
 
   // update the config when the selected model changes
   useEffect(() => {
-    setConfig((prev) => ({ ...prev, ...selectedModel.sessionConfig }));
+    setConfig((prev) => ({ ...prev, ...selectedModel.sessionConfig, instructions: prev.instructions }));
   }, [selectedModel]);
 
   // update the config when the selected agent changes
