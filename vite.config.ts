@@ -1,5 +1,6 @@
 import react from "@vitejs/plugin-react";
 import { join } from "path";
+import { visualizer } from "rollup-plugin-visualizer";
 
 // https://vite.dev/config/
 export default {
@@ -10,5 +11,5 @@ export default {
     },
   },
   envPrefix: "OUTSPEED_",
-  plugins: [react()],
+  plugins: [react(), visualizer()],
 };
