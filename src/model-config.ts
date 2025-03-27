@@ -17,7 +17,7 @@ type ModelValue = {
   sessionConfig: SessionConfig;
 };
 
-const OUTSPEED_MINICPMO_VOICES = ["chris", "james", "jessica"];
+const OUTSPEED_MINICPMO_VOICES = ["male", "female"];
 const OPENAI_VOICES = ["alloy", "ash", "ballad", "coral", "echo", "sage", "shimmer", "verse"];
 
 export const models: Record<ModalName, ModelValue> = {
@@ -28,7 +28,7 @@ export const models: Record<ModalName, ModelValue> = {
       model: "MiniCPM-o-2_6",
       modalities: ["audio", "text"],
       temperature: 0.6,
-      voice: "james",
+      voice: "female",
       instructions: "",
     },
   },
