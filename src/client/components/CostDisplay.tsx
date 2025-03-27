@@ -1,33 +1,34 @@
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 
-import { useModel } from "@/contexts/model";
+import { useSession } from "@/contexts/session";
 import { calculateTimeCosts, CostState } from "@/utils/cost-calc";
 import { providers } from "@src/settings";
 
 interface CostDisplayProps {
   costState: CostState;
   sessionStartTime: number;
-  isSessionActive: boolean;
 }
 
-export default function CostDisplay({ costState, sessionStartTime, isSessionActive }: CostDisplayProps) {
-  const { selectedModel } = useModel();
+const CostDisplay: React.FC<CostDisplayProps> = memo(({ costState, sessionStartTime }) => {
+  const { activeState, selectedModel, durationRef } = useSession();
   const [showDetails, setShowDetails] = useState(false);
-  const [durationInSeconds, setDurationInSeconds] = useState(0);
+  const [durationInSeconds, setDurationInSeconds] = useState(durationRef.current);
   const intervalRef = useRef<NodeJS.Timeout>(undefined);
 
   useEffect(() => {
-    if (!isSessionActive) {
+    if (activeState !== "active") {
       clearInterval(intervalRef.current);
       return;
     }
 
     intervalRef.current = setInterval(() => {
-      setDurationInSeconds(Math.floor((Date.now() - sessionStartTime) / 1000));
+      const duration = Math.floor((Date.now() - sessionStartTime) / 1000);
+      setDurationInSeconds(duration);
+      durationRef.current = duration;
     }, 1000);
 
     return () => clearInterval(intervalRef.current);
-  }, [sessionStartTime, isSessionActive]);
+  }, [sessionStartTime, activeState]);
 
   // Check if this is a token-based (OpenAI) or duration-based (Outspeed) cost
   const isDurationBased = selectedModel.provider === providers.Outspeed;
@@ -181,7 +182,7 @@ export default function CostDisplay({ costState, sessionStartTime, isSessionActi
       )}
     </div>
   );
-}
+});
 
 // Helper function to format time
 function formatDuration(seconds: number) {
@@ -193,3 +194,5 @@ function formatDuration(seconds: number) {
     .filter(Boolean)
     .join(" ");
 }
+
+export default CostDisplay;

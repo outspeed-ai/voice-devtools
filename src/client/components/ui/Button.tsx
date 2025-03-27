@@ -34,7 +34,7 @@ const Button: React.FC<ButtonProps> = ({
       onClick={onClick}
       disabled={disabled}
     >
-      {icon && <span>{icon}</span>}
+      {icon && <span className={children ? "mr-2" : ""}>{icon}</span>}
       {children}
     </button>
   );

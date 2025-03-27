@@ -8,34 +8,50 @@ export type SessionConfig = {
   modalities: string[];
   temperature: number;
   voice: string;
+  instructions: string;
 };
 
-export const models: Record<ModalName, { label: string; sessionConfig: SessionConfig }> = {
+type ModelValue = {
+  label: string;
+  voices: string[];
+  sessionConfig: SessionConfig;
+};
+
+const OUTSPEED_MINICPMO_VOICES = ["chris", "james", "jessica"];
+const OPENAI_VOICES = ["alloy", "ash", "ballad", "coral", "echo", "sage", "shimmer", "verse"];
+
+export const models: Record<ModalName, ModelValue> = {
   "MiniCPM-o-2_6": {
     label: "MiniCPM-o 2.6",
+    voices: OUTSPEED_MINICPMO_VOICES,
     sessionConfig: {
       model: "MiniCPM-o-2_6",
       modalities: ["audio", "text"],
       temperature: 0.6,
-      voice: "female",
+      voice: "james",
+      instructions: "",
     },
   },
   "gpt-4o-realtime-preview-2024-12-17": {
     label: "GPT-4o Realtime",
+    voices: OPENAI_VOICES,
     sessionConfig: {
       model: "gpt-4o-realtime-preview-2024-12-17",
       modalities: ["audio", "text"],
       temperature: 0.6,
       voice: "sage",
+      instructions: "",
     },
   },
   "gpt-4o-mini-realtime-preview-2024-12-17": {
     label: "GPT-4o Mini Realtime",
+    voices: OPENAI_VOICES,
     sessionConfig: {
       model: "gpt-4o-mini-realtime-preview-2024-12-17",
       modalities: ["audio", "text"],
       temperature: 0.6,
       voice: "sage",
+      instructions: "",
     },
   },
 };

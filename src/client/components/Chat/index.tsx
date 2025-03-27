@@ -2,6 +2,7 @@ import { memo, useEffect, useRef, useState } from "react";
 import { AlertCircle, Send } from "react-feather";
 
 import Button from "@/components/ui/Button";
+import { useSession } from "@/contexts/session";
 
 import styles from "./style.module.css";
 
@@ -79,13 +80,13 @@ const MessageBubble: React.FC<MessageBubbleProps> = memo(({ text, audio, interru
         )}
         {text && (
           <>
-            <div className={`text-xs ${
-              isSessionRecording
-                ? "text-purple-500"
-                : isUser
-                ? "text-gray-400"
-                : "text-gray-500"
-            } font-mono`}>{text.timestamp}</div>
+            <div
+              className={`text-xs ${
+                isSessionRecording ? "text-purple-500" : isUser ? "text-gray-400" : "text-gray-500"
+              } font-mono`}
+            >
+              {text.timestamp}
+            </div>
             <div className="whitespace-pre-wrap">{text.content}</div>
             {text.streaming && (
               <div className="flex mt-1">
@@ -113,12 +114,11 @@ const MessageBubble: React.FC<MessageBubbleProps> = memo(({ text, audio, interru
 
 interface ChatProps {
   messages: Map<string, MessageBubbleProps>;
-  isSessionActive: boolean;
-  loadingModel: boolean;
   sendTextMessage: (message: string) => void;
 }
 
-const Chat: React.FC<ChatProps> = memo(({ messages, isSessionActive, loadingModel, sendTextMessage }) => {
+const Chat: React.FC<ChatProps> = memo(({ messages, sendTextMessage }) => {
+  const { activeState } = useSession();
   const [message, setMessage] = useState("");
 
   const scrolledManually = useRef(false);
@@ -161,8 +161,8 @@ const Chat: React.FC<ChatProps> = memo(({ messages, isSessionActive, loadingMode
     return () => container.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleSendClientEvent = () => {
-    if (!isSessionActive || loadingModel) {
+  const handleSendText = () => {
+    if (activeState !== "active") {
       return;
     }
 
@@ -192,7 +192,7 @@ const Chat: React.FC<ChatProps> = memo(({ messages, isSessionActive, loadingMode
         <input
           onKeyDown={(e) => {
             if (e.key === "Enter" && message.trim()) {
-              handleSendClientEvent();
+              handleSendText();
             }
           }}
           autoFocus
@@ -203,10 +203,10 @@ const Chat: React.FC<ChatProps> = memo(({ messages, isSessionActive, loadingMode
           onChange={(e) => setMessage(e.target.value)}
         />
         <Button
-          onClick={handleSendClientEvent}
+          onClick={handleSendText}
           icon={<Send height={16} />}
           className="rounded-full w-10 h-10 p-0"
-          disabled={!isSessionActive || loadingModel}
+          disabled={activeState !== "active"}
         />
       </div>
     </div>
