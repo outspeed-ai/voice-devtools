@@ -1,6 +1,5 @@
 import { useSession } from "@/contexts/session";
 import { type Agent } from "@src/agent-config";
-import { models } from "@src/settings";
 
 const SessionConfig: React.FC = () => {
   const {
@@ -9,6 +8,7 @@ const SessionConfig: React.FC = () => {
     setConfig,
     selectedModel,
     setSelectedModel,
+    availableModels,
     selectedAgent,
     setSelectedAgent,
     availableAgents,
@@ -26,13 +26,13 @@ const SessionConfig: React.FC = () => {
               id="model"
               value={selectedModel.sessionConfig.model}
               onChange={(e) => {
-                const model = models[e.target.value as keyof typeof models];
+                const model = availableModels[e.target.value as keyof typeof availableModels];
                 if (model) setSelectedModel(model);
               }}
               className="border p-2 rounded-md"
               disabled={!isInactive}
             >
-              {Object.entries(models).map(([key, model]) => (
+              {Object.entries(availableModels).map(([key, model]) => (
                 <option key={key} value={key}>
                   {model.label} ({model.provider.name})
                 </option>
