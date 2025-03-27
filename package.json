@@ -9,7 +9,7 @@
     "build:server": "tsc -b && vite build --outDir dist/server --ssr ./src/client/entry-server.jsx",
     "devinstall": "zx ../../devinstall.mjs -- node src/server.js --dev",
     "lint": "eslint . --ext .js,.jsx --fix",
-    "analyze": "npm run build:client && open stats.html"
+    "analyze": "ANALYZE=true npm run build:client"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",
