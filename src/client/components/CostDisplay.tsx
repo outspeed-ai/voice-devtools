@@ -7,17 +7,16 @@ import { providers } from "@src/settings";
 interface CostDisplayProps {
   costState: CostState;
   sessionStartTime: number;
-  isSessionActive: boolean;
 }
 
-export default function CostDisplay({ costState, sessionStartTime, isSessionActive }: CostDisplayProps) {
-  const { selectedModel } = useSession();
+export default function CostDisplay({ costState, sessionStartTime }: CostDisplayProps) {
+  const { activeState, selectedModel } = useSession();
   const [showDetails, setShowDetails] = useState(false);
   const [durationInSeconds, setDurationInSeconds] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout>(undefined);
 
   useEffect(() => {
-    if (!isSessionActive) {
+    if (activeState !== "active") {
       clearInterval(intervalRef.current);
       return;
     }
@@ -27,7 +26,7 @@ export default function CostDisplay({ costState, sessionStartTime, isSessionActi
     }, 1000);
 
     return () => clearInterval(intervalRef.current);
-  }, [sessionStartTime, isSessionActive]);
+  }, [sessionStartTime, activeState]);
 
   // Check if this is a token-based (OpenAI) or duration-based (Outspeed) cost
   const isDurationBased = selectedModel.provider === providers.Outspeed;

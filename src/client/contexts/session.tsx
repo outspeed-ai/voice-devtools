@@ -7,6 +7,9 @@ import { type SessionConfig } from "@src/model-config";
 import { models, providers, type Model } from "@src/settings";
 
 interface SessionContextType {
+  activeState: "inactive" | "loading" | "active";
+  setActiveState: (state: "inactive" | "loading" | "active") => void;
+
   availableModels: typeof models;
   selectedModel: Model;
   setSelectedModel: (model: Model) => void;
@@ -38,6 +41,7 @@ const getAvailableModels = () => {
 };
 
 export const ModelProvider: React.FC<SessionProviderProps> = ({ children }) => {
+  const [activeState, setActiveState] = useState<"inactive" | "loading" | "active">("inactive");
   const [selectedModel, setSelectedModel] = useState<Model>(models["MiniCPM-o-2_6"]);
   const [selectedAgent, setSelectedAgent] = useState<Agent>(agents.dentalAgent);
 
@@ -62,12 +66,17 @@ export const ModelProvider: React.FC<SessionProviderProps> = ({ children }) => {
   return (
     <SessionContext.Provider
       value={{
+        activeState,
+        setActiveState,
+
         availableModels: availableModels,
         selectedModel,
         setSelectedModel,
+
         availableAgents: agents,
         selectedAgent,
         setSelectedAgent,
+
         config,
         setConfig,
       }}

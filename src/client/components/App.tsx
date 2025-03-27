@@ -12,13 +12,24 @@ import { type SessionConfig } from "@src/model-config";
 import { Provider, providers } from "@src/settings";
 import Chat, { MessageBubbleProps } from "./Chat";
 import EventLog from "./EventLog";
+import SessionConfigComponent from "./SessionConfig";
 import SessionControls from "./SessionControls";
-import SessionDetailsPanel from "./SessionDetails";
+
+enum Tab {
+  SESSION_CONFIG = "session-config",
+  MOBILE_CHAT = "mobile-chat",
+  EVENTS = "events",
+}
+
+const tabs = [
+  { label: "Chat", value: Tab.MOBILE_CHAT, mobileOnly: true },
+  { label: "Session Config", value: Tab.SESSION_CONFIG },
+  { label: "Events", value: Tab.EVENTS },
+];
 
 export default function App() {
-  const { selectedModel } = useSession();
-  const [isSessionActive, setIsSessionActive] = useState(false);
-  const [loadingModel, setLoadingModel] = useState(false);
+  const [activeTab, setActiveTab] = useState<Tab>(Tab.SESSION_CONFIG);
+  const { activeState, setActiveState, selectedModel } = useSession();
   const [events, setEvents] = useState<OaiEvent[]>([]);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dcRef = useRef<RTCDataChannel | null>(null);
@@ -39,8 +50,10 @@ export default function App() {
 
   const navigate = useNavigate();
 
+  const isMobile = window.innerWidth < 768;
+
   useEffect(() => {
-    if (isSessionActive && iAudioRecorderRef.current) {
+    if (activeState === "active" && iAudioRecorderRef.current) {
       console.log("starting user speech audio recorder");
       iAudioRecorderRef.current.start();
     }
@@ -51,7 +64,7 @@ export default function App() {
         iAudioRecorderRef.current.stop();
       }
     };
-  }, [isSessionActive]);
+  }, [activeState]);
 
   const handleErrorEvent = (errorMessage: string, eventId: string, fullError: unknown) => {
     if (fullError) {
@@ -80,8 +93,9 @@ export default function App() {
 
     switch (event.type) {
       case "session.created":
-        setLoadingModel(false);
+        setActiveState("active");
         setSessionStartTime(Date.now());
+        setActiveTab(isMobile ? Tab.MOBILE_CHAT : Tab.EVENTS);
 
         pc.getSenders().forEach((sender) => {
           if (!sender.track) {
@@ -297,8 +311,7 @@ export default function App() {
 
   async function startSession(provider: Provider, config: SessionConfig) {
     try {
-      setLoadingModel(true);
-      setIsSessionActive(false);
+      setActiveState("loading");
       setCostState(getInitialCostState());
 
       iAudioRecorderRef.current?.dispose();
@@ -339,7 +352,6 @@ export default function App() {
         // reset remaining states
         setMessages(new Map());
         setEvents([]);
-        setIsSessionActive(true);
       });
 
       // handle events from the data channel
@@ -395,7 +407,8 @@ export default function App() {
     cleanup();
 
     // if this function was called because of a connection error, don't show a toast
-    if (!isSessionActive) {
+    // i.e we got an error even before the session could be active
+    if (activeState !== "active") {
       return;
     }
 
@@ -413,8 +426,7 @@ export default function App() {
   }
 
   function cleanup() {
-    setIsSessionActive(false);
-    setLoadingModel(false);
+    setActiveState("inactive");
     pcRef.current = null;
     dcRef.current = null;
     iAudioRecorderRef.current = null;
@@ -483,81 +495,80 @@ export default function App() {
   return (
     <main className="h-full flex flex-col px-4 pb-4 gap-4">
       <div className="flex grow gap-4 overflow-hidden">
-        <div className="flex-1 h-full min-h-0 rounded-xl bg-white overflow-y-auto">
-          <Chat
-            messages={messages}
-            isSessionActive={isSessionActive}
-            loadingModel={loadingModel}
-            sendTextMessage={sendTextMessage}
-          />
-        </div>
         <div className="hidden md:block flex-1 h-full min-h-0 rounded-xl bg-white overflow-y-auto">
-          <RightSide
-            isSessionActive={isSessionActive}
-            loadingModel={loadingModel}
+          <Chat messages={messages} sendTextMessage={sendTextMessage} />
+        </div>
+        <div className="flex-1 h-full min-h-0 rounded-xl bg-white overflow-y-auto">
+          <Tabs
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            isMobile={isMobile}
+            messages={messages}
+            sendTextMessage={sendTextMessage}
             events={events}
             costState={costState}
             sessionStartTime={sessionStartTime}
           />
         </div>
       </div>
-      <section className="h-10 shrink-0 ">
-        <SessionControls
-          startWebrtcSession={startSession}
-          stopWebrtcSession={stopSession}
-          loadingModel={loadingModel}
-          isSessionActive={isSessionActive}
-        />
+      <section className="shrink-0">
+        <SessionControls startWebrtcSession={startSession} stopWebrtcSession={stopSession} />
       </section>
     </main>
   );
 }
 
-interface RightSideProps {
-  isSessionActive: boolean;
-  loadingModel: boolean;
+interface TabsProps {
+  activeTab: Tab;
+  setActiveTab: (tab: Tab) => void;
+  isMobile: boolean;
+  messages: Map<string, MessageBubbleProps>;
+  sendTextMessage: (message: string) => void;
   events: OaiEvent[];
   costState: CostState;
   sessionStartTime: number | null;
 }
 
-const RightSide: React.FC<RightSideProps> = ({
-  isSessionActive,
-  loadingModel,
+const Tabs: React.FC<TabsProps> = ({
+  activeTab,
+  setActiveTab,
+  isMobile,
+  messages,
+  sendTextMessage,
   events,
   costState,
   sessionStartTime,
 }) => {
-  const [activeTab, setActiveTab] = useState("events"); // "events" | "session-details"
-
-  let heading;
-  if (activeTab === "events") {
-    heading = "Event Logs";
-  } else if (activeTab === "session-details") {
-    heading = "Session Details";
-  }
-
   return (
-    <div>
-      <div className="sticky top-0 z-10 text-base border-b bg-white p-4 flex items-center justify-between">
-        <h3 className="font-semibold">{heading}</h3>
-        <select className="border rounded-md p-2" onChange={(e) => setActiveTab(e.target.value)}>
-          <option value="events">Event Logs</option>
-          <option value="session-details">Session Details</option>
-        </select>
+    <div className="flex flex-col h-full">
+      <div className="flex gap-2 px-4 py-4 sticky top-0 bg-white">
+        {tabs.map((tab) => {
+          if (tab.mobileOnly && !isMobile) {
+            return null;
+          }
+
+          return (
+            <button
+              key={tab.value}
+              onClick={() => setActiveTab(tab.value)}
+              className={`pb-2 px-2 border-b-2 rounded-tl-md rounded-tr-md ${
+                activeTab === tab.value ? "border-black" : "border-transparent hover:border-gray-500"
+              } flex items-center gap-1`}
+            >
+              {tab.label}
+              {tab.value === Tab.EVENTS && <span>({events.length})</span>}
+            </button>
+          );
+        })}
       </div>
-      {activeTab === "events" && (
-        <EventLog
-          events={events}
-          loadingModel={loadingModel}
-          costState={costState}
-          sessionStartTime={sessionStartTime}
-          isSessionActive={isSessionActive}
-        />
-      )}
-      {activeTab === "session-details" && (
-        <SessionDetailsPanel isSessionActive={isSessionActive} loadingModel={loadingModel} />
-      )}
+
+      <div className="flex-1 overflow-y-auto">
+        {activeTab === Tab.MOBILE_CHAT && isMobile && <Chat messages={messages} sendTextMessage={sendTextMessage} />}
+        {activeTab === Tab.SESSION_CONFIG && <SessionConfigComponent />}
+        {activeTab === Tab.EVENTS && (
+          <EventLog events={events} costState={costState} sessionStartTime={sessionStartTime} />
+        )}
+      </div>
     </div>
   );
 };

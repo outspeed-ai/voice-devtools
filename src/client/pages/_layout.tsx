@@ -39,7 +39,7 @@ export default function RootLayout() {
             </Link>
             {selectedModel.provider === providers.Outspeed && (
               <Link to="/sessions" className="text-blue-600 hover:text-blue-800">
-                Sessions
+                History
               </Link>
             )}
           </div>

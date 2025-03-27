@@ -2,6 +2,7 @@ import { memo, useEffect, useRef, useState } from "react";
 import { AlertCircle, Send } from "react-feather";
 
 import Button from "@/components/ui/Button";
+import { useSession } from "@/contexts/session";
 
 import styles from "./style.module.css";
 
@@ -86,12 +87,11 @@ const MessageBubble: React.FC<MessageBubbleProps> = memo(({ text, audio, interru
 
 interface ChatProps {
   messages: Map<string, MessageBubbleProps>;
-  isSessionActive: boolean;
-  loadingModel: boolean;
   sendTextMessage: (message: string) => void;
 }
 
-const Chat: React.FC<ChatProps> = memo(({ messages, isSessionActive, loadingModel, sendTextMessage }) => {
+const Chat: React.FC<ChatProps> = memo(({ messages, sendTextMessage }) => {
+  const { activeState } = useSession();
   const [message, setMessage] = useState("");
 
   const scrolledManually = useRef(false);
@@ -135,7 +135,7 @@ const Chat: React.FC<ChatProps> = memo(({ messages, isSessionActive, loadingMode
   }, []);
 
   const handleSendClientEvent = () => {
-    if (!isSessionActive || loadingModel) {
+    if (activeState !== "active") {
       return;
     }
 
@@ -179,7 +179,7 @@ const Chat: React.FC<ChatProps> = memo(({ messages, isSessionActive, loadingMode
           onClick={handleSendClientEvent}
           icon={<Send height={16} />}
           className="rounded-full w-10 h-10 p-0"
-          disabled={!isSessionActive || loadingModel}
+          disabled={activeState !== "active"}
         />
       </div>
     </div>
