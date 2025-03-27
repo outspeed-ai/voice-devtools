@@ -1,5 +1,5 @@
 import { env } from "./client/config/env.js"; // "@/config/env.js" doesn't work for some reason
-import { models as modelConfig } from "./model-config.js";
+import { models as modelConfig, ModelName } from "./model-config.js";
 
 export type ProviderName = "Outspeed" | "OpenAI";
 
@@ -31,7 +31,12 @@ export const providers: Record<ProviderName, Provider> = {
   },
 };
 
-export const models = {
+export type Model = (typeof modelConfig)[keyof typeof modelConfig] & {
+  cost: { perMinute: number } | OpenAICosts;
+  provider: Provider;
+};
+
+export const models: Record<ModelName, Model> = {
   "MiniCPM-o-2_6": {
     ...modelConfig["MiniCPM-o-2_6"],
     cost: { perMinute: 0.01 },
@@ -89,5 +94,3 @@ export interface OpenAICosts {
     audio: number;
   };
 }
-
-export type Model = (typeof models)[keyof typeof models];

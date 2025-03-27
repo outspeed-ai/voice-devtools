@@ -1,4 +1,4 @@
-export type ModalName =
+export type ModelName =
   | "MiniCPM-o-2_6"
   | "gpt-4o-realtime-preview-2024-12-17"
   | "gpt-4o-mini-realtime-preview-2024-12-17";
@@ -20,7 +20,7 @@ type ModelValue = {
 const OUTSPEED_MINICPMO_VOICES = ["male", "female"];
 const OPENAI_VOICES = ["alloy", "ash", "ballad", "coral", "echo", "sage", "shimmer", "verse"];
 
-export const models: Record<ModalName, ModelValue> = {
+export const models: Record<ModelName, ModelValue> = {
   "MiniCPM-o-2_6": {
     label: "MiniCPM-o 2.6",
     voices: OUTSPEED_MINICPMO_VOICES,
