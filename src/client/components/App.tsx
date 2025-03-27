@@ -426,7 +426,7 @@ export default function App() {
           newMessages.set("session_audio", {
             role: "custom:session-recording",
             text: {
-              content: "here's the audio recording of this session.",
+              content: "Here's the audio recording of this session.",
               timestamp,
             },
             audio: {
