@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { useSession } from "@/contexts/session";
 import { OaiEvent } from "@/types";
 import { CostState } from "@/utils/cost-calc";
 import CostDisplay from "./CostDisplay";
@@ -20,7 +21,7 @@ const Event: React.FC<EventProps> = ({ event, timestamp }) => {
         className="flex items-center gap-2 cursor-pointer justify-between"
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <p className="flex items-center gap-2">
+        <p className="flex items-center gap-2 break-all whitespace-normal overflow-hidden">
           {isClient ? (
             <span className="text-[#7f5af0] text-lg">▲</span>
           ) : (
@@ -28,7 +29,9 @@ const Event: React.FC<EventProps> = ({ event, timestamp }) => {
           )}
           {event.type}
         </p>
-        <span className="text-gray-500">{timestamp}</span>
+        <span className="text-gray-500 break-words whitespace-normal overflow-hidden text-sm text-right">
+          {timestamp}
+        </span>
       </div>
       <div className={`p-2 rounded-md bg-gray-50 overflow-x-auto ${isExpanded ? "block" : "hidden"}`}>
         <pre className="text-xs">{JSON.stringify(event, null, 2)}</pre>
@@ -39,28 +42,23 @@ const Event: React.FC<EventProps> = ({ event, timestamp }) => {
 
 interface EventLogProps {
   events: OaiEvent[];
-  loadingModel: boolean;
   costState: CostState | null;
   sessionStartTime: number | null;
-  isSessionActive: boolean;
 }
 
-const EventLog: React.FC<EventLogProps> = ({
-  events,
-  loadingModel = false,
-  costState = null,
-  sessionStartTime,
-  isSessionActive,
-}) => {
+const EventLog: React.FC<EventLogProps> = ({ events, costState = null, sessionStartTime = null }) => {
+  const { activeState } = useSession();
+  const isLoading = activeState === "loading";
+
   return (
-    <div className="flex flex-col gap-2 overflow-x-auto p-4">
-      {costState && events.length > 0 && sessionStartTime && (
-        <CostDisplay costState={costState} sessionStartTime={sessionStartTime} isSessionActive={isSessionActive} />
+    <div className="h-full w-full flex flex-col gap-4 p-4">
+      {isLoading && <p className="text-gray-500">loading...</p>}
+
+      {!isLoading && events.length > 0 && costState && sessionStartTime && (
+        <CostDisplay costState={costState} sessionStartTime={sessionStartTime} />
       )}
 
-      {loadingModel && <div className="text-gray-500">loading model to GPU. please wait a moment...</div>}
-      {!loadingModel && events.length === 0 && <div className="text-gray-500">Awaiting events...</div>}
-      {!loadingModel && events.length > 0 && (
+      {!isLoading && events.length > 0 && (
         <>
           {events.map((event, index) => {
             // Generate a unique key using event.id if available, otherwise use a unique key based on type and index
@@ -70,6 +68,8 @@ const EventLog: React.FC<EventLogProps> = ({
           })}
         </>
       )}
+
+      {!isLoading && events.length === 0 && <p className="text-gray-500">waiting for events...</p>}
     </div>
   );
 };
