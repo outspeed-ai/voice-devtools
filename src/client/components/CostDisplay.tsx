@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 
 import { useSession } from "@/contexts/session";
 import { calculateTimeCosts, CostState } from "@/utils/cost-calc";
@@ -9,7 +9,7 @@ interface CostDisplayProps {
   sessionStartTime: number;
 }
 
-export default function CostDisplay({ costState, sessionStartTime }: CostDisplayProps) {
+const CostDisplay: React.FC<CostDisplayProps> = memo(({ costState, sessionStartTime }) => {
   const { activeState, selectedModel } = useSession();
   const [showDetails, setShowDetails] = useState(false);
   const [durationInSeconds, setDurationInSeconds] = useState(0);
@@ -180,7 +180,7 @@ export default function CostDisplay({ costState, sessionStartTime }: CostDisplay
       )}
     </div>
   );
-}
+});
 
 // Helper function to format time
 function formatDuration(seconds: number) {
@@ -192,3 +192,5 @@ function formatDuration(seconds: number) {
     .filter(Boolean)
     .join(" ");
 }
+
+export default CostDisplay;
