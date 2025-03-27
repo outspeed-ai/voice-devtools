@@ -80,13 +80,13 @@ const MessageBubble: React.FC<MessageBubbleProps> = memo(({ text, audio, interru
         )}
         {text && (
           <>
-            <div className={`text-xs ${
-              isSessionRecording
-                ? "text-purple-500"
-                : isUser
-                ? "text-gray-400"
-                : "text-gray-500"
-            } font-mono`}>{text.timestamp}</div>
+            <div
+              className={`text-xs ${
+                isSessionRecording ? "text-purple-500" : isUser ? "text-gray-400" : "text-gray-500"
+              } font-mono`}
+            >
+              {text.timestamp}
+            </div>
             <div className="whitespace-pre-wrap">{text.content}</div>
             {text.streaming && (
               <div className="flex mt-1">
@@ -161,7 +161,7 @@ const Chat: React.FC<ChatProps> = memo(({ messages, sendTextMessage }) => {
     return () => container.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleSendClientEvent = () => {
+  const handleSendText = () => {
     if (activeState !== "active") {
       return;
     }
@@ -192,7 +192,7 @@ const Chat: React.FC<ChatProps> = memo(({ messages, sendTextMessage }) => {
         <input
           onKeyDown={(e) => {
             if (e.key === "Enter" && message.trim()) {
-              handleSendClientEvent();
+              handleSendText();
             }
           }}
           autoFocus
@@ -203,7 +203,7 @@ const Chat: React.FC<ChatProps> = memo(({ messages, sendTextMessage }) => {
           onChange={(e) => setMessage(e.target.value)}
         />
         <Button
-          onClick={handleSendClientEvent}
+          onClick={handleSendText}
           icon={<Send height={16} />}
           className="rounded-full w-10 h-10 p-0"
           disabled={activeState !== "active"}
