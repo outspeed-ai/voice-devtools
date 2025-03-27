@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 import { env } from "@/config/env";
 import type { Agent } from "@src/agent-config";
@@ -9,6 +9,8 @@ import { models, providers, type Model } from "@src/settings";
 interface SessionContextType {
   activeState: "inactive" | "loading" | "active";
   setActiveState: (state: "inactive" | "loading" | "active") => void;
+
+  durationRef: React.RefObject<number>;
 
   availableModels: typeof models;
   selectedModel: Model;
@@ -40,10 +42,11 @@ const getAvailableModels = () => {
   return availableModels;
 };
 
-export const ModelProvider: React.FC<SessionProviderProps> = ({ children }) => {
+export const SessionProvider: React.FC<SessionProviderProps> = ({ children }) => {
   const [activeState, setActiveState] = useState<"inactive" | "loading" | "active">("inactive");
   const [selectedModel, setSelectedModel] = useState<Model>(models["MiniCPM-o-2_6"]);
   const [selectedAgent, setSelectedAgent] = useState<Agent>(agents.dentalAgent);
+  const durationRef = useRef(0);
 
   // initial state is the combined config of the selected model and instructions from the selected agent
   const [config, setConfig] = useState<SessionConfig>({
@@ -68,6 +71,8 @@ export const ModelProvider: React.FC<SessionProviderProps> = ({ children }) => {
       value={{
         activeState,
         setActiveState,
+
+        durationRef,
 
         availableModels: availableModels,
         selectedModel,

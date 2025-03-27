@@ -10,9 +10,9 @@ interface CostDisplayProps {
 }
 
 const CostDisplay: React.FC<CostDisplayProps> = memo(({ costState, sessionStartTime }) => {
-  const { activeState, selectedModel } = useSession();
+  const { activeState, selectedModel, durationRef } = useSession();
   const [showDetails, setShowDetails] = useState(false);
-  const [durationInSeconds, setDurationInSeconds] = useState(0);
+  const [durationInSeconds, setDurationInSeconds] = useState(durationRef.current);
   const intervalRef = useRef<NodeJS.Timeout>(undefined);
 
   useEffect(() => {
@@ -22,7 +22,9 @@ const CostDisplay: React.FC<CostDisplayProps> = memo(({ costState, sessionStartT
     }
 
     intervalRef.current = setInterval(() => {
-      setDurationInSeconds(Math.floor((Date.now() - sessionStartTime) / 1000));
+      const duration = Math.floor((Date.now() - sessionStartTime) / 1000);
+      setDurationInSeconds(duration);
+      durationRef.current = duration;
     }, 1000);
 
     return () => clearInterval(intervalRef.current);
