@@ -105,33 +105,6 @@ const SessionConfig: React.FC = () => {
               disabled={!isInactive}
             />
           </div>
-
-          {/* <div className="flex flex-col gap-1">
-            <label>Modalities (read-only):</label>
-            <div className="flex gap-4">
-              {Array.from(config.modalities).map((modality) => (
-                <div key={modality} className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked
-                    onChange={() => {}} // Modalities are currently fixed
-                    readOnly
-                  />
-                  <label>{modality}</label>
-                </div>
-              ))}
-            </div>
-          </div> */}
-
-          {/* <div className="flex flex-col gap-1">
-            <label htmlFor="provider">Provider:</label>
-            <input
-              id="provider"
-              readOnly
-              value={selectedModel.provider.name}
-              className="border p-2 rounded-md bg-gray-100"
-            />
-          </div> */}
         </div>
       </div>
     </section>
