@@ -7,6 +7,7 @@ interface ButtonProps {
   disabled?: boolean;
   icon?: React.ReactNode;
   className?: string;
+  type?: "button" | "submit" | "reset";
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -16,6 +17,7 @@ const Button: React.FC<ButtonProps> = ({
   disabled = false,
   icon,
   className = "",
+  type = "button",
 }) => {
   const baseClasses =
     " flex items-center justify-center gap-1 p-4 py-2 rounded-md font-medium transition-colors hover:opacity-90 transition-opacity disabled:opacity-50";
@@ -33,6 +35,7 @@ const Button: React.FC<ButtonProps> = ({
       className={twMerge(baseClasses, variantClasses[variant], disabled && "opacity-50 cursor-not-allowed", className)}
       onClick={onClick}
       disabled={disabled}
+      type={type}
     >
       {icon && <span className={children ? "mr-2" : ""}>{icon}</span>}
       {children}
