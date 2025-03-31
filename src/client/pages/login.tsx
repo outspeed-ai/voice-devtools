@@ -130,7 +130,7 @@ export default function Login() {
       <p className="text-center mt-8 text-sm text-blue-100/70">
         By signing in, you agree to our{" "}
         <a
-          href="https://outspeed.com/terms-of-use"
+          href="https://outspeed.com/terms"
           target="_blank"
           className="font-medium text-blue-300 hover:text-blue-200 transition-colors duration-200 underline-offset-2 hover:underline"
         >
@@ -138,7 +138,7 @@ export default function Login() {
         </a>{" "}
         and{" "}
         <a
-          href="https://outspeed.com/privacy-policy"
+          href="https://outspeed.com/privacy"
           target="_blank"
           className="font-medium text-blue-300 hover:text-blue-200 transition-colors duration-200 underline-offset-2 hover:underline"
         >
