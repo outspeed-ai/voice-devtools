@@ -3,6 +3,7 @@ import { Route, Routes } from "react-router";
 import { ProtectedRoutes, StrictlyPublicRoutes } from "./components/route-protection";
 import { env } from "./config/env";
 import RootLayout from "./pages/_layout";
+import Deploy from "./pages/Deploy";
 import Index from "./pages/index";
 import Login from "./pages/login";
 import Metrics from "./pages/metrics";
@@ -16,6 +17,7 @@ export default function Router() {
         <Route element={<RootLayout />}>
           <Route path="/" element={<Index />} />
           <Route path="/sessions" element={<Sessions />} />
+          <Route path="/deploy" element={<Deploy />} />
 
           {/* session_id will be passed as a query param to fetch metrics by session*/}
           <Route path="/metrics/" element={<Metrics />} />
