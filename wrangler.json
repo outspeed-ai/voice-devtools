@@ -1,0 +1,6 @@
+{
+    "name": "realtime-ek-server",
+    "main": "ekserver.js",
+    "compatibility_date": "2025-03-31",
+    "workers_dev": true
+}
