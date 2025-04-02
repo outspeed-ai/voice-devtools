@@ -91,7 +91,7 @@ export default function Deploy() {
             onToggle={() => toggleSection('cloudflare')}
           >
             <div className="space-y-4">
-              <p>1. Deploy your backend to Cloudflare Workers:</p>
+              <p>1. Deploy your {selectedModel.provider.name} voice agent's backend to Cloudflare Workers:</p>
               <div className="bg-gray-50 p-3 rounded-md border">
                 <code className="text-sm">npm run deploy</code>
               </div>
@@ -113,7 +113,7 @@ export default function Deploy() {
             <div className="space-y-4">
               <p>1. Clone and deploy the template repository:</p>
               <div className="bg-gray-50 p-3 rounded-md border">
-                <code className="text-sm">git clone https://github.com/outspeed-ai/voice-devtools-template.git</code>
+                <code className="text-sm">git clone https://github.com/outspeed-ai/outspeed-nextjs-template</code>
               </div>
               
               <p>2. Copy your agent's configuration to the <code>agent.ts</code> file in your repository:</p>
