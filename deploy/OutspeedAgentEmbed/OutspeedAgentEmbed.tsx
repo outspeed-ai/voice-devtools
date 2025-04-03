@@ -6,11 +6,12 @@ import { getEphemeralKey } from "@/helpers/ephemeral-key";
 import { startWebrtcSession } from "@/helpers/webrtc";
 import { OaiEvent } from "@/types";
 import { type SessionConfig } from "@src/model-config";
-import { providers, type Provider } from "@src/settings";
+import { models, providers, type Provider } from "@src/settings";
 import { useEffect, useRef, useState } from "react";
+import agent from "./deploy-config";
 
 const OutspeedAgentEmbed = () => {
-    const { activeState, setActiveState, selectedModel } = useSession();
+    const { activeState, setActiveState, selectedModel, setSelectedAgent, setSelectedModel } = useSession();
     const pcRef = useRef<RTCPeerConnection | null>(null);
     const dcRef = useRef<RTCDataChannel | null>(null);
     const [messages, setMessages] = useState<Map<string, MessageBubbleProps>>(new Map());
@@ -289,6 +290,10 @@ const OutspeedAgentEmbed = () => {
     async function startSession(provider: Provider, config: SessionConfig) {
       try {
         setActiveState("loading");
+
+        // set model and agent
+        setSelectedAgent(agent)
+        setSelectedModel(models[agent.modelName])
   
         iAudioRecorderRef.current?.dispose();
         oAudioRecorderRef.current?.dispose();

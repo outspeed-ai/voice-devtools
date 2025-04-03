@@ -41,10 +41,11 @@ function AccordionSection({ title, children, isOpen, onToggle }: AccordionSectio
 }
 
 export default function Deploy() {
-  const { selectedModel } = useSession();
+  const { selectedModel, selectedAgent } = useSession();
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     step1: true,
     step2: false,
+    step3: false,
   });
 
   const toggleSection = (section: string) => {
@@ -54,6 +55,16 @@ export default function Deploy() {
     }));
   };
 
+  const configObject = `
+const agent: Agent = {
+  id: "${selectedAgent.id}",
+  name: "${selectedAgent.name}",
+  modelName: '${selectedModel.sessionConfig.model}',
+  instructions: \`${selectedAgent.instructions}\`,
+  tools: ${JSON.stringify(selectedAgent.tools, null, 2)},
+};
+`;
+
   return (
     <div className="h-full overflow-y-auto">
       <div className="max-w-4xl mx-auto p-8">
@@ -61,9 +72,26 @@ export default function Deploy() {
         
         <div className="space-y-4">
           <AccordionSection
-            title="Step 1: Deploy Your Agent"
+            title="Step 1: Configure Your Agent"
             isOpen={openSections.step1}
             onToggle={() => toggleSection('step1')}
+          >
+            <div className="space-y-4">
+              <p>Copy the following configuration and place it in <code>deploy/OutspeedAgentEmbed/deploy-config.ts</code>:</p>
+              <div className="rounded-lg overflow-hidden">
+                <SyntaxHighlighter language="typescript" style={atomDark}>
+                  {configObject}
+                </SyntaxHighlighter>
+              </div>
+              
+              <p className="text-sm text-gray-600">This configuration uses your currently selected agent and model settings.</p>
+            </div>
+          </AccordionSection>
+
+          <AccordionSection
+            title="Step 2: Deploy Your Agent"
+            isOpen={openSections.step2}
+            onToggle={() => toggleSection('step2')}
           >
             <div className="space-y-4">
               <p>1. Make sure you have the required environment variables in your <code>.env</code> file:</p>
@@ -83,12 +111,12 @@ export default function Deploy() {
           </AccordionSection>
 
           <AccordionSection
-            title="Step 2: Embed the Agent"
-            isOpen={openSections.step2}
-            onToggle={() => toggleSection('step2')}
+            title="Step 3: Embed the Agent"
+            isOpen={openSections.step3}
+            onToggle={() => toggleSection('step3')}
           >
             <div className="space-y-4">
-              <p>Copy the following code to your webpage, replacing <code>YOUR_WORKER_URL</code> with the URL you received in Step 1:</p>
+              <p>Copy the following code to your webpage, replacing <code>YOUR_WORKER_URL</code> with the URL you received in Step 2:</p>
               <div className="rounded-lg overflow-hidden">
                 <SyntaxHighlighter language="html" style={atomDark}>
                   {embedCodeSnippet}
