@@ -361,6 +361,7 @@ export default function App() {
       for (const sender of senders) {
         if (sender.track?.kind === "audio") {
           inputAudioTrackRef.current = sender.track;
+          inputAudioTrackRef.current.enabled = isMuted;
           break;
         }
       }
