@@ -25,3 +25,10 @@ pnpm-debug.log*
 
 # local files & folders
 *.local
+
+# deploy dirs
+.wrangler
+.outspeed
+
+# editor dirs
+.vscode
