@@ -1,5 +1,4 @@
 import { useSession } from "@/contexts/session";
-import { providers } from "@src/settings";
 import { useState } from "react";
 import { ChevronDown, ChevronRight } from "react-feather";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
@@ -43,7 +42,6 @@ function AccordionSection({ title, children, isOpen, onToggle }: AccordionSectio
 
 export default function Deploy() {
   const { selectedModel } = useSession();
-  const isOutspeed = selectedModel.provider === providers.Outspeed;
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     step1: true,
     step2: false,
