@@ -9,13 +9,13 @@
     "build:server": "tsc -b && vite build --outDir dist/server --ssr ./src/client/entry-server.jsx",
     "devinstall": "zx ../../devinstall.mjs -- node src/server.js --dev",
     "lint": "eslint . --ext .js,.jsx --fix",
+    "analyze": "ANALYZE=true npm run build:client",
     "deploy": "node scripts/deploy.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",
     "@tailwindcss/vite": "^4.1.1",
     "@tanstack/react-query": "^5.66.9",
-    "@types/react-syntax-highlighter": "^15.5.13",
     "axios": "^1.7.9",
     "chalk": "^5.3.0",
     "dotenv": "^16.4.7",
@@ -37,6 +37,7 @@
     "@types/node": "^22.13.10",
     "@types/react": "^19.0.12",
     "@types/react-dom": "^19.0.4",
+    "@types/react-syntax-highlighter": "^15.5.13",
     "@types/semver": "^7.5.8",
     "@vitejs/plugin-react": "^4.3.4",
     "eslint": "^9.22.0",
