@@ -108,6 +108,22 @@ export default function App() {
         setSessionStartTime(Date.now());
         setActiveTab(isMobile ? Tab.MOBILE_CHAT : Tab.EVENTS);
 
+        // OpenAI new semantic VAD
+        // docs: https://platform.openai.com/docs/guides/realtime-vad#semantic-vad
+        // if (selectedModel.provider === providers.OpenAI) {
+        //   sendClientEvent({
+        //     type: "session.update",
+        //     session: {
+        //       turn_detection: {
+        //         type: "semantic_vad",
+        //         eagerness: "auto", // optional
+        //         create_response: true, // only in conversation mode
+        //         interrupt_response: true, // only in conversation mode
+        //       },
+        //     },
+        //   });
+        // }
+
         pc.getSenders().forEach((sender) => {
           if (!sender.track) {
             console.error("error: session.created - No track found");
@@ -186,6 +202,14 @@ export default function App() {
       case "input_audio_buffer.speech_started":
         if (!iAudioRecorderRef.current) {
           console.error("error: input_audio_buffer.speech_started - audio recorder not found");
+          break;
+        }
+
+        if (currentUserSpeechItemRef.current) {
+          /**
+           * when semantic VAD is on, we receive multiple input_audio_buffer.speech_started event
+           * before we receive a final input_audio_buffer.speech_stopped.
+           */
           break;
         }
 
