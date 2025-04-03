@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FloatingTalkButton Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://realtime-ek-server.voice-agent.workers.dev/floating-talk-button.css">
+
+    <!-- Add some basic styling -->
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            line-height: 1.5;
+            margin: 0;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #2563eb;
+        }
+        p {
+            color: #4b5563;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Voice Agent Test Page</h1>
+        <p>To test your agent, replace the JavaScript and CSS links with the ones you receive after running <code>npm run deploy</code>.</p>
+        <p>Once set up, you'll see a floating icon on the bottom right corner. Click it to get started with the chat interface!</p>
+    </div>
+
+    <!-- Embed the FloatingTalkButton -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://realtime-ek-server.voice-agent.workers.dev/floating-talk-button.iife.js"></script>
+    <script>
+        window.addEventListener('load', function() {
+            window.FloatingTalkButton.init({
+                // Add any configuration options here
+            });
+        });
+    </script>
+</body>
+</html> 

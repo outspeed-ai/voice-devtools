@@ -12,6 +12,9 @@ if (ANALYZE) {
 
 // https://vite.dev/config/
 export default {
+  define: {
+    '__BACKEND_SERVER_URL__': JSON.stringify('')
+  },
   resolve: {
     alias: {
       "@": join(__dirname, "src/client"),

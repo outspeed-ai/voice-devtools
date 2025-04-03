@@ -1,3 +1,4 @@
+import { SessionProvider } from '@/contexts/session';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import FloatingTalkButton from './FloatingTalkButton';
@@ -6,11 +7,11 @@ class TalkButtonEmbed {
   private container: HTMLElement | null = null;
   private root: ReturnType<typeof createRoot> | null = null;
 
-  constructor(config = {}) {
-    this.init(config);
+  constructor() {
+    this.init();
   }
 
-  private init(config: any) {
+  private init() {
     // Clean up any existing instance
     this.destroy();
 
@@ -23,7 +24,9 @@ class TalkButtonEmbed {
     this.root = createRoot(this.container);
     this.root.render(
       <React.StrictMode>
-        <FloatingTalkButton />
+        <SessionProvider>
+          <FloatingTalkButton />
+        </SessionProvider>
       </React.StrictMode>
     );
   }
@@ -42,7 +45,7 @@ class TalkButtonEmbed {
 
 // Export global API
 window.FloatingTalkButton = {
-  init: (config = {}) => new TalkButtonEmbed(config),
+  init: () => new TalkButtonEmbed(),
   destroy: () => {
     // Implementation if needed
   },
