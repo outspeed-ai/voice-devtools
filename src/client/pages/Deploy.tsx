@@ -5,41 +5,19 @@ import { ChevronDown, ChevronRight } from "react-feather";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
-const openAICodeSnippet = `import { RealtimeClient } from "@outspeed-ai/voice-devtools";
+const embedCodeSnippet = `<!-- Add React dependencies -->
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 
-const client = new RealtimeClient({
-  apiKey: "your-openai-api-key",
-  model: "gpt-4-turbo-preview",
-  provider: "openai",
-  // Optional: Configure voice settings
-  voice: {
-    provider: "elevenlabs",
-    voiceId: "your-voice-id",
-    apiKey: "your-elevenlabs-api-key"
-  }
-});
-
-// Start a conversation
-await client.start();
-`;
-
-const outspeedCodeSnippet = `import { RealtimeClient } from "@outspeed-ai/voice-devtools";
-
-const client = new RealtimeClient({
-  apiKey: "your-outspeed-api-key",
-  model: "gpt-4",
-  provider: "outspeed",
-  // Optional: Configure voice settings
-  voice: {
-    provider: "elevenlabs",
-    voiceId: "your-voice-id",
-    apiKey: "your-elevenlabs-api-key"
-  }
-});
-
-// Start a conversation
-await client.start();
-`;
+<!-- Add the FloatingTalkButton script -->
+<script src="YOUR_WORKER_URL/floating-talk-button.iife.js"></script>
+<script>
+    window.addEventListener('load', function() {
+        window.FloatingTalkButton.init({
+            // Add any configuration options here
+        });
+    });
+</script>`;
 
 interface AccordionSectionProps {
   title: string;
@@ -66,10 +44,9 @@ function AccordionSection({ title, children, isOpen, onToggle }: AccordionSectio
 export default function Deploy() {
   const { selectedModel } = useSession();
   const isOutspeed = selectedModel.provider === providers.Outspeed;
-  const codeSnippet = isOutspeed ? outspeedCodeSnippet : openAICodeSnippet;
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    cloudflare: true,
-    vercel: false,
+    step1: true,
+    step2: false,
   });
 
   const toggleSection = (section: string) => {
@@ -86,42 +63,41 @@ export default function Deploy() {
         
         <div className="space-y-4">
           <AccordionSection
-            title="Deploy on Cloudflare"
-            isOpen={openSections.cloudflare}
-            onToggle={() => toggleSection('cloudflare')}
+            title="Step 1: Deploy Your Agent"
+            isOpen={openSections.step1}
+            onToggle={() => toggleSection('step1')}
           >
             <div className="space-y-4">
-              <p>1. Deploy your {selectedModel.provider.name} voice agent's backend to Cloudflare Workers:</p>
+              <p>1. Make sure you have the required environment variables in your <code>.env</code> file:</p>
+              <div className="bg-gray-50 p-3 rounded-md border">
+                <code className="text-sm">OPENAI_API_KEY=your_key_here</code>
+                <br />
+                <code className="text-sm">OUTSPEED_API_KEY=your_key_here</code>
+              </div>
+              
+              <p>2. Deploy your agent to Cloudflare Workers:</p>
               <div className="bg-gray-50 p-3 rounded-md border">
                 <code className="text-sm">npm run deploy</code>
               </div>
               
-              <p>2. Copy the following code to your webpage to connect to the backend:</p>
-              <div className="rounded-lg overflow-hidden">
-                <SyntaxHighlighter language="typescript" style={atomDark}>
-                  {codeSnippet}
-                </SyntaxHighlighter>
-              </div>
+              <p className="text-sm text-gray-600">This will deploy your agent and provide you with a Worker URL. Save this URL for the next step.</p>
             </div>
           </AccordionSection>
 
           <AccordionSection
-            title="Deploy on Vercel"
-            isOpen={openSections.vercel}
-            onToggle={() => toggleSection('vercel')}
+            title="Step 2: Embed the Agent"
+            isOpen={openSections.step2}
+            onToggle={() => toggleSection('step2')}
           >
             <div className="space-y-4">
-              <p>1. Clone and deploy the template repository:</p>
-              <div className="bg-gray-50 p-3 rounded-md border">
-                <code className="text-sm">git clone https://github.com/outspeed-ai/outspeed-nextjs-template</code>
-              </div>
-              
-              <p>2. Copy your agent's configuration to the <code>agent.ts</code> file in your repository:</p>
+              <p>Copy the following code to your webpage, replacing <code>YOUR_WORKER_URL</code> with the URL you received in Step 1:</p>
               <div className="rounded-lg overflow-hidden">
-                <SyntaxHighlighter language="typescript" style={atomDark}>
-                  {codeSnippet}
+                <SyntaxHighlighter language="html" style={atomDark}>
+                  {embedCodeSnippet}
                 </SyntaxHighlighter>
               </div>
+              
+              <p className="text-sm text-gray-600">Once added, you'll see a floating icon on the bottom right corner of your webpage. Click it to start interacting with your agent!</p>
             </div>
           </AccordionSection>
         </div>

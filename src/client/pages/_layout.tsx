@@ -1,6 +1,5 @@
 import { Link, Outlet } from "react-router";
 
-import FloatingTalkButton from "@/components/FloatingTalkButton/FloatingTalkButton";
 import Button from "@/components/ui/Button";
 import { useSession } from "@/contexts/session";
 import { useUpdateCheck } from "@/utils/update-check";
@@ -52,7 +51,6 @@ export default function RootLayout() {
       <div className="pt-16 flex-1 overflow-hidden">
         <Outlet />
       </div>
-      <FloatingTalkButton />
     </div>
   );
 }

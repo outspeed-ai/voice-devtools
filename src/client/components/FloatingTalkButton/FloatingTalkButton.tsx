@@ -26,8 +26,6 @@ const FloatingTalkButton = () => {
     const currentUserSpeechItemRef = useRef<{ startTime: number; id: string } | null>(null);
     const currentBotSpeechItemRef = useRef<{ startTime: number; id: string } | null>(null);
   
-    const isMobile = window.innerWidth < 768;
-  
     useEffect(() => {
       if (activeState === "active" && iAudioRecorderRef.current) {
         console.log("starting user speech audio recorder");

@@ -29,6 +29,7 @@ pnpm-debug.log*
 # deploy dirs
 .wrangler
 .outspeed
+.dev.vars
 
 # editor dirs
 .vscode

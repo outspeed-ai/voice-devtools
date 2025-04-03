@@ -1,3 +1,6 @@
+// vite-env.d.ts
+declare const __BACKEND_SERVER_URL__: string
+
 import { toast, type ExternalToast } from "sonner";
 
 import { env } from "@/config/env";
@@ -29,7 +32,7 @@ export const getEphemeralKey = async (provider: Provider, config: SessionConfig)
 };
 
 const getEphemeralKeyServer = async (provider: Provider, config: SessionConfig) => {
-  const tokenResponse = await fetch(`/token`, {
+  const tokenResponse = await fetch(`${__BACKEND_SERVER_URL__}/token`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(config),

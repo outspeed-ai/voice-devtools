@@ -1,9 +1,9 @@
 {
-    "name": "realtime-ek-server",
-    "main": "ekserver.js",
-    "compatibility_date": "2025-03-31",
-    "workers_dev": true,
-    "assets": {
-        "directory": ".outspeed"
-    }
+  "name": "outspeed-server",
+  "main": "deploy/outspeed-server.js",
+  "compatibility_date": "2025-03-31",
+  "workers_dev": true,
+  "assets": {
+    "directory": ".outspeed"
+  }
 }
