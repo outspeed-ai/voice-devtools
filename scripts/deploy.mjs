@@ -48,6 +48,19 @@ try {
   }
 }
 
+// Build the embeddable version
+console.log(chalk.cyan('\n🔨 Building embeddable script...'));
+try {
+  // Build the embed script using Vite
+  execSync('node scripts/build-embed.mjs', { stdio: 'inherit' });
+  
+  console.log(chalk.green('✓ Embeddable script built successfully'));
+} catch (error) {
+  console.error(chalk.red('\n❌ Failed to build embeddable script:'));
+  console.error(error.message);
+  process.exit(1);
+}
+
 // Cloudflare deployment message
 console.log(chalk.cyan('\n🚀 Deploying to Cloudflare Workers...'));
 
