@@ -21,5 +21,4 @@ export const env = {
   SUPABASE_URL: getEnvVar("OUTSPEED_SUPABASE_URL") as string | undefined,
   SUPABASE_ANON_KEY: getEnvVar("OUTSPEED_SUPABASE_ANON_KEY") as string | undefined,
   OUTSPEED_API_KEY: getEnvVar("OUTSPEED_API_KEY") as string | undefined,
-  OUTSPEED_SERVER_URL: getEnvVar("OUTSPEED_SERVER_URL") as string | ""
 };

@@ -1,7 +1,7 @@
 import { SessionProvider } from '@/contexts/session';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import FloatingTalkButton from './FloatingTalkButton';
+import OutspeedAgentEmbed from './OutspeedAgentEmbed';
 
 class TalkButtonEmbed {
   private container: HTMLElement | null = null;
@@ -25,7 +25,7 @@ class TalkButtonEmbed {
     this.root.render(
       <React.StrictMode>
         <SessionProvider>
-          <FloatingTalkButton />
+          <OutspeedAgentEmbed />
         </SessionProvider>
       </React.StrictMode>
     );
@@ -44,7 +44,7 @@ class TalkButtonEmbed {
 }
 
 // Export global API
-window.FloatingTalkButton = {
+window.OutspeedAgentEmbed = {
   init: () => new TalkButtonEmbed(),
   destroy: () => {
     // Implementation if needed
