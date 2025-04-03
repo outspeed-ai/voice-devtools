@@ -13,6 +13,15 @@ import { build } from 'vite';
 // Load environment variables
 config();
 
+// Debug environment variables
+console.log(chalk.dim('\nEnvironment Variables:'));
+console.log(chalk.dim('OPENAI_API_KEY:'), process.env.OPENAI_API_KEY 
+  ? `${process.env.OPENAI_API_KEY.slice(0, 3)}...${process.env.OPENAI_API_KEY.slice(-4)}` 
+  : 'Not set');
+console.log(chalk.dim('OUTSPEED_API_KEY:'), process.env.OUTSPEED_API_KEY 
+  ? `${process.env.OUTSPEED_API_KEY.slice(0, 3)}...${process.env.OUTSPEED_API_KEY.slice(-4)}` 
+  : 'Not set');
+
 // Pretty print Outspeed
 console.log(chalk.blue(figlet.textSync('Outspeed', {
   font: 'Standard',
@@ -27,12 +36,13 @@ async function deployServer() {
   try {
     const deployCommand = [
       'npx wrangler deploy',
-      `--var OPENAI_API_KEY:"${process.env.OPENAI_API_KEY}"`,
-      `--var OUTSPEED_API_KEY:"${process.env.OUTSPEED_API_KEY}"`
+      `--var OPENAI_API_KEY:${process.env.OPENAI_API_KEY}`,
+      `--var OUTSPEED_API_KEY:${process.env.OUTSPEED_API_KEY}`
     ].join(' ');
 
-    console.log(chalk.dim('─────────────────────────────────────────────────────────────'));
-    console.log(chalk.dim('Deployment started'));
+    console.log(chalk.dim('┌─────────────────────────────────────────────────────────────┐'));
+    console.log(chalk.dim('│                     Deployment started                      │'));
+    console.log(chalk.dim('└─────────────────────────────────────────────────────────────┘'));
     
     const deployOutput = execSync(deployCommand, { 
       encoding: 'utf-8',
@@ -59,6 +69,8 @@ async function buildEmbed(serverUrl) {
     mode: 'production',
     configFile: false,
     define: {
+      'process.env': JSON.stringify(''),
+      'process.env.NODE_ENV': JSON.stringify('production'),
       '__BACKEND_SERVER_URL__': JSON.stringify(serverUrl)
     },
     plugins: [
@@ -70,9 +82,9 @@ async function buildEmbed(serverUrl) {
     ],
     build: {
       lib: {
-        entry: join(process.cwd(), 'src/client/components/FloatingTalkButton/embed.tsx'),
-        name: 'FloatingTalkButton',
-        fileName: 'floating-talk-button',
+        entry: join(process.cwd(), 'deploy/OutspeedAgentEmbed/embed.tsx'),
+        name: 'OutspeedAgentEmbed',
+        fileName: 'outspeed-agent-embed',
         formats: ['iife'],
       },
       rollupOptions: {
@@ -104,7 +116,13 @@ async function deployAssets(workerUrl) {
   console.log(chalk.cyan('\n📦 Deploying static assets...'));
   
   try {
-    const deployCommand = 'npx wrangler deploy';
+    const deployCommand = [
+      'npx wrangler deploy',
+      '--assets=.outspeed',
+      `--var OPENAI_API_KEY:${process.env.OPENAI_API_KEY}`,
+      `--var OUTSPEED_API_KEY:${process.env.OUTSPEED_API_KEY}`
+    ].join(' ');
+
     execSync(deployCommand, { stdio: 'inherit' });
   } catch (error) {
     console.error(chalk.red('\n❌ Static assets deployment failed:'));
@@ -161,12 +179,13 @@ async function main() {
   await deployAssets(workerUrl);
 
   // Print final embed script information
-  console.log(chalk.dim('\n─────────────────────────────────────────────────────────────'));
-  console.log(chalk.dim('Deployment complete'));
+  console.log(chalk.dim('┌─────────────────────────────────────────────────────────────┐'));
+  console.log(chalk.dim('│                    Deployment complete                      │'));
+  console.log(chalk.dim('└─────────────────────────────────────────────────────────────┘'));
   
   console.log(chalk.cyan('\n📜 Embed script:'));
-  console.log(chalk.blue(`<script src="${workerUrl}/floating-talk-button.iife.js"></script>`));
-  console.log(chalk.blue(`<script>window.FloatingTalkButton.init();</script>`));
+  console.log(chalk.blue(`<script src="${workerUrl}/outspeed-agent-embed.iife.js"></script>`));
+  console.log(chalk.blue(`<script>window.OutspeedAgentEmbed.init();</script>`));
 }
 
 // Run the deployment process

@@ -9,7 +9,7 @@ import { type SessionConfig } from "@src/model-config";
 import { providers, type Provider } from "@src/settings";
 import { useEffect, useRef, useState } from "react";
 
-const FloatingTalkButton = () => {
+const OutspeedAgentEmbed = () => {
     const { activeState, setActiveState, selectedModel } = useSession();
     const pcRef = useRef<RTCPeerConnection | null>(null);
     const dcRef = useRef<RTCDataChannel | null>(null);
@@ -523,4 +523,4 @@ const FloatingTalkButton = () => {
     );
   }
 
-export default FloatingTalkButton;
+export default OutspeedAgentEmbed;

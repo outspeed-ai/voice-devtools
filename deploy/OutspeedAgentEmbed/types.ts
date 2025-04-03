@@ -6,7 +6,7 @@ export interface TalkButtonConfig {
 
 declare global {
   interface Window {
-    FloatingTalkButton: {
+    OutspeedAgentEmbed: {
       init: (config?: TalkButtonConfig) => void;
       destroy: () => void;
     };

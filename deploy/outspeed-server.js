@@ -33,7 +33,16 @@ export default {
     // Add test endpoint
     if (request.method === "GET" && url.pathname === "/test") {
       console.log('🧪 Test endpoint called');
-      return new Response(JSON.stringify({ status: "ok", message: "Test endpoint working" }), {
+      return new Response(JSON.stringify({ 
+        status: "ok", 
+        message: "Test endpoint modified",
+        timestamp: new Date().toISOString(),
+        environment: {
+          workers_dev: env.WORKERS_DEV || false,
+          has_openai_key: !!env.OPENAI_API_KEY,
+          has_outspeed_key: !!env.OUTSPEED_API_KEY
+        }
+      }), {
         headers: { 
           ...corsHeaders,
           "Content-Type": "application/json" 
