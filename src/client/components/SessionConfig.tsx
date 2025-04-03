@@ -139,7 +139,7 @@ const SessionConfig: React.FC<SessionConfigProps> = ({ sendClientEvent }) => {
             disabled={activeState === "loading"}
           >
             <option value="server_vad">Server VAD</option>
-            <option value="semantic_vad">Semantic VAD</option>
+            <option value="semantic_vad">Semantic VAD (beta)</option>
           </select>
         </div>
       </div>
