@@ -42,6 +42,9 @@ export default function RootLayout() {
                 History
               </Link>
             )}
+            <Link to="/deploy" className="text-blue-600 hover:text-blue-800">
+              Deploy
+            </Link>
           </div>
         </div>
       </nav>
