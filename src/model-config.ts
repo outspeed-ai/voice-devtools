@@ -47,7 +47,7 @@ export const models: Record<ModelName, ModelValue> = {
   },
   "Sesame-1b": {
     label: "Sesame 1b",
-    voices: ["male", "female"],
+    voices: ["female"],
     sessionConfig: {
       model: "Sesame-1b",
       modalities: ["audio", "text"],
