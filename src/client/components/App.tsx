@@ -29,7 +29,7 @@ const tabs = [
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>(Tab.SESSION_CONFIG);
-  const { activeState, setActiveState, selectedModel } = useSession();
+  const { activeState, setActiveState, config, setConfig, selectedModel } = useSession();
   const [events, setEvents] = useState<OaiEvent[]>([]);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dcRef = useRef<RTCDataChannel | null>(null);
@@ -112,22 +112,6 @@ export default function App() {
         setSessionStartTime(Date.now());
         setActiveTab(isMobile ? Tab.MOBILE_CHAT : Tab.EVENTS);
 
-        // OpenAI new semantic VAD
-        // docs: https://platform.openai.com/docs/guides/realtime-vad#semantic-vad
-        // if (selectedModel.provider === providers.OpenAI) {
-        //   sendClientEvent({
-        //     type: "session.update",
-        //     session: {
-        //       turn_detection: {
-        //         type: "semantic_vad",
-        //         eagerness: "auto", // optional
-        //         create_response: true, // only in conversation mode
-        //         interrupt_response: true, // only in conversation mode
-        //       },
-        //     },
-        //   });
-        // }
-
         pc.getSenders().forEach((sender) => {
           if (!sender.track) {
             console.error("error: session.created - No track found");
@@ -137,6 +121,14 @@ export default function App() {
           // input track will be muted so we need to unmute it
           sender.track.enabled = true;
         });
+        break;
+
+      case "session.updated":
+        if (event.session) {
+          setConfig({ ...config, ...event.session });
+        } else {
+          console.error("error: session.update - no session found in event payload");
+        }
         break;
 
       case "response.done":
@@ -601,6 +593,7 @@ export default function App() {
             isMobile={isMobile}
             messages={messages}
             sendTextMessage={sendTextMessage}
+            sendClientEvent={sendClientEvent}
             events={events}
             costState={costState}
             sessionStartTime={sessionStartTime}
@@ -622,6 +615,7 @@ export default function App() {
 interface TabsProps {
   activeTab: Tab;
   setActiveTab: (tab: Tab) => void;
+  sendClientEvent: (event: OaiEvent) => void;
   isMobile: boolean;
   messages: Map<string, MessageBubbleProps>;
   sendTextMessage: (message: string) => void;
@@ -633,6 +627,7 @@ interface TabsProps {
 const Tabs: React.FC<TabsProps> = ({
   activeTab,
   setActiveTab,
+  sendClientEvent,
   isMobile,
   messages,
   sendTextMessage,
@@ -665,7 +660,7 @@ const Tabs: React.FC<TabsProps> = ({
 
       <div className="flex-1 overflow-y-auto">
         {activeTab === Tab.MOBILE_CHAT && isMobile && <Chat messages={messages} sendTextMessage={sendTextMessage} />}
-        {activeTab === Tab.SESSION_CONFIG && <SessionConfigComponent />}
+        {activeTab === Tab.SESSION_CONFIG && <SessionConfigComponent sendClientEvent={sendClientEvent} />}
         {activeTab === Tab.EVENTS && (
           <EventLog events={events} costState={costState} sessionStartTime={sessionStartTime} />
         )}
