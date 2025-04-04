@@ -1,16 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { useNavigate } from "react-router";
 
 import { Alert, Button, Card } from "@/components/ui";
-import { fetchSessions } from "@/services/api";
-
+import { fetchSessions, getAudioUrl, type SessionResponse } from "@/services/api";
 import { formatTimestamp } from "@/utils/date";
+import { PlayCircle } from "react-feather";
 
 export default function Sessions() {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(5);
-  const navigate = useNavigate();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["sessions", page, pageSize],
@@ -26,7 +24,7 @@ export default function Sessions() {
 
   return (
     <div className="container h-full overflow-y-auto mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Your Sessions</h1>
+      <h1 className="text-2xl font-bold mb-6">Your Sessions ({sessions.length})</h1>
 
       {error && <Alert type="error">{error.message || "Failed to load sessions. Please try again later."}</Alert>}
 
@@ -39,63 +37,7 @@ export default function Sessions() {
           {sessions.length === 0 ? (
             <Alert type="info">No sessions found.</Alert>
           ) : (
-            sessions.map((session) => (
-              <Card key={session.id} title={`Session ID: ${session.id}`} className="mb-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="mb-2">
-                      <strong className="text-gray-700">Created At:</strong>{" "}
-                      <span className="text-gray-900">{formatTimestamp(session.created)}</span>
-                    </p>
-                    <p className="mb-2">
-                      <strong className="text-gray-700">Model:</strong>{" "}
-                      <span className="text-gray-900">{session.model}</span>
-                    </p>
-                    <p className="mb-2">
-                      <strong className="text-gray-700">Modalities:</strong>{" "}
-                      <span className="text-gray-900">{session.modalities.join(", ")}</span>
-                    </p>
-                    <p className="mb-2">
-                      <strong className="text-gray-700">Voice:</strong>{" "}
-                      <span className="text-gray-900">{session.voice}</span>
-                    </p>
-                  </div>
-                  <div>
-                    <p className="mb-2">
-                      <strong className="text-gray-700">Temperature:</strong>{" "}
-                      <span className="text-gray-900">{session.temperature}</span>
-                    </p>
-                    <p className="mb-2">
-                      <strong className="text-gray-700">Input Audio Format:</strong>{" "}
-                      <span className="text-gray-900">{session.input_audio_format}</span>
-                    </p>
-                    <p className="mb-2">
-                      <strong className="text-gray-700">Output Audio Format:</strong>{" "}
-                      <span className="text-gray-900">{session.output_audio_format}</span>
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-4">
-                  <p className="mb-1">
-                    <strong className="text-gray-700">Instructions:</strong>
-                  </p>
-                  <div className="bg-gray-50 p-3 rounded-md max-h-40 overflow-y-auto text-sm text-gray-800 border border-gray-200 whitespace-pre-line">
-                    {session.instructions}
-                  </div>
-                </div>
-
-                <div className="flex justify-end mt-4">
-                  <Button
-                    variant="outline"
-                    onClick={() => navigate(`/metrics?session_id=${session.id}`)}
-                    className="hover:bg-blue-50"
-                  >
-                    View Metrics
-                  </Button>
-                </div>
-              </Card>
-            ))
+            sessions.map((session) => <SessionCard key={session.config.id} session={session} />)
           )}
 
           {/* Pagination */}
@@ -149,5 +91,111 @@ export default function Sessions() {
         </>
       )}
     </div>
+  );
+}
+
+interface SessionCardProps {
+  session: SessionResponse["sessions"][0];
+}
+
+function SessionCard({ session }: SessionCardProps) {
+  const [audioUrl, setAudioUrl] = useState<string | undefined>();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleLoadRecording = async () => {
+    if (!session.recording) return;
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      const { presigned_url } = await getAudioUrl(session.recording);
+      setAudioUrl(presigned_url);
+    } catch (err) {
+      console.error("Failed to get audio URL:", err);
+      setError("Failed to load recording");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAudioError = () => {
+    setError("Failed to play recording");
+    setAudioUrl(undefined);
+  };
+
+  return (
+    <Card title={`Session ID: ${session.config.id}`} className="mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <p className="mb-2">
+            <strong className="text-gray-700">Created At:</strong>{" "}
+            <span className="text-gray-900">{formatTimestamp(session.created_at)}</span>
+          </p>
+          <p className="mb-2">
+            <strong className="text-gray-700">Model:</strong>{" "}
+            <span className="text-gray-900">{session.config.model}</span>
+          </p>
+          <p className="mb-2">
+            <strong className="text-gray-700">Modalities:</strong>{" "}
+            <span className="text-gray-900">{session.config.modalities.join(", ")}</span>
+          </p>
+          <p className="mb-2">
+            <strong className="text-gray-700">Voice:</strong>{" "}
+            <span className="text-gray-900">{session.config.voice}</span>
+          </p>
+          <p className="mb-2">
+            <strong className="text-gray-700">Status:</strong> <span className="text-gray-900">{session.status}</span>
+          </p>
+        </div>
+        <div>
+          <p className="mb-2">
+            <strong className="text-gray-700">Temperature:</strong>{" "}
+            <span className="text-gray-900">{session.config.temperature}</span>
+          </p>
+          <p className="mb-2">
+            <strong className="text-gray-700">Provider:</strong>{" "}
+            <span className="text-gray-900">{session.provider}</span>
+          </p>
+        </div>
+      </div>
+
+      <div>
+        <p className="mb-1">
+          <strong className="text-gray-700">Instructions:</strong>
+        </p>
+        <div className="bg-gray-50 p-3 rounded-md max-h-40 overflow-y-auto text-sm text-gray-800 border border-gray-200 whitespace-pre-line">
+          {session.config.instructions}
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <p className="mb-2">
+          <strong className="text-gray-700">Recording:</strong>{" "}
+          <span className="text-gray-900">
+            {!session.recording ? (
+              "Not available :("
+            ) : !audioUrl ? (
+              <Button
+                onClick={handleLoadRecording}
+                disabled={isLoading}
+                icon={<PlayCircle size={16} />}
+                className="mt-2"
+              >
+                {isLoading ? "Loading..." : error ? "Reload Audio" : "Load Recording"}
+              </Button>
+            ) : null}
+          </span>
+        </p>
+
+        {audioUrl && (
+          <audio controls src={audioUrl} className="w-full" onError={handleAudioError}>
+            Your browser does not support the audio element.
+          </audio>
+        )}
+
+        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+      </div>
+    </Card>
   );
 }

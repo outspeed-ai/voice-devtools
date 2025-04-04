@@ -1,15 +1,12 @@
 import { Link, Outlet } from "react-router";
 
 import Button from "@/components/ui/Button";
-import { useSession } from "@/contexts/session";
 import { useUpdateCheck } from "@/utils/update-check";
 import { version as consoleVersion } from "@src/../package.json";
-import { providers } from "@src/settings";
 
 import logo from "/outspeed-logo.png";
 
 export default function RootLayout() {
-  const { selectedModel } = useSession();
   const { data: updateInfo } = useUpdateCheck(consoleVersion);
 
   return (
@@ -37,11 +34,10 @@ export default function RootLayout() {
             <Link to="/" className="text-blue-600 hover:text-blue-800">
               Home
             </Link>
-            {selectedModel.provider === providers.Outspeed && (
-              <Link to="/sessions" className="text-blue-600 hover:text-blue-800">
-                History
-              </Link>
-            )}
+
+            <Link to="/sessions" className="text-blue-600 hover:text-blue-800">
+              History
+            </Link>
           </div>
         </div>
       </nav>
