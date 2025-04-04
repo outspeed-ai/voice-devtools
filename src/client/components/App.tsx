@@ -35,6 +35,10 @@ export default function App() {
   const dcRef = useRef<RTCDataChannel | null>(null);
   const [messages, setMessages] = useState<Map<string, MessageBubbleProps>>(new Map());
 
+  /** Add state and ref for mute functionality */
+  const [isMuted, setIsMuted] = useState<boolean>(false);
+  const inputAudioTrackRef = useRef<MediaStreamTrack | null>(null);
+
   /** response id of message that is currently being streamed */
   const botStreamingTextRef = useRef<string | null>(null);
 
@@ -346,6 +350,15 @@ export default function App() {
     setEvents((prev) => [event, ...prev]);
   };
 
+  const toggleMute = () => {
+    if (inputAudioTrackRef.current) {
+      // When isMuted is true, we want to enable the track (unmute)
+      // When isMuted is false, we want to disable the track (mute)
+      inputAudioTrackRef.current.enabled = isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
+
   async function startSession(provider: Provider, config: SessionConfig) {
     try {
       setActiveState("loading");
@@ -363,8 +376,19 @@ export default function App() {
 
       // step 2.start the WebRTC session
       const { pc, dc } = await startWebrtcSession(ephemeralKey, selectedModel);
+
       pcRef.current = pc;
       dcRef.current = dc;
+
+      // Store the input audio track reference for muting
+      const senders = pc.getSenders();
+      for (const sender of senders) {
+        if (sender.track?.kind === "audio") {
+          inputAudioTrackRef.current = sender.track;
+          inputAudioTrackRef.current.enabled = isMuted;
+          break;
+        }
+      }
 
       dc.addEventListener("open", () => {
         console.log("data channel opened");
@@ -584,7 +608,12 @@ export default function App() {
         </div>
       </div>
       <section className="shrink-0">
-        <SessionControls startWebrtcSession={startSession} stopWebrtcSession={stopSession} />
+        <SessionControls
+          startWebrtcSession={startSession}
+          stopWebrtcSession={stopSession}
+          toggleMute={toggleMute}
+          isMuted={isMuted}
+        />
       </section>
     </main>
   );
