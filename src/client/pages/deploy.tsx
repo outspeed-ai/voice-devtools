@@ -9,7 +9,7 @@ const embedCodeSnippet = `<!-- Add React dependencies -->
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 
 <!-- Add the OutspeedAgentEmbed script -->
-<script src="YOUR_WORKER_URL/floating-talk-button.iife.js"></script>
+<script src="YOUR_WORKER_URL"></script>
 <script>
     window.addEventListener('load', function() {
         window.OutspeedAgentEmbed.init({
