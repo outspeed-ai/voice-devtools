@@ -9,6 +9,7 @@ export type SessionConfig = {
   temperature: number;
   voice: string;
   instructions: string;
+  tools: string[];
 };
 
 type ModelValue = {
@@ -30,6 +31,7 @@ export const models: Record<ModelName, ModelValue> = {
       temperature: 0.6,
       voice: "female",
       instructions: "",
+      tools: [],
     },
   },
   "gpt-4o-realtime-preview-2024-12-17": {
@@ -41,6 +43,7 @@ export const models: Record<ModelName, ModelValue> = {
       temperature: 0.6,
       voice: "sage",
       instructions: "",
+      tools: [],
     },
   },
   "gpt-4o-mini-realtime-preview-2024-12-17": {
@@ -52,6 +55,7 @@ export const models: Record<ModelName, ModelValue> = {
       temperature: 0.6,
       voice: "sage",
       instructions: "",
+      tools: [],
     },
   },
 };
