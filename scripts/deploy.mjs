@@ -192,8 +192,15 @@ async function main() {
   console.log(chalk.dim("┌─────────────────────────────────────────────────────────────┐"));
   console.log(chalk.dim("│                    Deployment complete                      │"));
   console.log(chalk.dim("└─────────────────────────────────────────────────────────────┘"));
-  console.log(chalk.cyan("\n📜 Embed script:"));
+
+  console.log(chalk.cyan("\n📜 Embed scripts:"));
+  console.log(chalk.yellow("// JavaScript - Load the Outspeed Agent script"));
   console.log(chalk.blue(`<script src="${workerUrl}/outspeed-agent-embed.iife.js"></script>`));
+  
+  console.log(chalk.yellow("\n// Styling - Load the Outspeed Agent CSS"));
+  console.log(chalk.blue(`<link rel="stylesheet" href="${workerUrl}/outspeed-agent-embed.css">`));
+  
+  console.log(chalk.yellow("\n// JavaScript - Initialize the Outspeed Agent"));
   console.log(chalk.blue(`<script>window.OutspeedAgentEmbed.init();</script>`));
 }
 

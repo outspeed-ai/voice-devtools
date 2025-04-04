@@ -44,7 +44,7 @@ const getAvailableModels = () => {
 
 export const SessionProvider: React.FC<SessionProviderProps> = ({ children }) => {
   const [activeState, setActiveState] = useState<"inactive" | "loading" | "active">("inactive");
-  const [selectedModel, setSelectedModel] = useState(models["gpt-4o-realtime-preview-2024-12-17"]);
+  const [selectedModel, setSelectedModel] = useState(models["MiniCPM-o-2_6"]);
   const [selectedAgent, setSelectedAgent] = useState<Agent>(agents.dentalAgent);
   const durationRef = useRef(0);
 
