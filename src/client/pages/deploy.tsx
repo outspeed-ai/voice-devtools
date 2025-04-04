@@ -71,7 +71,29 @@ export default function Deploy() {
 
         <div className="space-y-4">
           <AccordionSection
-            title="Step 1: Configure Your Agent"
+            title="Step 1: Clone Outspeed Voice DevTools"
+            isOpen={openSections.step1}
+            onToggle={() => toggleSection("step1")}
+          >
+            <div className="space-y-4">
+              <p>
+                Clone the{" "}
+                <a href="https://github.com/outspeed-ai/voice-devtools" className="underline" target="_blank">
+                  voice-devtools
+                </a>{" "}
+                repository:
+              </p>
+              <SyntaxHighlighter
+                language="bash"
+                content="git clone https://github.com/outspeed-ai/voice-devtools.git"
+              />
+              <p>Install dependencies:</p>
+              <SyntaxHighlighter language="bash" content="npm install" />
+            </div>
+          </AccordionSection>
+
+          <AccordionSection
+            title="Step 2: Configure Your Agent"
             isOpen={openSections.step1}
             onToggle={() => toggleSection("step1")}
           >
@@ -91,7 +113,7 @@ export default function Deploy() {
           </AccordionSection>
 
           <AccordionSection
-            title="Step 2: Deploy Your Agent"
+            title="Step 3: Deploy Your Agent"
             isOpen={openSections.step2}
             onToggle={() => toggleSection("step2")}
           >
@@ -115,14 +137,14 @@ OUTSPEED_API_KEY=your_key_here`}
           </AccordionSection>
 
           <AccordionSection
-            title="Step 3: Embed the Agent"
+            title="Step 4: Embed the Agent"
             isOpen={openSections.step3}
             onToggle={() => toggleSection("step3")}
           >
             <div className="space-y-4">
               <p>
                 Copy the following code to your webpage, replacing <code>YOUR_WORKER_URL</code> with the URL you
-                received in Step 2:
+                received in Step 3:
               </p>
               <div className="rounded-lg overflow-hidden">
                 <SyntaxHighlighter language="html" content={embedCodeSnippet} />
