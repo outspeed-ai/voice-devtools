@@ -54,6 +54,9 @@ export const models: Record<ModelName, ModelValue> = {
       temperature: 0.6,
       voice: "female",
       instructions: "",
+      turn_detection: {
+        type: "server_vad",
+      },
     },
   },
   "gpt-4o-realtime-preview-2024-12-17": {
