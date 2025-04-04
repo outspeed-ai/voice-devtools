@@ -1,8 +1,8 @@
 import { useSession } from "@/contexts/session";
 import { useState } from "react";
 import { ChevronDown, ChevronRight } from "react-feather";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+
+import SyntaxHighlighter from "@/components/SyntaxHighlighter";
 
 const embedCodeSnippet = `<!-- Add React dependencies -->
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -49,14 +49,13 @@ export default function Deploy() {
   });
 
   const toggleSection = (section: string) => {
-    setOpenSections(prev => ({
+    setOpenSections((prev) => ({
       ...prev,
-      [section]: !prev[section]
+      [section]: !prev[section],
     }));
   };
 
-  const configObject = `
-const agent: Agent = {
+  const configObject = `const agent: Agent = {
   id: "${selectedAgent.id}",
   name: "${selectedAgent.name}",
   modelName: '${selectedModel.sessionConfig.model}',
@@ -69,65 +68,74 @@ const agent: Agent = {
     <div className="h-full overflow-y-auto">
       <div className="max-w-4xl mx-auto p-8">
         <h1 className="text-2xl font-bold mb-8">Deploy Your Agent</h1>
-        
+
         <div className="space-y-4">
           <AccordionSection
             title="Step 1: Configure Your Agent"
             isOpen={openSections.step1}
-            onToggle={() => toggleSection('step1')}
+            onToggle={() => toggleSection("step1")}
           >
             <div className="space-y-4">
-              <p>Copy the following configuration and place it in <code>deploy/OutspeedAgentEmbed/deploy-config.ts</code>:</p>
+              <p>
+                Copy the following configuration and place it in <code>deploy/OutspeedAgentEmbed/deploy-config.ts</code>
+                :
+              </p>
               <div className="rounded-lg overflow-hidden">
-                <SyntaxHighlighter language="typescript" style={atomDark}>
-                  {configObject}
-                </SyntaxHighlighter>
+                <SyntaxHighlighter language="typescript" content={configObject} />
               </div>
-              
-              <p className="text-sm text-gray-600">This configuration uses your currently selected agent and model settings.</p>
+
+              <p className="text-sm text-gray-600">
+                This configuration uses your currently selected agent and model settings.
+              </p>
             </div>
           </AccordionSection>
 
           <AccordionSection
             title="Step 2: Deploy Your Agent"
             isOpen={openSections.step2}
-            onToggle={() => toggleSection('step2')}
+            onToggle={() => toggleSection("step2")}
           >
             <div className="space-y-4">
-              <p>1. Make sure you have the required environment variables in your <code>.env</code> file:</p>
-              <div className="bg-gray-50 p-3 rounded-md border">
-                <code className="text-sm">OPENAI_API_KEY=your_key_here</code>
-                <br />
-                <code className="text-sm">OUTSPEED_API_KEY=your_key_here</code>
-              </div>
-              
+              <p>
+                1. Make sure you have the required environment variables in your <code>.env</code> file:
+              </p>
+              <SyntaxHighlighter
+                content={`OPENAI_API_KEY=your_key_here
+OUTSPEED_API_KEY=your_key_here`}
+              />
+
               <p>2. Deploy your agent to Cloudflare Workers:</p>
-              <div className="bg-gray-50 p-3 rounded-md border">
-                <code className="text-sm">npm run deploy</code>
-              </div>
-              
-              <p className="text-sm text-gray-600">This will deploy your agent and provide you with a Worker URL. Save this URL for the next step.</p>
+
+              <SyntaxHighlighter language="bash" content="npm run deploy" />
+
+              <p className="text-sm text-gray-600">
+                This will deploy your agent and provide you with a Worker URL. Save this URL for the next step.
+              </p>
             </div>
           </AccordionSection>
 
           <AccordionSection
             title="Step 3: Embed the Agent"
             isOpen={openSections.step3}
-            onToggle={() => toggleSection('step3')}
+            onToggle={() => toggleSection("step3")}
           >
             <div className="space-y-4">
-              <p>Copy the following code to your webpage, replacing <code>YOUR_WORKER_URL</code> with the URL you received in Step 2:</p>
+              <p>
+                Copy the following code to your webpage, replacing <code>YOUR_WORKER_URL</code> with the URL you
+                received in Step 2:
+              </p>
               <div className="rounded-lg overflow-hidden">
-                <SyntaxHighlighter language="html" style={atomDark}>
-                  {embedCodeSnippet}
-                </SyntaxHighlighter>
+                <SyntaxHighlighter language="html" content={embedCodeSnippet} />
               </div>
-              
-              <p className="text-sm text-gray-600">Once added, you'll see a floating icon on the bottom right corner of your webpage. Click it to start interacting with your agent!</p>
+
+              <p className="text-sm text-gray-600">
+                Once added, you'll see a floating icon on the bottom right corner of your webpage. Click it to start
+                interacting with your agent!
+              </p>
             </div>
           </AccordionSection>
         </div>
       </div>
     </div>
   );
-} 
+}
