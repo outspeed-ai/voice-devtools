@@ -41,7 +41,7 @@ function AccordionSection({ title, children, isOpen, onToggle }: AccordionSectio
 }
 
 export default function Deploy() {
-  const { selectedModel, selectedAgent } = useSession();
+  const { config, selectedAgent } = useSession();
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     step1: true,
     step2: false,
@@ -58,9 +58,9 @@ export default function Deploy() {
   const configObject = `const agent: Agent = {
   id: "${selectedAgent.id}",
   name: "${selectedAgent.name}",
-  modelName: '${selectedModel.sessionConfig.model}',
-  instructions: \`${selectedAgent.instructions}\`,
-  tools: ${JSON.stringify(selectedAgent.tools, null, 2)},
+  modelName: '${config.model}',
+  instructions: \`${config.instructions}\`,
+  tools: ${JSON.stringify(config.tools, null, 2)},
 };
 `;
 

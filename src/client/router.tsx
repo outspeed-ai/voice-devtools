@@ -3,7 +3,7 @@ import { Route, Routes } from "react-router";
 import { ProtectedRoutes, StrictlyPublicRoutes } from "./components/route-protection";
 import { env } from "./config/env";
 import RootLayout from "./pages/_layout";
-import Deploy from "./pages/Deploy";
+import Deploy from "./pages/deploy";
 import Index from "./pages/index";
 import Login from "./pages/login";
 import Metrics from "./pages/metrics";
