@@ -1,5 +1,6 @@
 export type ModelName =
   | "MiniCPM-o-2_6"
+  | "Sesame-1b"
   | "gpt-4o-realtime-preview-2024-12-17"
   | "gpt-4o-mini-realtime-preview-2024-12-17";
 
@@ -42,6 +43,17 @@ export const models: Record<ModelName, ModelValue> = {
       turn_detection: {
         type: "server_vad",
       },
+    },
+  },
+  "Sesame-1b": {
+    label: "Sesame 1b",
+    voices: ["male", "female"],
+    sessionConfig: {
+      model: "Sesame-1b",
+      modalities: ["audio", "text"],
+      temperature: 0.6,
+      voice: "female",
+      instructions: "",
     },
   },
   "gpt-4o-realtime-preview-2024-12-17": {
