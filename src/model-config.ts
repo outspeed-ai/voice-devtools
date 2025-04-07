@@ -47,10 +47,10 @@ export const models: Record<ModelName, ModelValue> = {
     },
   },
   "Sesame-1b": {
-    label: "Sesame 1b",
+    label: "Sesame 1b (beta)",
     voices: OUTSPEED_SESAME_VOICES,
     sessionConfig: {
-      model: "Sesame-1b (beta)",
+      model: "Sesame-1b",
       modalities: ["audio", "text"],
       temperature: 0.6,
       voice: "female",
