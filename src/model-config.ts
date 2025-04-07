@@ -28,6 +28,7 @@ type ModelValue = {
 };
 
 const OUTSPEED_MINICPMO_VOICES = ["male", "female"];
+const OUTSPEED_SESAME_VOICES = ["male", "female"];
 const OPENAI_VOICES = ["alloy", "ash", "ballad", "coral", "echo", "sage", "shimmer", "verse"];
 
 export const models: Record<ModelName, ModelValue> = {
@@ -47,9 +48,9 @@ export const models: Record<ModelName, ModelValue> = {
   },
   "Sesame-1b": {
     label: "Sesame 1b",
-    voices: ["female"],
+    voices: OUTSPEED_SESAME_VOICES,
     sessionConfig: {
-      model: "Sesame-1b",
+      model: "Sesame-1b (beta)",
       modalities: ["audio", "text"],
       temperature: 0.6,
       voice: "female",
