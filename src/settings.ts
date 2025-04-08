@@ -42,6 +42,11 @@ export const models: Record<ModelName, Model> = {
     cost: { perMinute: 0.01 },
     provider: providers.Outspeed,
   },
+  "Sesame-1b": {
+    ...modelConfig["Sesame-1b"],
+    cost: { perMinute: 0.01 },
+    provider: providers.Outspeed,
+  },
   "gpt-4o-realtime-preview-2024-12-17": {
     ...modelConfig["gpt-4o-realtime-preview-2024-12-17"],
     cost: {

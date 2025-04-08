@@ -24,28 +24,6 @@ const stylingSnippet = `<!-- Styling Dependencies -->
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="YOUR_WORKER_URL/outspeed-agent-embed.css">`;
 
-const embedCodeSnippet = `<!-- ===== DEPENDENCIES ===== -->
-<!-- React Dependencies -->
-<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-
-<!-- Styling Dependencies -->
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="YOUR_WORKER_URL/outspeed-agent-embed.css">
-
-<!-- ===== OUTSPEED AGENT ===== -->
-<!-- Load the Outspeed Agent Script -->
-<script src="YOUR_WORKER_URL/outspeed-agent-embed.iife.js"></script>
-
-<!-- Initialize the Outspeed Agent -->
-<script>
-    window.addEventListener('load', function() {
-        window.OutspeedAgentEmbed.init({
-            // Add any configuration options here
-        });
-    });
-</script>`;
-
 interface AccordionSectionProps {
   title: string;
   children: React.ReactNode;
@@ -176,7 +154,7 @@ OUTSPEED_API_KEY=your_key_here`}
                 Add the following code to your HTML file, replacing <code>YOUR_WORKER_URL</code> with the URL you
                 received in Step 3:
               </p>
-              
+
               <div className="space-y-6">
                 <div>
                   <h3 className="text-lg font-medium mb-2">1. Add Styling in the &lt;head&gt; section</h3>
@@ -187,7 +165,7 @@ OUTSPEED_API_KEY=your_key_here`}
                     <SyntaxHighlighter language="html" content={stylingSnippet} />
                   </div>
                 </div>
-                
+
                 <div>
                   <h3 className="text-lg font-medium mb-2">2. Add JavaScript before the closing &lt;/body&gt; tag</h3>
                   <p className="text-sm text-gray-600 mb-2">
@@ -200,22 +178,20 @@ OUTSPEED_API_KEY=your_key_here`}
               </div>
 
               <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                <button 
+                <button
                   onClick={() => setShowExample(!showExample)}
                   className="w-full flex items-center justify-between text-left"
                 >
                   <h3 className="text-lg font-medium text-blue-700">Example Implementation</h3>
                   {showExample ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                 </button>
-                
+
                 {showExample && (
                   <>
-                    <p className="text-sm text-gray-700 mb-2 mt-2">
-                      Here's how your HTML file structure should look:
-                    </p>
+                    <p className="text-sm text-gray-700 mb-2 mt-2">Here's how your HTML file structure should look:</p>
                     <div className="rounded-lg overflow-hidden">
-                      <SyntaxHighlighter 
-                        language="html" 
+                      <SyntaxHighlighter
+                        language="html"
                         content={`<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -241,7 +217,7 @@ OUTSPEED_API_KEY=your_key_here`}
         });
     </script>
 </body>
-</html>`} 
+</html>`}
                       />
                     </div>
                   </>

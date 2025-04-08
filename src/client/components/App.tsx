@@ -29,11 +29,15 @@ const tabs = [
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>(Tab.SESSION_CONFIG);
-  const { activeState, setActiveState, selectedModel } = useSession();
+  const { activeState, setActiveState, config, setConfig, selectedModel } = useSession();
   const [events, setEvents] = useState<OaiEvent[]>([]);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dcRef = useRef<RTCDataChannel | null>(null);
   const [messages, setMessages] = useState<Map<string, MessageBubbleProps>>(new Map());
+
+  /** Add state and ref for mute functionality */
+  const [isMuted, setIsMuted] = useState<boolean>(false);
+  const inputAudioTrackRef = useRef<MediaStreamTrack | null>(null);
 
   /** response id of message that is currently being streamed */
   const botStreamingTextRef = useRef<string | null>(null);
@@ -119,6 +123,14 @@ export default function App() {
         });
         break;
 
+      case "session.updated":
+        if (event.session) {
+          setConfig({ ...config, ...event.session });
+        } else {
+          console.error("error: session.update - no session found in event payload");
+        }
+        break;
+
       case "response.done":
         // Calculate cost for OpenAI Realtime API based on  usage
         if (selectedModel.provider === providers.OpenAI && event.response?.usage) {
@@ -186,6 +198,14 @@ export default function App() {
       case "input_audio_buffer.speech_started":
         if (!iAudioRecorderRef.current) {
           console.error("error: input_audio_buffer.speech_started - audio recorder not found");
+          break;
+        }
+
+        if (currentUserSpeechItemRef.current) {
+          /**
+           * when semantic VAD is on, we receive multiple input_audio_buffer.speech_started event
+           * before we receive a final input_audio_buffer.speech_stopped.
+           */
           break;
         }
 
@@ -322,6 +342,15 @@ export default function App() {
     setEvents((prev) => [event, ...prev]);
   };
 
+  const toggleMute = () => {
+    if (inputAudioTrackRef.current) {
+      // When isMuted is true, we want to enable the track (unmute)
+      // When isMuted is false, we want to disable the track (mute)
+      inputAudioTrackRef.current.enabled = isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
+
   async function startSession(provider: Provider, config: SessionConfig) {
     try {
       setActiveState("loading");
@@ -339,8 +368,19 @@ export default function App() {
 
       // step 2.start the WebRTC session
       const { pc, dc } = await startWebrtcSession(ephemeralKey, selectedModel);
+
       pcRef.current = pc;
       dcRef.current = dc;
+
+      // Store the input audio track reference for muting
+      const senders = pc.getSenders();
+      for (const sender of senders) {
+        if (sender.track?.kind === "audio") {
+          inputAudioTrackRef.current = sender.track;
+          inputAudioTrackRef.current.enabled = isMuted;
+          break;
+        }
+      }
 
       dc.addEventListener("open", () => {
         console.log("data channel opened");
@@ -553,6 +593,7 @@ export default function App() {
             isMobile={isMobile}
             messages={messages}
             sendTextMessage={sendTextMessage}
+            sendClientEvent={sendClientEvent}
             events={events}
             costState={costState}
             sessionStartTime={sessionStartTime}
@@ -560,7 +601,12 @@ export default function App() {
         </div>
       </div>
       <section className="shrink-0">
-        <SessionControls startWebrtcSession={startSession} stopWebrtcSession={stopSession} />
+        <SessionControls
+          startWebrtcSession={startSession}
+          stopWebrtcSession={stopSession}
+          toggleMute={toggleMute}
+          isMuted={isMuted}
+        />
       </section>
     </main>
   );
@@ -569,6 +615,7 @@ export default function App() {
 interface TabsProps {
   activeTab: Tab;
   setActiveTab: (tab: Tab) => void;
+  sendClientEvent: (event: OaiEvent) => void;
   isMobile: boolean;
   messages: Map<string, MessageBubbleProps>;
   sendTextMessage: (message: string) => void;
@@ -580,6 +627,7 @@ interface TabsProps {
 const Tabs: React.FC<TabsProps> = ({
   activeTab,
   setActiveTab,
+  sendClientEvent,
   isMobile,
   messages,
   sendTextMessage,
@@ -612,7 +660,7 @@ const Tabs: React.FC<TabsProps> = ({
 
       <div className="flex-1 overflow-y-auto">
         {activeTab === Tab.MOBILE_CHAT && isMobile && <Chat messages={messages} sendTextMessage={sendTextMessage} />}
-        {activeTab === Tab.SESSION_CONFIG && <SessionConfigComponent />}
+        {activeTab === Tab.SESSION_CONFIG && <SessionConfigComponent sendClientEvent={sendClientEvent} />}
         {activeTab === Tab.EVENTS && (
           <EventLog events={events} costState={costState} sessionStartTime={sessionStartTime} />
         )}
