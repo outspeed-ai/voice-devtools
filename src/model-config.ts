@@ -10,6 +10,7 @@ export type SessionConfig = {
   temperature: number;
   voice: string;
   instructions: string;
+  tools: string[];
 
   /**
    * to use "semantic_vad" for OpenAI Realtime API, you need to send `"session.update"` event
@@ -41,6 +42,7 @@ export const models: Record<ModelName, ModelValue> = {
       temperature: 0.6,
       voice: "female",
       instructions: "",
+      tools: [],
       turn_detection: {
         type: "server_vad",
       },
@@ -55,6 +57,7 @@ export const models: Record<ModelName, ModelValue> = {
       temperature: 0.6,
       voice: "female",
       instructions: "",
+      tools: [],
       turn_detection: {
         type: "server_vad",
       },
@@ -69,6 +72,7 @@ export const models: Record<ModelName, ModelValue> = {
       temperature: 0.6,
       voice: "sage",
       instructions: "",
+      tools: [],
       turn_detection: {
         // to use "semantic_vad", you need to send "session.update" event
         // docs: https://platform.openai.com/docs/guides/realtime-vad#semantic-vad
@@ -85,6 +89,7 @@ export const models: Record<ModelName, ModelValue> = {
       temperature: 0.6,
       voice: "sage",
       instructions: "",
+      tools: [],
       turn_detection: {
         type: "server_vad",
       },

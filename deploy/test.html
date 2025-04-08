@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OutspeedAgentEmbed Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://outspeed-server.voice-agent.workers.dev/outspeed-agent-embed.css">
+</head>
+<body class="font-sans antialiased">
+    <div class="max-w-3xl mx-auto p-8">
+        <h1 class="text-4xl font-bold text-blue-600 mb-6">Voice Agent Test Page</h1>
+        <p class="text-lg text-gray-600 mb-4">
+            To test your agent, replace the JavaScript and CSS links with the ones you receive after running 
+            <code class="bg-gray-100 px-2 py-1 rounded">npm run deploy</code>.
+        </p>
+        <p class="text-lg text-gray-600">
+            Once set up, you'll see a floating icon on the bottom right corner. Click it to get started with the chat interface!
+        </p>
+    </div>
+
+    <!-- Embed the OutspeedAgentEmbed -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://outspeed-server.voice-agent.workers.dev/outspeed-agent-embed.iife.js"></script>
+    <script>
+        window.addEventListener('load', function() {
+            window.OutspeedAgentEmbed.init({
+                // Add any configuration options here
+            });
+        });
+    </script>
+</body>
+</html> 
