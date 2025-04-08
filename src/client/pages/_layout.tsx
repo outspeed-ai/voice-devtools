@@ -34,9 +34,11 @@ export default function RootLayout() {
             <Link to="/" className="text-blue-600 hover:text-blue-800">
               Home
             </Link>
-
             <Link to="/sessions" className="text-blue-600 hover:text-blue-800">
               History
+            </Link>
+            <Link to="/deploy" className="text-blue-600 hover:text-blue-800">
+              Deploy
             </Link>
           </div>
         </div>

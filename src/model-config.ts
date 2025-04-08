@@ -10,6 +10,16 @@ export type SessionConfig = {
   temperature: number;
   voice: string;
   instructions: string;
+  tools: string[];
+
+  /**
+   * to use "semantic_vad" for OpenAI Realtime API, you need to send `"session.update"` event
+   * AFTER the session is created.
+   * docs: https://platform.openai.com/docs/guides/realtime-vad#semantic-vad
+   */
+  turn_detection: {
+    type: "server_vad" | "semantic_vad";
+  };
 };
 
 type ModelValue = {
@@ -19,6 +29,7 @@ type ModelValue = {
 };
 
 const OUTSPEED_MINICPMO_VOICES = ["male", "female"];
+const OUTSPEED_SESAME_VOICES = ["male", "female"];
 const OPENAI_VOICES = ["alloy", "ash", "ballad", "coral", "echo", "sage", "shimmer", "verse"];
 
 export const models: Record<ModelName, ModelValue> = {
@@ -31,17 +42,25 @@ export const models: Record<ModelName, ModelValue> = {
       temperature: 0.6,
       voice: "female",
       instructions: "",
+      tools: [],
+      turn_detection: {
+        type: "server_vad",
+      },
     },
   },
   "Sesame-1b": {
-    label: "Sesame 1b",
-    voices: ["male", "female"],
+    label: "Sesame 1b (beta)",
+    voices: OUTSPEED_SESAME_VOICES,
     sessionConfig: {
       model: "Sesame-1b",
       modalities: ["audio", "text"],
       temperature: 0.6,
       voice: "female",
       instructions: "",
+      tools: [],
+      turn_detection: {
+        type: "server_vad",
+      },
     },
   },
   "gpt-4o-realtime-preview-2024-12-17": {
@@ -53,6 +72,12 @@ export const models: Record<ModelName, ModelValue> = {
       temperature: 0.6,
       voice: "sage",
       instructions: "",
+      tools: [],
+      turn_detection: {
+        // to use "semantic_vad", you need to send "session.update" event
+        // docs: https://platform.openai.com/docs/guides/realtime-vad#semantic-vad
+        type: "server_vad",
+      },
     },
   },
   "gpt-4o-mini-realtime-preview-2024-12-17": {
@@ -64,6 +89,10 @@ export const models: Record<ModelName, ModelValue> = {
       temperature: 0.6,
       voice: "sage",
       instructions: "",
+      tools: [],
+      turn_detection: {
+        type: "server_vad",
+      },
     },
   },
 };
