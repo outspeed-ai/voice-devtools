@@ -6,7 +6,6 @@ import RootLayout from "./pages/_layout";
 import Deploy from "./pages/deploy";
 import Index from "./pages/index";
 import Login from "./pages/login";
-import Metrics from "./pages/metrics";
 import Sessions from "./pages/sessions";
 
 export default function Router() {
@@ -18,9 +17,6 @@ export default function Router() {
           <Route path="/" element={<Index />} />
           <Route path="/sessions" element={<Sessions />} />
           <Route path="/deploy" element={<Deploy />} />
-
-          {/* session_id will be passed as a query param to fetch metrics by session*/}
-          <Route path="/metrics/" element={<Metrics />} />
         </Route>
       </Route>
 

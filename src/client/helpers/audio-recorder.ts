@@ -101,7 +101,7 @@ export default class AudioRecorder {
    * @param duration - the duration of audio to keep (in milliseconds). if not provided, the entire audio will be returned.
    * @returns the audio URL.
    */
-  stop(duration?: number): Promise<string | null> {
+  stop(duration?: number): Promise<{ url: string; blob: Blob } | null> {
     return new Promise((resolve, reject) => {
       if (this.getState() !== "recording") {
         reject(new Error("recording is not active"));
@@ -119,7 +119,7 @@ export default class AudioRecorder {
           const finalBlob = await trimAudioBlobWav(recordedBlob, duration);
           const url = URL.createObjectURL(finalBlob);
           this.audioUrls.push(url);
-          resolve(url);
+          resolve({ url, blob: finalBlob });
         } catch (error) {
           reject(error);
         }

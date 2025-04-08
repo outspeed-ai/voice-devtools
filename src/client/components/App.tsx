@@ -5,7 +5,9 @@ import { type ExternalToast, toast } from "sonner";
 import { useSession } from "@/contexts/session";
 import AudioRecorder from "@/helpers/audio-recorder";
 import { getEphemeralKey } from "@/helpers/ephemeral-key";
+import { saveSessionRecording } from "@/helpers/save-session-recording";
 import { startWebrtcSession } from "@/helpers/webrtc";
+import { createSession as saveSession, updateSession } from "@/services/api";
 import { OaiEvent } from "@/types";
 import { calculateOpenAICosts, CostState, getInitialCostState, updateCumulativeCostOpenAI } from "@/utils/cost-calc";
 import { type SessionConfig } from "@src/model-config";
@@ -30,6 +32,7 @@ const tabs = [
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>(Tab.SESSION_CONFIG);
   const { activeState, setActiveState, config, setConfig, selectedModel } = useSession();
+  const [activeSessionID, setActiveSessionID] = useState<string | null>(null);
   const [events, setEvents] = useState<OaiEvent[]>([]);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dcRef = useRef<RTCDataChannel | null>(null);
@@ -121,6 +124,15 @@ export default function App() {
           // input track will be muted so we need to unmute it
           sender.track.enabled = true;
         });
+
+        if (event.session) {
+          setActiveSessionID(event.session.id);
+          saveSession({ config: event.session, provider: selectedModel.provider.name.toLowerCase() }).catch((error) => {
+            console.error("error: failed to save session:", error);
+          });
+        } else {
+          console.error("error: session.update - no session found in event payload");
+        }
         break;
 
       case "session.updated":
@@ -246,12 +258,12 @@ export default function App() {
         });
 
         const duration = Date.now() - currentUserSpeechItem.startTime + 1000;
-        const audioUrl = await iRecorder.stop(duration);
+        const audio = await iRecorder.stop(duration);
 
         console.log("starting user input speech recorder again...");
         iRecorder.start();
 
-        if (!audioUrl) {
+        if (!audio) {
           console.error("error:input_audio_buffer.speech_stopped - audio url not found");
           break;
         }
@@ -262,7 +274,7 @@ export default function App() {
           newMessages.set(currentUserSpeechItem.id, {
             role: "user",
             audio: {
-              content: audioUrl,
+              content: audio.url,
               timestamp: new Date().toLocaleTimeString(),
             },
           });
@@ -303,8 +315,8 @@ export default function App() {
             break;
           }
 
-          const audioUrl = await oRecorder.stop();
-          if (!audioUrl) {
+          const audio = await oRecorder.stop();
+          if (!audio) {
             console.error("error: output_audio_buffer.stopped - audio url not found");
             break;
           }
@@ -315,8 +327,8 @@ export default function App() {
             const newMessages = new Map(prev);
             const responseId = currentBotSpeechItem.id;
 
-            const audio = {
-              content: audioUrl,
+            const audioMsg = {
+              content: audio.url,
               timestamp: new Date().toLocaleTimeString(),
             };
 
@@ -326,12 +338,12 @@ export default function App() {
                 ...currentMessage,
                 role: "assistant",
                 interrupted,
-                audio,
+                audio: audioMsg,
               });
             } else {
               // If we can't find the matching text message, create a new message with just audio
               const newId = crypto.randomUUID();
-              newMessages.set(newId, { role: "assistant", audio, interrupted });
+              newMessages.set(newId, { role: "assistant", audio: audioMsg, interrupted });
             }
             return newMessages;
           });
@@ -446,6 +458,14 @@ export default function App() {
   }
 
   async function stopSession() {
+    if (activeSessionID) {
+      updateSession(activeSessionID, { status: "completed" }).catch((error) => {
+        console.error("error: failed to update session:", error);
+      });
+    } else {
+      console.error("error: session audio recorder stopped but no active session ID");
+    }
+
     // Stop recording if active
     if (iAudioRecorderRef.current?.getState() === "recording") {
       iAudioRecorderRef.current.stop();
@@ -456,8 +476,8 @@ export default function App() {
     }
 
     if (sessionAudioRecorderRef.current?.getState() === "recording") {
-      const audioUrl = await sessionAudioRecorderRef.current.stop();
-      if (!audioUrl) {
+      const recording = await sessionAudioRecorderRef.current.stop();
+      if (!recording) {
         console.error("error: session audio recorder stopped but didn't get audio URL");
       } else {
         setMessages((prev) => {
@@ -470,12 +490,18 @@ export default function App() {
               timestamp,
             },
             audio: {
-              content: audioUrl,
+              content: recording.url,
               timestamp,
             },
           });
           return newMessages;
         });
+
+        if (activeSessionID) {
+          saveSessionRecording(activeSessionID, recording);
+        } else {
+          console.error("error: session audio recorder stopped but no active session ID");
+        }
       }
     }
 
