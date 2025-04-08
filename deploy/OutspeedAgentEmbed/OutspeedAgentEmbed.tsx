@@ -194,12 +194,12 @@ const OutspeedAgentEmbed = () => {
         });
 
         const duration = Date.now() - currentUserSpeechItem.startTime + 1000;
-        const audioUrl = await iRecorder.stop(duration);
+        const audio = await iRecorder.stop(duration);
 
         console.log("starting user input speech recorder again...");
         iRecorder.start();
 
-        if (!audioUrl) {
+        if (!audio) {
           console.error("error:input_audio_buffer.speech_stopped - audio url not found");
           break;
         }
@@ -210,7 +210,7 @@ const OutspeedAgentEmbed = () => {
           newMessages.set(currentUserSpeechItem.id, {
             role: "user",
             audio: {
-              content: audioUrl,
+              content: audio.url,
               timestamp: new Date().toLocaleTimeString(),
             },
           });
@@ -251,8 +251,8 @@ const OutspeedAgentEmbed = () => {
             break;
           }
 
-          const audioUrl = await oRecorder.stop();
-          if (!audioUrl) {
+          const audio = await oRecorder.stop();
+          if (!audio) {
             console.error("error: output_audio_buffer.stopped - audio url not found");
             break;
           }
@@ -263,8 +263,8 @@ const OutspeedAgentEmbed = () => {
             const newMessages = new Map(prev);
             const responseId = currentBotSpeechItem.id;
 
-            const audio = {
-              content: audioUrl,
+            const audioData = {
+              content: audio.url,
               timestamp: new Date().toLocaleTimeString(),
             };
 
@@ -274,12 +274,12 @@ const OutspeedAgentEmbed = () => {
                 ...currentMessage,
                 role: "assistant",
                 interrupted,
-                audio,
+                audio: audioData,
               });
             } else {
               // If we can't find the matching text message, create a new message with just audio
               const newId = crypto.randomUUID();
-              newMessages.set(newId, { role: "assistant", audio, interrupted });
+              newMessages.set(newId, { role: "assistant", audio: audioData, interrupted });
             }
             return newMessages;
           });
@@ -384,8 +384,8 @@ const OutspeedAgentEmbed = () => {
     }
 
     if (sessionAudioRecorderRef.current?.getState() === "recording") {
-      const audioUrl = await sessionAudioRecorderRef.current.stop();
-      if (!audioUrl) {
+      const audio = await sessionAudioRecorderRef.current.stop();
+      if (!audio) {
         console.error("error: session audio recorder stopped but didn't get audio URL");
       } else {
         setMessages((prev) => {
@@ -398,7 +398,7 @@ const OutspeedAgentEmbed = () => {
               timestamp,
             },
             audio: {
-              content: audioUrl,
+              content: audio.url,
               timestamp,
             },
           });
