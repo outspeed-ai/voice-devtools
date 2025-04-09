@@ -156,6 +156,23 @@ export default function App() {
           setCostState((prev) => updateCumulativeCostOpenAI(prev, newCostData));
         }
 
+        const interrupted = event.response.status === "cancelled";
+        if (interrupted) {
+          setMessages((prev) => {
+            const newMessages = new Map(prev);
+            const currentMessage = prev.get(event.response_id);
+            if (!currentMessage) {
+              return prev;
+            }
+
+            newMessages.set(event.response_id, {
+              ...currentMessage,
+              interrupted,
+            });
+            return newMessages;
+          });
+        }
+
         if (event.response.status == "failed") {
           handleErrorEvent(event.response.status_details?.error?.message || "server error", event.event_id, event);
         }
@@ -183,6 +200,12 @@ export default function App() {
         break;
 
       case "response.audio_transcript.done":
+        const { transcript } = event;
+        if (!transcript) {
+          console.error(`error: response.audio_transcript.done - transcript not found ('${transcript}')`);
+          break;
+        }
+
         botStreamingTextRef.current = null;
         setMessages((prev) => {
           const newMessages = new Map(prev);
@@ -192,7 +215,7 @@ export default function App() {
           newMessages.set(event.response_id, {
             ...currentMessage,
             text: {
-              content: event.transcript,
+              content: transcript,
               timestamp: !currentMessage.text?.timestamp
                 ? new Date().toLocaleTimeString()
                 : currentMessage.text.timestamp,
@@ -287,6 +310,13 @@ export default function App() {
       case "output_audio_buffer.started":
         if (!oAudioRecorderRef.current) {
           console.error("error: output_audio_buffer.started - audio recorder not found");
+          break;
+        }
+
+        if (oAudioRecorderRef.current.getState() === "recording") {
+          // this probably means that we received another output_audio_buffer.started event
+          // before we received the output_audio_buffer.stopped or output_audio_buffer.cleared event
+          console.error("error: output_audio_buffer.started - audio recorder is already recording");
           break;
         }
 
