@@ -52,6 +52,13 @@ const OutspeedAgentEmbed = () => {
     };
   }, [activeState]);
 
+  useEffect(() => {
+    // set model and agent
+    setSelectedAgent(agent);
+    setSelectedModel(models[agent.modelName]);
+
+  }, [])
+
   const handleErrorEvent = (errorMessage: string, eventId: string, fullError: unknown) => {
     if (fullError) {
       console.error("error event:", fullError);
