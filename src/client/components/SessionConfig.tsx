@@ -6,7 +6,8 @@ interface SessionConfigProps {
   sendClientEvent: (event: OaiEvent) => void;
 }
 
-const SessionConfig: React.FC<SessionConfigProps> = ({ sendClientEvent }) => {
+// const SessionConfig: React.FC<SessionConfigProps> = ({ sendClientEvent }) => {
+const SessionConfig: React.FC<SessionConfigProps> = () => {
   const {
     activeState,
     config,
@@ -19,24 +20,25 @@ const SessionConfig: React.FC<SessionConfigProps> = ({ sendClientEvent }) => {
     availableAgents,
   } = useSession();
 
-  const changeTurnDetectonType = (type: "server_vad" | "semantic_vad") => {
-    if (activeState === "loading") {
-      return;
-    }
+  // coming soon (really soon)
+  // const changeTurnDetectonType = (type: "server_vad" | "semantic_vad") => {
+  //   if (activeState === "loading") {
+  //     return;
+  //   }
 
-    if (activeState === "active") {
-      // when the session is active, we need to send a client event to the server
-      sendClientEvent({
-        type: "session.update",
-        session: {
-          turn_detection: { type },
-        },
-      });
-    } else {
-      // when the session is inactive, we can update the config directly in frontend
-      setConfig({ ...config, turn_detection: { type } });
-    }
-  };
+  //   if (activeState === "active") {
+  //     // when the session is active, we need to send a client event to the server
+  //     sendClientEvent({
+  //       type: "session.update",
+  //       session: {
+  //         turn_detection: { type },
+  //       },
+  //     });
+  //   } else {
+  //     // when the session is inactive, we can update the config directly in frontend
+  //     setConfig({ ...config, turn_detection: { type } });
+  //   }
+  // };
 
   const isInactive = activeState === "inactive";
 
@@ -102,6 +104,8 @@ const SessionConfig: React.FC<SessionConfigProps> = ({ sendClientEvent }) => {
           </div>
         )}
 
+        {/* coming really soon */}
+        {/**
         <div className="flex flex-col gap-1">
           <label htmlFor="turn_detection">Turn Detection:</label>
           <select
@@ -115,6 +119,7 @@ const SessionConfig: React.FC<SessionConfigProps> = ({ sendClientEvent }) => {
             <option value="semantic_vad">Semantic VAD (beta)</option>
           </select>
         </div>
+         */}
 
         <div className="flex flex-col gap-1">
           <label htmlFor="instructions">Instructions:</label>

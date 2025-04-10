@@ -24,7 +24,7 @@ export default function Sessions() {
 
   return (
     <div className="container h-full overflow-y-auto mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Your Sessions ({sessions.length})</h1>
+      <h1 className="text-2xl font-bold mb-6">Your Sessions ({data?.total || 0})</h1>
 
       {error && <Alert type="error">{error.message || "Failed to load sessions. Please try again later."}</Alert>}
 
