@@ -103,6 +103,20 @@ const SessionConfig: React.FC<SessionConfigProps> = ({ sendClientEvent }) => {
         )}
 
         <div className="flex flex-col gap-1">
+          <label htmlFor="turn_detection">Turn Detection:</label>
+          <select
+            id="turn_detection"
+            value={config.turn_detection.type}
+            onChange={(e) => changeTurnDetectonType(e.target.value as "server_vad" | "semantic_vad")}
+            className="border p-2 rounded-md"
+            disabled={activeState === "loading"}
+          >
+            <option value="server_vad">Server VAD</option>
+            <option value="semantic_vad">Semantic VAD (beta)</option>
+          </select>
+        </div>
+
+        <div className="flex flex-col gap-1">
           <label htmlFor="instructions">Instructions:</label>
           <textarea
             id="instructions"
@@ -127,20 +141,6 @@ const SessionConfig: React.FC<SessionConfigProps> = ({ sendClientEvent }) => {
             className="w-full"
             disabled={!isInactive}
           />
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <label htmlFor="turn_detection">Turn Detection:</label>
-          <select
-            id="turn_detection"
-            value={config.turn_detection.type}
-            onChange={(e) => changeTurnDetectonType(e.target.value as "server_vad" | "semantic_vad")}
-            className="border p-2 rounded-md"
-            disabled={activeState === "loading"}
-          >
-            <option value="server_vad">Server VAD</option>
-            <option value="semantic_vad">Semantic VAD (beta)</option>
-          </select>
         </div>
       </div>
     </section>
