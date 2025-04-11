@@ -1,53 +1,25 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router";
-import { type ExternalToast, toast } from "sonner";
 
+import Chat, { MessageBubbleProps } from "@/components/Chat";
+import SessionControls from "@/components/SessionControls";
 import { useSession } from "@/contexts/session";
 import AudioRecorder from "@/helpers/audio-recorder";
 import { getEphemeralKey } from "@/helpers/ephemeral-key";
-import { saveSessionRecording } from "@/helpers/save-session-recording";
 import { startWebrtcSession } from "@/helpers/webrtc";
-import { createSession as saveSession, updateSession } from "@/services/api";
 import { OaiEvent } from "@/types";
-import { calculateOpenAICosts, CostState, getInitialCostState, updateCumulativeCostOpenAI } from "@/utils/cost-calc";
 import { type SessionConfig } from "@src/model-config";
-import { Provider, providers } from "@src/settings";
-import Chat, { MessageBubbleProps } from "./Chat";
-import EventLog from "./EventLog";
-import SessionConfigComponent from "./SessionConfig";
-import SessionControls from "./SessionControls";
+import { models, providers, type Provider } from "@src/settings";
+import agent from "./deploy-config";
 
-enum Tab {
-  SESSION_CONFIG = "session-config",
-  MOBILE_CHAT = "mobile-chat",
-  EVENTS = "events",
-}
-
-const tabs = [
-  { label: "Chat", value: Tab.MOBILE_CHAT, mobileOnly: true },
-  { label: "Session Config", value: Tab.SESSION_CONFIG },
-  { label: "Events", value: Tab.EVENTS },
-];
-
-export default function App() {
-  const [activeTab, setActiveTab] = useState<Tab>(Tab.SESSION_CONFIG);
-  const { activeState, setActiveState, config, setConfig, selectedModel } = useSession();
-  const [activeSessionID, setActiveSessionID] = useState<string | null>(null);
-  const [events, setEvents] = useState<OaiEvent[]>([]);
+const OutspeedAgentEmbed = () => {
+  const { activeState, setActiveState, selectedModel, setSelectedAgent, setSelectedModel } = useSession();
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dcRef = useRef<RTCDataChannel | null>(null);
   const [messages, setMessages] = useState<Map<string, MessageBubbleProps>>(new Map());
-
-  /** Add state and ref for mute functionality */
-  const [isMuted, setIsMuted] = useState<boolean>(false);
-  const inputAudioTrackRef = useRef<MediaStreamTrack | null>(null);
+  const [isOpen, setIsOpen] = useState(true);
 
   /** response id of message that is currently being streamed */
   const botStreamingTextRef = useRef<string | null>(null);
-
-  // states for cost calculation
-  const [costState, setCostState] = useState<CostState>(getInitialCostState());
-  const [sessionStartTime, setSessionStartTime] = useState<number | null>(null);
 
   // refs for speech recording
   const iAudioRecorderRef = useRef<AudioRecorder | null>(null); // input audio recorder
@@ -55,10 +27,6 @@ export default function App() {
   const sessionAudioRecorderRef = useRef<AudioRecorder | null>(null); // session audio recorder
   const currentUserSpeechItemRef = useRef<{ startTime: number; id: string } | null>(null);
   const currentBotSpeechItemRef = useRef<{ startTime: number; id: string } | null>(null);
-
-  const navigate = useNavigate();
-
-  const isMobile = window.innerWidth < 768;
 
   useEffect(() => {
     if (activeState === "active" && iAudioRecorderRef.current) {
@@ -83,6 +51,13 @@ export default function App() {
       }
     };
   }, [activeState]);
+
+  useEffect(() => {
+    // set model and agent
+    setSelectedAgent(agent);
+    setSelectedModel(models[agent.modelName]);
+
+  }, [])
 
   const handleErrorEvent = (errorMessage: string, eventId: string, fullError: unknown) => {
     if (fullError) {
@@ -112,8 +87,6 @@ export default function App() {
     switch (event.type) {
       case "session.created":
         setActiveState("active");
-        setSessionStartTime(Date.now());
-        setActiveTab(isMobile ? Tab.MOBILE_CHAT : Tab.EVENTS);
 
         pc.getSenders().forEach((sender) => {
           if (!sender.track) {
@@ -124,23 +97,6 @@ export default function App() {
           // input track will be muted so we need to unmute it
           sender.track.enabled = true;
         });
-
-        if (event.session) {
-          setActiveSessionID(event.session.id);
-          saveSession({ config: event.session, provider: selectedModel.provider.name.toLowerCase() }).catch((error) => {
-            console.error("error: failed to save session:", error);
-          });
-        } else {
-          console.error("error: session.update - no session found in event payload");
-        }
-        break;
-
-      case "session.updated":
-        if (event.session) {
-          setConfig({ ...config, ...event.session });
-        } else {
-          console.error("error: session.update - no session found in event payload");
-        }
         break;
 
       case "response.done":
@@ -149,28 +105,6 @@ export default function App() {
           if (!("input" in selectedModel.cost)) {
             throw new Error("input is not defined in the cost object");
           }
-
-          const newCostData = calculateOpenAICosts(event.response.usage, selectedModel.cost);
-
-          // Update cost state by incorporating the new data into cumulative
-          setCostState((prev) => updateCumulativeCostOpenAI(prev, newCostData));
-        }
-
-        const interrupted = event.response.status === "cancelled";
-        if (interrupted) {
-          setMessages((prev) => {
-            const newMessages = new Map(prev);
-            const currentMessage = prev.get(event.response_id);
-            if (!currentMessage) {
-              return prev;
-            }
-
-            newMessages.set(event.response_id, {
-              ...currentMessage,
-              interrupted,
-            });
-            return newMessages;
-          });
         }
 
         if (event.response.status == "failed") {
@@ -200,12 +134,6 @@ export default function App() {
         break;
 
       case "response.audio_transcript.done":
-        const { transcript } = event;
-        if (!transcript) {
-          console.error(`error: response.audio_transcript.done - transcript not found ('${transcript}')`);
-          break;
-        }
-
         botStreamingTextRef.current = null;
         setMessages((prev) => {
           const newMessages = new Map(prev);
@@ -215,7 +143,7 @@ export default function App() {
           newMessages.set(event.response_id, {
             ...currentMessage,
             text: {
-              content: transcript,
+              content: event.transcript,
               timestamp: !currentMessage.text?.timestamp
                 ? new Date().toLocaleTimeString()
                 : currentMessage.text.timestamp,
@@ -233,14 +161,6 @@ export default function App() {
       case "input_audio_buffer.speech_started":
         if (!iAudioRecorderRef.current) {
           console.error("error: input_audio_buffer.speech_started - audio recorder not found");
-          break;
-        }
-
-        if (currentUserSpeechItemRef.current) {
-          /**
-           * when semantic VAD is on, we receive multiple input_audio_buffer.speech_started event
-           * before we receive a final input_audio_buffer.speech_stopped.
-           */
           break;
         }
 
@@ -313,13 +233,6 @@ export default function App() {
           break;
         }
 
-        if (oAudioRecorderRef.current.getState() === "recording") {
-          // this probably means that we received another output_audio_buffer.started event
-          // before we received the output_audio_buffer.stopped or output_audio_buffer.cleared event
-          console.error("error: output_audio_buffer.started - audio recorder is already recording");
-          break;
-        }
-
         oAudioRecorderRef.current.start();
         currentBotSpeechItemRef.current = {
           id: event.response_id,
@@ -357,7 +270,7 @@ export default function App() {
             const newMessages = new Map(prev);
             const responseId = currentBotSpeechItem.id;
 
-            const audioMsg = {
+            const audioData = {
               content: audio.url,
               timestamp: new Date().toLocaleTimeString(),
             };
@@ -368,35 +281,27 @@ export default function App() {
                 ...currentMessage,
                 role: "assistant",
                 interrupted,
-                audio: audioMsg,
+                audio: audioData,
               });
             } else {
               // If we can't find the matching text message, create a new message with just audio
               const newId = crypto.randomUUID();
-              newMessages.set(newId, { role: "assistant", audio: audioMsg, interrupted });
+              newMessages.set(newId, { role: "assistant", audio: audioData, interrupted });
             }
             return newMessages;
           });
         }
         break;
     }
-
-    setEvents((prev) => [event, ...prev]);
-  };
-
-  const toggleMute = () => {
-    if (inputAudioTrackRef.current) {
-      // When isMuted is true, we want to enable the track (unmute)
-      // When isMuted is false, we want to disable the track (mute)
-      inputAudioTrackRef.current.enabled = isMuted;
-      setIsMuted(!isMuted);
-    }
   };
 
   async function startSession(provider: Provider, config: SessionConfig) {
     try {
       setActiveState("loading");
-      setCostState(getInitialCostState());
+
+      // set model and agent
+      setSelectedAgent(agent);
+      setSelectedModel(models[agent.modelName]);
 
       iAudioRecorderRef.current?.dispose();
       oAudioRecorderRef.current?.dispose();
@@ -410,19 +315,8 @@ export default function App() {
 
       // step 2.start the WebRTC session
       const { pc, dc } = await startWebrtcSession(ephemeralKey, selectedModel);
-
       pcRef.current = pc;
       dcRef.current = dc;
-
-      // Store the input audio track reference for muting
-      const senders = pc.getSenders();
-      for (const sender of senders) {
-        if (sender.track?.kind === "audio") {
-          inputAudioTrackRef.current = sender.track;
-          inputAudioTrackRef.current.enabled = isMuted;
-          break;
-        }
-      }
 
       dc.addEventListener("open", () => {
         console.log("data channel opened");
@@ -457,7 +351,6 @@ export default function App() {
 
         // reset remaining states
         setMessages(new Map());
-        setEvents([]);
       });
 
       // handle events from the data channel
@@ -488,14 +381,6 @@ export default function App() {
   }
 
   async function stopSession() {
-    if (activeSessionID) {
-      updateSession(activeSessionID, { status: "completed" }).catch((error) => {
-        console.error("error: failed to update session:", error);
-      });
-    } else {
-      console.error("error: session audio recorder stopped but no active session ID");
-    }
-
     // Stop recording if active
     if (iAudioRecorderRef.current?.getState() === "recording") {
       iAudioRecorderRef.current.stop();
@@ -506,8 +391,8 @@ export default function App() {
     }
 
     if (sessionAudioRecorderRef.current?.getState() === "recording") {
-      const recording = await sessionAudioRecorderRef.current.stop();
-      if (!recording) {
+      const audio = await sessionAudioRecorderRef.current.stop();
+      if (!audio) {
         console.error("error: session audio recorder stopped but didn't get audio URL");
       } else {
         setMessages((prev) => {
@@ -520,18 +405,12 @@ export default function App() {
               timestamp,
             },
             audio: {
-              content: recording.url,
+              content: audio.url,
               timestamp,
             },
           });
           return newMessages;
         });
-
-        if (activeSessionID) {
-          saveSessionRecording(activeSessionID, recording);
-        } else {
-          console.error("error: session audio recorder stopped but no active session ID");
-        }
       }
     }
 
@@ -555,18 +434,6 @@ export default function App() {
     if (activeState !== "active") {
       return;
     }
-
-    const toastOptions: ExternalToast = { richColors: false };
-
-    // only show this action if the provider is Outspeed
-    if (selectedModel.provider === providers.Outspeed) {
-      toastOptions.action = {
-        label: "View Details",
-        onClick: () => navigate("/sessions"),
-      };
-    }
-
-    toast.info("Session stopped.", toastOptions);
   }
 
   function cleanup() {
@@ -584,7 +451,6 @@ export default function App() {
   function handleConnectionError() {
     stopSession();
     cleanup();
-    toast.error("Connection error! Check the console for details.");
   }
 
   function sendClientEvent(event: OaiEvent) {
@@ -596,12 +462,6 @@ export default function App() {
       console.error("Failed to send message - no active connection", event);
       return;
     }
-
-    // timestamps are only for frontend debugging
-    // they are not sent to the backend nor do they come from the backend
-    event.timestamp = event.timestamp || new Date().toLocaleTimeString();
-
-    setEvents((prev) => [event, ...prev]);
   }
 
   function sendTextMessage(message: string) {
@@ -637,90 +497,58 @@ export default function App() {
   }
 
   return (
-    <main className="h-full flex flex-col px-4 pb-4 gap-4">
-      <div className="flex grow gap-4 overflow-hidden">
-        <div className="hidden md:block flex-1 h-full min-h-0 rounded-xl bg-white overflow-y-auto">
-          <Chat messages={messages} sendTextMessage={sendTextMessage} />
-        </div>
-        <div className="flex-1 h-full min-h-0 rounded-xl bg-white overflow-y-auto">
-          <Tabs
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            isMobile={isMobile}
-            messages={messages}
-            sendTextMessage={sendTextMessage}
-            sendClientEvent={sendClientEvent}
-            events={events}
-            costState={costState}
-            sessionStartTime={sessionStartTime}
-          />
-        </div>
-      </div>
-      <section className="shrink-0">
-        <SessionControls
-          startWebrtcSession={startSession}
-          stopWebrtcSession={stopSession}
-          toggleMute={toggleMute}
-          isMuted={isMuted}
-        />
-      </section>
-    </main>
-  );
-}
-
-interface TabsProps {
-  activeTab: Tab;
-  setActiveTab: (tab: Tab) => void;
-  sendClientEvent: (event: OaiEvent) => void;
-  isMobile: boolean;
-  messages: Map<string, MessageBubbleProps>;
-  sendTextMessage: (message: string) => void;
-  events: OaiEvent[];
-  costState: CostState;
-  sessionStartTime: number | null;
-}
-
-const Tabs: React.FC<TabsProps> = ({
-  activeTab,
-  setActiveTab,
-  sendClientEvent,
-  isMobile,
-  messages,
-  sendTextMessage,
-  events,
-  costState,
-  sessionStartTime,
-}) => {
-  return (
-    <div className="flex flex-col h-full">
-      <div className="flex gap-2 px-4 py-4 sticky top-0 bg-white">
-        {tabs.map((tab) => {
-          if (tab.mobileOnly && !isMobile) {
-            return null;
-          }
-
-          return (
+    <>
+      {isOpen ? (
+        <div className="fixed bottom-4 right-4 z-50 w-96 h-[600px] bg-white rounded-xl shadow-lg overflow-hidden flex flex-col border border-gray-200">
+          <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200">
+            <h3 className="font-medium text-gray-900">Voice Chat</h3>
             <button
-              key={tab.value}
-              onClick={() => setActiveTab(tab.value)}
-              className={`pb-2 px-2 border-b-2 rounded-tl-md rounded-tr-md ${
-                activeTab === tab.value ? "border-black" : "border-transparent hover:border-gray-500"
-              } flex items-center gap-1`}
+              onClick={() => setIsOpen(false)}
+              className="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-100"
             >
-              {tab.label}
-              {tab.value === Tab.EVENTS && <span>({events.length})</span>}
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path
+                  fillRule="evenodd"
+                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                  clipRule="evenodd"
+                />
+              </svg>
             </button>
-          );
-        })}
-      </div>
-
-      <div className="flex-1 overflow-y-auto">
-        {activeTab === Tab.MOBILE_CHAT && isMobile && <Chat messages={messages} sendTextMessage={sendTextMessage} />}
-        {activeTab === Tab.SESSION_CONFIG && <SessionConfigComponent sendClientEvent={sendClientEvent} />}
-        {activeTab === Tab.EVENTS && (
-          <EventLog events={events} costState={costState} sessionStartTime={sessionStartTime} />
-        )}
-      </div>
-    </div>
+          </div>
+          <div className="flex-1 overflow-hidden">
+            <div className="h-full flex flex-col">
+              <div className="flex-1 overflow-y-auto">
+                <Chat messages={messages} sendTextMessage={sendTextMessage} />
+              </div>
+            </div>
+          </div>
+          <div className="shrink-0 border-t">
+            <SessionControls startWebrtcSession={startSession} stopWebrtcSession={stopSession} />
+          </div>
+        </div>
+      ) : (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="fixed bottom-4 right-4 z-50 w-12 h-12 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition-colors border-2 border-white"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+            />
+          </svg>
+        </button>
+      )}
+    </>
   );
 };
+
+export default OutspeedAgentEmbed;

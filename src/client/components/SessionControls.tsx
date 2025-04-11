@@ -5,13 +5,21 @@ import { useSession } from "@/contexts/session";
 import { type SessionConfig } from "@src/model-config";
 import { type Provider } from "@src/settings";
 import Button from "./ui/Button";
+import MuteButton from "./ui/MuteButton";
 
 interface SessionControlsProps {
   startWebrtcSession: (provider: Provider, config: SessionConfig) => Promise<void>;
   stopWebrtcSession: () => void;
+  isMuted?: boolean;
+  toggleMute?: () => void;
 }
 
-const SessionControls: React.FC<SessionControlsProps> = ({ startWebrtcSession, stopWebrtcSession }) => {
+const SessionControls: React.FC<SessionControlsProps> = ({
+  startWebrtcSession,
+  stopWebrtcSession,
+  isMuted = true,
+  toggleMute,
+}) => {
   const { activeState, config, selectedModel } = useSession();
 
   const handleStartSession = async () => {
@@ -31,6 +39,7 @@ const SessionControls: React.FC<SessionControlsProps> = ({ startWebrtcSession, s
   if (activeState === "active") {
     return (
       <div className="flex justify-center gap-2">
+        {toggleMute && <MuteButton isMuted={isMuted} onToggleMute={toggleMute} />}
         <Button icon={<PhoneOff size={14} />} className="bg-red-600" onClick={stopWebrtcSession}>
           Disconnect
         </Button>

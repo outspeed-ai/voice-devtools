@@ -3,6 +3,7 @@ import axios from "axios";
 import { env } from "@/config/env";
 import { getSupabaseAuthToken } from "@/config/supabase";
 import { OUTSPEED_API_BASE_URL } from "@/constants";
+import { type SessionConfig } from "@src/model-config";
 
 // Create axios instance with base URL
 const apiClient = axios.create({ baseURL: OUTSPEED_API_BASE_URL });
@@ -29,21 +30,30 @@ interface PaginationParams {
   pageSize?: number;
 }
 
-interface SessionResponse {
+export interface SessionResponse {
   sessions: Array<{
-    id: string;
-    created: string;
-    model: string;
-    modalities: string[];
-    total_tokens: number;
-    total_cost: number;
-    voice: string;
-    temperature: number;
-    input_audio_format: string;
-    output_audio_format: string;
-    instructions: string;
+    config: {
+      id: string;
+      created: number;
+      object: "realtime.session";
+      model: string;
+      modalities: string[];
+      instructions: string;
+      voice: string;
+      temperature: number;
+      tools: string[];
+      tool_choice: string;
+    };
+    status: "in_progress" | "completed";
+    recording: string | null;
+    provider: string;
+    created_at: string;
+    created_by: string;
   }>;
   total: number;
+  page: number;
+  page_size: number;
+  has_next: boolean;
 }
 
 interface InferenceMetric {
@@ -79,6 +89,32 @@ interface MetricsResponse {
   total: number;
 }
 
+interface SessionCreate {
+  config: SessionConfig;
+  provider: string;
+}
+
+interface SessionUpdate {
+  config?: Partial<SessionConfig>;
+  recording?: string;
+  status?: "completed";
+}
+
+interface S3UploadUrlResponse {
+  upload_url: string;
+  s3_url: string;
+  expires_in: number;
+}
+
+interface RecordingUrlResponse {
+  presigned_url: string;
+  expires_in: number;
+}
+
+interface AudioResponse {
+  presigned_url: string;
+}
+
 // Sessions API
 export const fetchSessions = async ({ page = 1, pageSize = 5 }: PaginationParams): Promise<SessionResponse> => {
   const response = await apiClient.get(`/sessions?page=${page}&page_size=${pageSize}`);
@@ -100,12 +136,40 @@ export const fetchMetricDetail = async (id: string): Promise<InferenceMetric> =>
   return response.data;
 };
 
-interface AudioResponse {
-  presigned_url: string;
-}
-
 // Audio API
 export const getAudioUrl = async (s3Url: string): Promise<AudioResponse> => {
   const response = await apiClient.post(`/audio`, { s3_url: s3Url });
+  return response.data;
+};
+
+// Create a new session
+export const createSession = async (data: SessionCreate): Promise<SessionResponse> => {
+  const response = await apiClient.post("/sessions", data);
+  return response.data;
+};
+
+// Update an existing session
+export const updateSession = async (sessionId: string, data: SessionUpdate): Promise<SessionResponse> => {
+  const response = await apiClient.put(`/sessions/${sessionId}`, data);
+  return response.data;
+};
+
+// Get a pre-signed URL for uploading audio to S3
+export const getAudioUploadUrl = async (params: {
+  fileName: string;
+  sessionId: string;
+  contentType?: string;
+}): Promise<S3UploadUrlResponse> => {
+  const response = await apiClient.post("/sessions/audio-upload-url", {
+    file_name: params.fileName,
+    session_id: params.sessionId,
+    content_type: params.contentType || "audio/wav",
+  });
+  return response.data;
+};
+
+// Get a pre-signed URL for playing a session recording
+export const getRecordingUrl = async (sessionId: string): Promise<RecordingUrlResponse> => {
+  const response = await apiClient.get(`/sessions/recording-url?session_id=${sessionId}`);
   return response.data;
 };
