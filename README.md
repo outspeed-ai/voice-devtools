@@ -3,9 +3,9 @@
 This UI provides a debug console for real-time AI voice interactions. It works with multiple realtime models ([View supported models](https://docs.outspeed.com/models)). Features include:
 
 1. Cost Tracking: Know how much you've spent per voice interaction
-2. Model Support: Supports open-source (MiniCPM-o) and closed-source S2S models (adding more soon!)
-3. Metrics Support: Track errors, response timelines, and performance
-4. Voice and Chat UI
+2. Model Support: Supports open-source (MiniCPM-o) and closed-source S2S models like OpenAI's GPT-4o Realtime (adding more soon!)
+3. Voice and Chat UI
+4. Session history and recording
 
 Inspired by [openai-realtime-console](https://github.com/openai/openai-realtime-console) and [openai-realtime-agents](https://github.com/openai/openai-realtime-agents).
 
@@ -39,30 +39,26 @@ To modify agent prompt and tools, modify `agent-config.js`.
 
 To modify the model parameters like (voice, version, etc.), edit `model-config.js`
 
-
 ### Agents
 
-There are two voice agent examples already present in `agent-config.js`:
+There are three voice agent examples already present. You can choose them in the Session Config UI on the right before starting a session.
+
 1. Dental Agent: Answers callers' questions about working hours of a dental clinic
 2. Message Agent: Takes callers' messages for a person
+3. Recruiter Agent: Talks to a candidate and asks questions about their background and availability
 
-You can modify the export in the file to activate an agent:
-
-```js
-// agent-config.js
-export { dental_agent as agent }
-
-// for message_agent
-export { message_agent as agent }
-```
-
-Play around with the prompts, or add your own voice agent to give it a spin.
+You can see the prompts in [./src/agent-config.ts](./src/agent-config.ts) file.
 
 ### Supported Models
-  - [MiniCPM-o](https://github.com/OpenBMB/MiniCPM-o) (hosted by Outspeed)
-  - OpenAI Realtime models
-  - Moshi (Coming Soon)
-  - Gemini Multimodal Live (Coming Soon)
+
+- [MiniCPM-o](https://github.com/OpenBMB/MiniCPM-o) (hosted by Outspeed)
+- OpenAI Realtime models
+- Moshi (Coming Soon)
+- Gemini Multimodal Live (Coming Soon)
+
+### Deployment
+
+You can see the deployment your agent to Cloudflare by following the steps at [demo.outspeed.com/deploy](https://demo.outspeed.com/deploy), or you could run this locally and visit the deploy route.
 
 ## License
 
