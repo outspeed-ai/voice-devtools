@@ -31,7 +31,7 @@ type ModelValue = {
 
 const OUTSPEED_MINICPMO_VOICES = ["male", "female"];
 // const OUTSPEED_SESAME_VOICES = ["male", "female"];
-const OUTSPEED_ORPHEUS_VOICES = ["male", "female"];
+const OUTSPEED_ORPHEUS_VOICES = ["tara", "leah", "jess", "leo", "dan", "mia", "zac", "zoe", "julia"];
 const OPENAI_VOICES = ["alloy", "ash", "ballad", "coral", "echo", "sage", "shimmer", "verse"];
 
 export const models: Record<ModelName, ModelValue> = {
@@ -72,7 +72,7 @@ export const models: Record<ModelName, ModelValue> = {
       model: "Orpheus-3b",
       modalities: ["audio", "text"],
       temperature: 0.6,
-      voice: "female",
+      voice: "tara",
       instructions: "",
       tools: [],
       turn_detection: {
