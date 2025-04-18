@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import { type ExternalToast, toast } from "sonner";
+import { toast } from "sonner";
 
 import { useSession } from "@/contexts/session";
 import AudioRecorder from "@/helpers/audio-recorder";
@@ -488,6 +488,8 @@ export default function App() {
   }
 
   async function stopSession() {
+    console.log("stopping session");
+
     if (activeSessionID) {
       updateSession(activeSessionID, { status: "completed" }).catch((error) => {
         console.error("error: failed to update session:", error);
@@ -529,6 +531,7 @@ export default function App() {
 
         if (activeSessionID) {
           saveSessionRecording(activeSessionID, recording);
+          toast.info("Session stopped. Storing session recording...");
         } else {
           console.error("error: session audio recorder stopped but no active session ID");
         }
@@ -550,23 +553,15 @@ export default function App() {
 
     cleanup();
 
+    console.log("session stopped");
+
     // if this function was called because of a connection error, don't show a toast
     // i.e we got an error even before the session could be active
     if (activeState !== "active") {
       return;
     }
 
-    const toastOptions: ExternalToast = { richColors: false };
-
-    // only show this action if the provider is Outspeed
-    if (selectedModel.provider === providers.Outspeed) {
-      toastOptions.action = {
-        label: "View Details",
-        onClick: () => navigate("/sessions"),
-      };
-    }
-
-    toast.info("Session stopped.", toastOptions);
+    navigate("/sessions");
   }
 
   function cleanup() {

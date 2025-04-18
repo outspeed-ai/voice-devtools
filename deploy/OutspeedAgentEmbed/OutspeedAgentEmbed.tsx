@@ -56,8 +56,7 @@ const OutspeedAgentEmbed = () => {
     // set model and agent
     setSelectedAgent(agent);
     setSelectedModel(models[agent.modelName]);
-
-  }, [])
+  }, []);
 
   const handleErrorEvent = (errorMessage: string, eventId: string, fullError: unknown) => {
     if (fullError) {
@@ -88,6 +87,8 @@ const OutspeedAgentEmbed = () => {
       case "session.created":
         setActiveState("active");
 
+        console.log("session created", event);
+
         pc.getSenders().forEach((sender) => {
           if (!sender.track) {
             console.error("error: session.created - No track found");
@@ -97,6 +98,10 @@ const OutspeedAgentEmbed = () => {
           // input track will be muted so we need to unmute it
           sender.track.enabled = true;
         });
+        break;
+
+      case "session.updated":
+        console.log("session updated", event);
         break;
 
       case "response.done":
@@ -381,6 +386,8 @@ const OutspeedAgentEmbed = () => {
   }
 
   async function stopSession() {
+    console.log("stopping session");
+
     // Stop recording if active
     if (iAudioRecorderRef.current?.getState() === "recording") {
       iAudioRecorderRef.current.stop();
@@ -428,6 +435,8 @@ const OutspeedAgentEmbed = () => {
     }
 
     cleanup();
+
+    console.log("session stopped");
 
     // if this function was called because of a connection error, don't show a toast
     // i.e we got an error even before the session could be active

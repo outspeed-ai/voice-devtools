@@ -13,6 +13,7 @@ export default function Sessions() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["sessions", page, pageSize],
     queryFn: () => fetchSessions({ page, pageSize }),
+    refetchOnMount: "always",
   });
 
   const sessions = data?.sessions || [];
