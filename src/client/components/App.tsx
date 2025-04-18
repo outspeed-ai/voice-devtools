@@ -488,6 +488,8 @@ export default function App() {
   }
 
   async function stopSession() {
+    console.log("stopping session");
+
     if (activeSessionID) {
       updateSession(activeSessionID, { status: "completed" }).catch((error) => {
         console.error("error: failed to update session:", error);
@@ -550,6 +552,8 @@ export default function App() {
     }
 
     cleanup();
+
+    console.log("session stopped");
 
     // if this function was called because of a connection error, don't show a toast
     // i.e we got an error even before the session could be active
