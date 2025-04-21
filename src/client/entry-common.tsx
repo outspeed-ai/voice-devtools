@@ -22,7 +22,7 @@ export default function EntryCommon() {
       <AuthProvider>
         <SessionProvider>
           <AudioPlayerProvider>
-            <Toaster richColors position="top-right" />
+            <Toaster richColors position="top-right" closeButton />
             <Router />
           </AudioPlayerProvider>
         </SessionProvider>
