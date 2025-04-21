@@ -1,4 +1,4 @@
-import { Link, Outlet } from "react-router";
+import { Link, NavLink, Outlet } from "react-router";
 
 import Button from "@/components/ui/Button";
 import { useUpdateCheck } from "@/utils/update-check";
@@ -31,15 +31,30 @@ export default function RootLayout() {
                 Update Available: v{updateInfo.version}
               </Button>
             )}
-            <Link to="/" className="text-blue-600 hover:text-blue-800">
+            <NavLink
+              to="/"
+              className={({ isActive }) =>
+                `text-blue-600 hover:text-blue-800 ${isActive ? "font-medium border-b-2 border-blue-600" : ""}`
+              }
+            >
               Home
-            </Link>
-            <Link to="/sessions" className="text-blue-600 hover:text-blue-800">
+            </NavLink>
+            <NavLink
+              to="/sessions"
+              className={({ isActive }) =>
+                `text-blue-600 hover:text-blue-800 ${isActive ? "font-medium border-b-2 border-blue-600" : ""}`
+              }
+            >
               History
-            </Link>
-            <Link to="/deploy" className="text-blue-600 hover:text-blue-800">
+            </NavLink>
+            <NavLink
+              to="/deploy"
+              className={({ isActive }) =>
+                `text-blue-600 hover:text-blue-800 ${isActive ? "font-medium border-b-2 border-blue-600" : ""}`
+              }
+            >
               Deploy
-            </Link>
+            </NavLink>
           </div>
         </div>
       </nav>
