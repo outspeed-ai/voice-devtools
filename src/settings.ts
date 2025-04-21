@@ -48,6 +48,11 @@ export const models: Record<ModelName, Model> = {
   //   cost: { perMinute: 0.01 },
   //   provider: providers.Outspeed,
   // },
+  "Orpheus-3b": {
+    ...modelConfig["Orpheus-3b"],
+    cost: { perMinute: 0.01 },
+    provider: providers.Outspeed,
+  },
   "gpt-4o-realtime-preview-2024-12-17": {
     ...modelConfig["gpt-4o-realtime-preview-2024-12-17"],
     cost: {

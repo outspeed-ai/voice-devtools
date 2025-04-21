@@ -3,7 +3,9 @@ import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import "dotenv/config";
+import dotenv from "dotenv";
+dotenv.config({ path: ".env", override: true });
+
 import express from "express";
 import { createServer as createViteServer } from "vite";
 

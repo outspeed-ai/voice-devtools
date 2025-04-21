@@ -1,13 +1,15 @@
 #!/usr/bin/env node
 
+import { execSync } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
+
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import chalk from "chalk";
-import { execSync } from "child_process";
 import { config } from "dotenv";
 import figlet from "figlet";
-import { readFileSync } from "fs";
-import { join } from "path";
+import pty from "node-pty";
 import { build } from "vite";
 
 // Load environment variables
@@ -39,26 +41,97 @@ console.log(
   ),
 );
 
+/**
+ * Runs a command in a pseudo-terminal and returns the output.
+ *
+ * @param {string} command - The command to run
+ * @param {string[]} args - The arguments to pass to the command
+ * @returns {Promise<string>} The output of the command
+ */
+async function runInteractiveCommand(command, args) {
+  return new Promise((resolve, reject) => {
+    let listener;
+    const cleanup = () => {
+      process.stdin.setRawMode(false);
+      if (listener) {
+        console.log("Removing listener");
+        process.stdin.removeListener("data", listener);
+      }
+    };
+
+    try {
+      const outputChunks = [];
+
+      // spawn the process in a pseudo-terminal to deploy the worker
+      const ptyProcess = pty.spawn(command, args, {
+        name: "xterm-color",
+        cols: 80,
+        rows: 30,
+        cwd: process.cwd(),
+        env: process.env,
+      });
+
+      // Turning on raw mode so that when we press special keys like
+      // arrow keys, they work in pseudo-terminal as well
+      // DON'T TURN IT OFF OR YOU WILL NOT BE ABLE TO USE ARROW KEYS,
+      // WHICH MIGHT BE REQUIRED ON FIRST LOGIN TO CLOUDFLARE
+      process.stdin.setRawMode(true);
+      listener = (data) => {
+        // forwarding input to the pty process
+        ptyProcess.write(data);
+      };
+
+      process.stdin.on("data", listener);
+
+      // capture output while also showing it in the terminal
+      ptyProcess.onData((data) => {
+        process.stdout.write(data);
+        outputChunks.push(data.toString());
+      });
+
+      ptyProcess.onExit(({ exitCode }) => {
+        cleanup();
+        if (exitCode !== 0) {
+          reject(new Error(`Process exited with code ${exitCode}`));
+          return;
+        }
+
+        resolve(outputChunks.join(""));
+      });
+
+      ptyProcess.on("error", (error) => {
+        cleanup();
+        reject(error);
+      });
+    } catch (error) {
+      cleanup();
+      reject(error);
+    }
+  });
+}
+
 // Function to deploy server to Cloudflare Workers
 async function deployServer() {
   console.log(chalk.cyan("\n🚀 Deploying server to Cloudflare Workers..."));
 
   try {
-    const deployCommand = [
-      "npx wrangler deploy",
-      `--var OPENAI_API_KEY:${process.env.OPENAI_API_KEY}`,
-      `--var OUTSPEED_API_KEY:${process.env.OUTSPEED_API_KEY}`,
-    ].join(" ");
-
     console.log(chalk.dim("┌─────────────────────────────────────────────────────────────┐"));
     console.log(chalk.dim("│                     Deployment started                      │"));
     console.log(chalk.dim("└─────────────────────────────────────────────────────────────┘"));
 
     // First deploy to get the URL
-    const deployOutput = execSync(deployCommand, {
-      encoding: "utf-8",
-      stdio: ["inherit", "pipe", "inherit"], // Allow input ("inherit" to make it interactive) but capture output with "pipe"
-    });
+    const command = "npx";
+    const args = [
+      "wrangler",
+      "deploy",
+      "--var",
+      `OPENAI_API_KEY:${process.env.OPENAI_API_KEY}`,
+      "--var",
+      `OUTSPEED_API_KEY:${process.env.OUTSPEED_API_KEY}`,
+    ];
+    const deployOutput = await runInteractiveCommand(command, args);
+
+    // Extract the worker URL from the output
     const workerUrlMatch = deployOutput.match(/\bhttps?:\/\/[a-z-.]*\.workers\.dev/g);
     if (!workerUrlMatch) {
       throw new Error("Could not find worker URL in deployment output");
@@ -91,7 +164,7 @@ async function buildEmbed(serverUrl) {
     ],
     build: {
       lib: {
-        entry: join(process.cwd(), "deploy/OutspeedAgentEmbed/embed.tsx"),
+        entry: path.join(process.cwd(), "deploy/OutspeedAgentEmbed/embed.tsx"),
         name: "OutspeedAgentEmbed",
         fileName: "outspeed-agent-embed",
         formats: ["iife"],
@@ -113,8 +186,8 @@ async function buildEmbed(serverUrl) {
     envPrefix: "OUTSPEED_",
     resolve: {
       alias: {
-        "@": join(process.cwd(), "src/client"),
-        "@src": join(process.cwd(), "src"),
+        "@": path.join(process.cwd(), "src/client"),
+        "@src": path.join(process.cwd(), "src"),
       },
     },
   });
@@ -144,8 +217,8 @@ async function deployAssets(workerUrl) {
 // Main deployment process
 async function main() {
   // Check environment variables from .env
-  const envPath = join(process.cwd(), ".env");
-  const envContent = readFileSync(envPath, "utf-8");
+  const envPath = path.join(process.cwd(), ".env");
+  const envContent = fs.readFileSync(envPath, "utf-8");
   const envVars = {
     OPENAI_API_KEY: envContent.includes("OPENAI_API_KEY") && !!process.env.OPENAI_API_KEY,
     OUTSPEED_API_KEY: envContent.includes("OUTSPEED_API_KEY") && !!process.env.OUTSPEED_API_KEY,
@@ -193,20 +266,30 @@ async function main() {
   console.log(chalk.dim("│                    Deployment complete                      │"));
   console.log(chalk.dim("└─────────────────────────────────────────────────────────────┘"));
 
+  console.log(chalk.cyan("\n💻 Worker URL:"));
+  console.log(chalk.blue(`${workerUrl}`));
+
   console.log(chalk.cyan("\n📜 Embed scripts:"));
-  console.log(chalk.yellow("// JavaScript - Load the Outspeed Agent script"));
-  console.log(chalk.blue(`<script src="${workerUrl}/outspeed-agent-embed.iife.js"></script>`));
-  
-  console.log(chalk.yellow("\n// Styling - Load the Outspeed Agent CSS"));
+  console.log(chalk.yellow("\n<!-- Styling - Load the Outspeed Agent CSS -->"));
   console.log(chalk.blue(`<link rel="stylesheet" href="${workerUrl}/outspeed-agent-embed.css">`));
-  
-  console.log(chalk.yellow("\n// JavaScript - Initialize the Outspeed Agent"));
+
+  console.log(chalk.yellow("\n<!-- JavaScript - Load the Outspeed Agent script -->"));
+  console.log(chalk.blue(`<script src="${workerUrl}/outspeed-agent-embed.iife.js"></script>`));
+
+  console.log(chalk.yellow("\n<!-- JavaScript - Initialize the Outspeed Agent -->"));
   console.log(chalk.blue(`<script>window.OutspeedAgentEmbed.init();</script>`));
 }
 
 // Run the deployment process
-main().catch((error) => {
-  console.error(chalk.red("\n❌ Deployment process failed:"));
-  console.error(error.message);
-  process.exit(1);
-});
+main()
+  .then(() => {
+    console.log(chalk.green("\n✅ Deployment process completed successfully"));
+    // after fucking with process.stdin in runInteractiveCommand, the command isn't exiting
+    // i wasted some time on this but could not fix it. hence i'm manually exiting with status code 0
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error(chalk.red("\n❌ Deployment process failed:"));
+    console.error(error.message);
+    process.exit(1);
+  });
