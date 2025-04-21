@@ -1,15 +1,10 @@
 // Helper function to safely get env variables
-// the reaason i've to do this is because when running this in ssr mode using tsx
-// (see "dev" script in package.json), import.meta.env is undefined,
-// and variables are available in process.env instead
+// the reason i've to do this is because when running this in ssr mode using tsx
+// (see "dev" script in package.json), import.meta.env is undefined initially
+// until we run the code in browser
 const getEnvVar = (key: string): string | undefined => {
   if (import.meta.env?.[key]) {
     return import.meta.env[key];
-  }
-
-  // Check if process is defined before accessing process.env
-  if (typeof process !== "undefined" && process.env?.[key]) {
-    return process.env[key];
   }
 
   return undefined;
