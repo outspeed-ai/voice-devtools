@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router";
 import { toast } from "sonner";
 
 import { useSession } from "@/contexts/session";
@@ -55,8 +54,6 @@ export default function App() {
   const sessionAudioRecorderRef = useRef<AudioRecorder | null>(null); // session audio recorder
   const currentUserSpeechItemRef = useRef<{ startTime: number; id: string } | null>(null);
   const currentBotSpeechItemRef = useRef<{ startTime: number; id: string } | null>(null);
-
-  const navigate = useNavigate();
 
   const isMobile = window.innerWidth < 768;
 
@@ -560,8 +557,6 @@ export default function App() {
     if (activeState !== "active") {
       return;
     }
-
-    navigate("/sessions");
   }
 
   function cleanup() {
