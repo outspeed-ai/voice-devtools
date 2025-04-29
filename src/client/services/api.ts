@@ -152,7 +152,6 @@ export const transcribeAudio = async (audioBlob: Blob): Promise<TranscriptionRes
   formData.append("audio_file", audioBlob, "recording.wav");
 
   const response = await apiClient.post("/stt/transcribe", formData, {
-    baseURL: "https://outspeed-ai-dev--outspeed-infra-fastapi-app-dev.modal.run/v1",
     headers: {
       "Content-Type": "multipart/form-data",
     },
