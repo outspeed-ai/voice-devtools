@@ -6,7 +6,7 @@ import AudioRecorder from "@/helpers/audio-recorder";
 import { getEphemeralKey } from "@/helpers/ephemeral-key";
 import { saveSessionRecording } from "@/helpers/save-session-recording";
 import { startWebrtcSession } from "@/helpers/webrtc";
-import { createSession as saveSession, updateSession } from "@/services/api";
+import { createSession as saveSession, transcribeAudio, updateSession } from "@/services/api";
 import { OaiEvent } from "@/types";
 import { calculateOpenAICosts, CostState, getInitialCostState, updateCumulativeCostOpenAI } from "@/utils/cost-calc";
 import { type SessionConfig } from "@src/model-config";
@@ -288,7 +288,7 @@ export default function App() {
           break;
         }
 
-        // finally update the message with the audio url
+        // now update the message with the audio url and a "generating transcription" msg
         setMessages((prev) => {
           const newMessages = new Map(prev);
           newMessages.set(currentUserSpeechItem.id, {
@@ -297,9 +297,57 @@ export default function App() {
               content: audio.url,
               timestamp: new Date().toLocaleTimeString(),
             },
+            text: {
+              content: "generating transcription...",
+              timestamp: new Date().toLocaleTimeString(),
+            },
           });
           return newMessages;
         });
+
+        try {
+          // get the audio blob from the URL
+          const response = await fetch(audio.url);
+          const audioBlob = await response.blob();
+
+          const transcriptionResult = await transcribeAudio(audioBlob);
+
+          // finally the message with both audio URL and transcription
+          setMessages((prev) => {
+            const newMessages = new Map(prev);
+            newMessages.set(currentUserSpeechItem.id, {
+              role: "user",
+              audio: {
+                content: audio.url,
+                timestamp: new Date().toLocaleTimeString(),
+              },
+              text: {
+                content: transcriptionResult.text,
+                timestamp: new Date().toLocaleTimeString(),
+              },
+            });
+            return newMessages;
+          });
+        } catch (error) {
+          console.error("Error transcribing audio:", error);
+
+          // if transcription fails, still update with audio URL & a failed transcription msg
+          setMessages((prev) => {
+            const newMessages = new Map(prev);
+            newMessages.set(currentUserSpeechItem.id, {
+              role: "user",
+              audio: {
+                content: audio.url,
+                timestamp: new Date().toLocaleTimeString(),
+              },
+              text: {
+                content: "failed to transcribe audio:(",
+                timestamp: new Date().toLocaleTimeString(),
+              },
+            });
+            return newMessages;
+          });
+        }
 
         break;
       }

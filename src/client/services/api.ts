@@ -115,6 +115,10 @@ interface AudioResponse {
   presigned_url: string;
 }
 
+interface TranscriptionResponse {
+  text: string;
+}
+
 // Sessions API
 export const fetchSessions = async ({ page = 1, pageSize = 5 }: PaginationParams): Promise<SessionResponse> => {
   const response = await apiClient.get(`/sessions?page=${page}&page_size=${pageSize}`);
@@ -139,6 +143,21 @@ export const fetchMetricDetail = async (id: string): Promise<InferenceMetric> =>
 // Audio API
 export const getAudioUrl = async (s3Url: string): Promise<AudioResponse> => {
   const response = await apiClient.post(`/audio`, { s3_url: s3Url });
+  return response.data;
+};
+
+// Transcription API
+export const transcribeAudio = async (audioBlob: Blob): Promise<TranscriptionResponse> => {
+  const formData = new FormData();
+  formData.append("audio_file", audioBlob, "recording.wav");
+
+  const response = await apiClient.post("/stt/transcribe", formData, {
+    baseURL: "https://outspeed-ai-dev--outspeed-infra-fastapi-app-dev.modal.run/v1",
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
   return response.data;
 };
 
