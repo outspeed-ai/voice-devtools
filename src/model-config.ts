@@ -1,9 +1,4 @@
-export type ModelName =
-  | "MiniCPM-o-2_6"
-  // | "Sesame-1b"
-  | "Orpheus-3b"
-  | "gpt-4o-realtime-preview-2024-12-17"
-  | "gpt-4o-mini-realtime-preview-2024-12-17";
+export type ModelName = "Orpheus-3b" | "gpt-4o-realtime-preview-2024-12-17" | "gpt-4o-mini-realtime-preview-2024-12-17";
 
 export type SessionConfig = {
   model: string;
@@ -29,42 +24,10 @@ type ModelValue = {
   sessionConfig: SessionConfig;
 };
 
-const OUTSPEED_MINICPMO_VOICES = ["male", "female"];
-// const OUTSPEED_SESAME_VOICES = ["male", "female"];
 const OUTSPEED_ORPHEUS_VOICES = ["tara", "leah", "jess", "leo", "dan", "mia", "zac", "zoe", "julia"];
 const OPENAI_VOICES = ["alloy", "ash", "ballad", "coral", "echo", "sage", "shimmer", "verse"];
 
 export const models: Record<ModelName, ModelValue> = {
-  "MiniCPM-o-2_6": {
-    label: "MiniCPM-o 2.6",
-    voices: OUTSPEED_MINICPMO_VOICES,
-    sessionConfig: {
-      model: "MiniCPM-o-2_6",
-      modalities: ["audio", "text"],
-      temperature: 0.6,
-      voice: "female",
-      instructions: "",
-      tools: [],
-      turn_detection: {
-        type: "server_vad",
-      },
-    },
-  },
-  // "Sesame-1b": {
-  //   label: "Sesame 1b (beta)",
-  //   voices: OUTSPEED_SESAME_VOICES,
-  //   sessionConfig: {
-  //     model: "Sesame-1b",
-  //     modalities: ["audio", "text"],
-  //     temperature: 0.6,
-  //     voice: "female",
-  //     instructions: "",
-  //     tools: [],
-  //     turn_detection: {
-  //       type: "server_vad",
-  //     },
-  //   },
-  // },
   "Orpheus-3b": {
     label: "Orpheus 3b",
     voices: OUTSPEED_ORPHEUS_VOICES,
