@@ -3,7 +3,7 @@
 This UI provides a debug console for real-time AI voice interactions. It works with multiple realtime models ([View supported models](https://docs.outspeed.com/models)). Features include:
 
 1. Cost Tracking: Know how much you've spent per voice interaction
-2. Model Support: Supports open-source (MiniCPM-o) and closed-source S2S models like OpenAI's GPT-4o Realtime (adding more soon!)
+2. Model Support: Supports open-source (Orpheus 3B) and closed-source S2S models like OpenAI's GPT-4o Realtime (adding more soon!)
 3. Voice and Chat UI
 4. Session history and recording
 
@@ -51,7 +51,7 @@ You can see the prompts in [./src/agent-config.ts](./src/agent-config.ts) file.
 
 ### Supported Models
 
-- [MiniCPM-o](https://github.com/OpenBMB/MiniCPM-o) (hosted by Outspeed)
+- [Orpheus 3B](https://huggingface.co/collections/canopylabs/orpheus-tts-67d9ea3f6c05a941c06ad9d2) (hosted by Outspeed)
 - OpenAI Realtime models
 - Moshi (Coming Soon)
 - Gemini Multimodal Live (Coming Soon)

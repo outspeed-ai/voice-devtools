@@ -37,17 +37,6 @@ export type Model = (typeof modelConfig)[keyof typeof modelConfig] & {
 };
 
 export const models: Record<ModelName, Model> = {
-  "MiniCPM-o-2_6": {
-    ...modelConfig["MiniCPM-o-2_6"],
-    cost: { perMinute: 0.01 },
-    provider: providers.Outspeed,
-  },
-  // coming soon
-  // "Sesame-1b": {
-  //   ...modelConfig["Sesame-1b"],
-  //   cost: { perMinute: 0.01 },
-  //   provider: providers.Outspeed,
-  // },
   "Orpheus-3b": {
     ...modelConfig["Orpheus-3b"],
     cost: { perMinute: 0.01 },
