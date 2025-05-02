@@ -106,6 +106,8 @@ export default function App() {
     event.timestamp = event.timestamp || new Date().toLocaleTimeString();
     event.server_sent = true; // to distinguish between server and client events
 
+    setEvents((prev) => [event, ...prev]);
+
     switch (event.type) {
       case "session.created":
         setActiveState("active");
@@ -425,8 +427,6 @@ export default function App() {
         }
         break;
     }
-
-    setEvents((prev) => [event, ...prev]);
   };
 
   const toggleMute = () => {
