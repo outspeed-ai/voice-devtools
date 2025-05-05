@@ -101,6 +101,59 @@ export default function App() {
     });
   };
 
+  // @ts-expect-error unused function
+  const transcribeInputAudio = async (browserAudioUrl: string) => {
+    const currentUserSpeechItem = currentUserSpeechItemRef.current;
+    if (!currentUserSpeechItem) {
+      console.error("error: transcribeInputAudio - currentUserSpeechItem not found");
+      return;
+    }
+
+    try {
+      // get the audio blob from the URL
+      const response = await fetch(browserAudioUrl);
+      const audioBlob = await response.blob();
+
+      const transcriptionResult = await transcribeAudio(audioBlob);
+
+      // finally the message with both audio URL and transcription
+      setMessages((prev) => {
+        const newMessages = new Map(prev);
+        newMessages.set(currentUserSpeechItem.id, {
+          role: "user",
+          audio: {
+            content: browserAudioUrl,
+            timestamp: new Date().toLocaleTimeString(),
+          },
+          text: {
+            content: transcriptionResult.text,
+            timestamp: new Date().toLocaleTimeString(),
+          },
+        });
+        return newMessages;
+      });
+    } catch (error) {
+      console.error("Error transcribing audio:", error);
+
+      // if transcription fails, still update with audio URL & a failed transcription msg
+      setMessages((prev) => {
+        const newMessages = new Map(prev);
+        newMessages.set(currentUserSpeechItem.id, {
+          role: "user",
+          audio: {
+            content: browserAudioUrl,
+            timestamp: new Date().toLocaleTimeString(),
+          },
+          text: {
+            content: "failed to transcribe audio:(",
+            timestamp: new Date().toLocaleTimeString(),
+          },
+        });
+        return newMessages;
+      });
+    }
+  };
+
   const handleOaiServerEvent = async (pc: RTCPeerConnection, event: OaiEvent) => {
     event.event_id = event.event_id || crypto.randomUUID();
     event.timestamp = event.timestamp || new Date().toLocaleTimeString();
@@ -244,7 +297,7 @@ export default function App() {
         }
 
         currentUserSpeechItemRef.current = {
-          id: crypto.randomUUID(),
+          id: event.item_id,
           startTime: Date.now(),
         };
         break;
@@ -290,7 +343,7 @@ export default function App() {
           break;
         }
 
-        // now update the message with the audio url and a "generating transcription" msg
+        // now update the message with the audio url
         setMessages((prev) => {
           const newMessages = new Map(prev);
           newMessages.set(currentUserSpeechItem.id, {
@@ -299,58 +352,12 @@ export default function App() {
               content: audio.url,
               timestamp: new Date().toLocaleTimeString(),
             },
-            text: {
-              content: "generating transcription...",
-              timestamp: new Date().toLocaleTimeString(),
-            },
           });
           return newMessages;
         });
 
-        try {
-          // get the audio blob from the URL
-          const response = await fetch(audio.url);
-          const audioBlob = await response.blob();
-
-          const transcriptionResult = await transcribeAudio(audioBlob);
-
-          // finally the message with both audio URL and transcription
-          setMessages((prev) => {
-            const newMessages = new Map(prev);
-            newMessages.set(currentUserSpeechItem.id, {
-              role: "user",
-              audio: {
-                content: audio.url,
-                timestamp: new Date().toLocaleTimeString(),
-              },
-              text: {
-                content: transcriptionResult.text,
-                timestamp: new Date().toLocaleTimeString(),
-              },
-            });
-            return newMessages;
-          });
-        } catch (error) {
-          console.error("Error transcribing audio:", error);
-
-          // if transcription fails, still update with audio URL & a failed transcription msg
-          setMessages((prev) => {
-            const newMessages = new Map(prev);
-            newMessages.set(currentUserSpeechItem.id, {
-              role: "user",
-              audio: {
-                content: audio.url,
-                timestamp: new Date().toLocaleTimeString(),
-              },
-              text: {
-                content: "failed to transcribe audio:(",
-                timestamp: new Date().toLocaleTimeString(),
-              },
-            });
-            return newMessages;
-          });
-        }
-
+        // no need for this anymore since we're getting the transcription event from the server
+        // transcribeInputAudio(audio.url);
         break;
       }
 
@@ -372,6 +379,28 @@ export default function App() {
           id: event.response_id,
           startTime: Date.now(),
         };
+        break;
+
+      case "conversation.item.input_audio_transcription.completed":
+      case "conversation.item.input_audio_transcription.failed":
+        if (event.error) {
+          console.error("error: conversation.item.input_audio_transcription.failed:", event.error);
+        }
+
+        const msgId = event.item_id;
+        setMessages((prev) => {
+          const newMessages = new Map(prev);
+          const currentMessage = prev.get(msgId);
+          newMessages.set(msgId, {
+            ...currentMessage,
+            role: "user",
+            text: {
+              content: event.transcript || event.error.message || "some error occurred while transcribing audio",
+              timestamp: new Date().toLocaleTimeString(),
+            },
+          });
+          return newMessages;
+        });
         break;
 
       case "output_audio_buffer.cleared":
