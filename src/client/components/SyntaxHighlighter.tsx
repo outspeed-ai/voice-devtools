@@ -1,7 +1,7 @@
 import { Prism } from "react-syntax-highlighter";
 import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { toast } from "sonner";
 
+import { copyToClipboard } from "@/utils/clipboard";
 import { Button } from "./ui";
 
 interface SyntaxHighlighterProps {
@@ -13,16 +13,10 @@ interface SyntaxHighlighterProps {
  * A wrapper over react-syntax-highlighter's Prism component, with a button to copy the code to the clipboard.
  */
 const SyntaxHighlighter: React.FC<SyntaxHighlighterProps> = ({ language, content }) => {
-  const handleCopy = async () => {
-    navigator.clipboard
-      .writeText(content)
-      .then(() => {
-        toast.success("Copied to clipboard");
-      })
-      .catch(() => {
-        toast.error("Failed to copy to clipboard");
-      });
+  const handleCopy = () => {
+    copyToClipboard(content);
   };
+
   return (
     <div className="syntax-highlighter-container relative">
       <Button
