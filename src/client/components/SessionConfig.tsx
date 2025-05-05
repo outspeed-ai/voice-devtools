@@ -104,6 +104,32 @@ const SessionConfig: React.FC<SessionConfigProps> = ({ sendClientEvent }) => {
           </div>
         )}
 
+        {config.modalities.includes("audio") && (
+          <div className="flex flex-col gap-1">
+            <label htmlFor="transcription_model">Input Transcription Model:</label>
+            <select
+              id="transcription_model"
+              value={config.input_audio_transcription?.model || "none"}
+              onChange={(e) => {
+                const value = e.target.value;
+                setConfig({
+                  ...config,
+                  input_audio_transcription: value === "none" ? undefined : { model: value },
+                });
+              }}
+              className="border p-2 rounded-md"
+              disabled={!isInactive}
+            >
+              <option value="none">None</option>
+              {selectedModel.transcriptionModels.map((model) => (
+                <option key={model} value={model}>
+                  {model}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         {/* coming really soon */}
         <div className="flex flex-col gap-1">
           <label htmlFor="turn_detection">Turn Detection:</label>
