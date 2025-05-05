@@ -6,6 +6,12 @@ interface ButtonProps {
   variant?: "primary" | "outline";
   disabled?: boolean;
   icon?: React.ReactNode;
+
+  /**
+   * Only applied when an icon is present
+   */
+  iconClassName?: string;
+
   className?: string;
 }
 
@@ -15,6 +21,7 @@ const Button: React.FC<ButtonProps> = ({
   variant = "primary",
   disabled = false,
   icon,
+  iconClassName = "",
   className = "",
 }) => {
   const baseClasses =
@@ -34,7 +41,7 @@ const Button: React.FC<ButtonProps> = ({
       onClick={onClick}
       disabled={disabled}
     >
-      {icon && <span className={children ? "mr-2" : ""}>{icon}</span>}
+      {icon && <span className={twMerge(children ? "mr-2" : "", iconClassName)}>{icon}</span>}
       {children}
     </button>
   );

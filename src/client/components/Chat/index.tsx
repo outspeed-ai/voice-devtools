@@ -1,11 +1,11 @@
 import { memo, useEffect, useRef, useState } from "react";
-import { AlertCircle, Send } from "react-feather";
+import { AlertCircle, Copy, Send } from "react-feather";
 
 import Button from "@/components/ui/Button";
 import { useSession } from "@/contexts/session";
 
+import { copyToClipboard } from "@/utils/clipboard";
 import styles from "./style.module.css";
-
 export interface MessageBubbleProps {
   /**
    * The role of the message
@@ -112,6 +112,35 @@ const MessageBubble: React.FC<MessageBubbleProps> = memo(({ text, audio, interru
   );
 });
 
+const formatTranscript = (messages: Map<string, MessageBubbleProps>): string => {
+  return Array.from(messages.values())
+    .map((message) => {
+      const roleDisplay =
+        message.role === "custom:session-recording"
+          ? "Session Recording"
+          : message.role.charAt(0).toUpperCase() + message.role.slice(1);
+
+      let formattedMessage = `[${roleDisplay}]`;
+
+      if (message.text) {
+        formattedMessage += ` (${message.text.timestamp})`;
+        if (message.interrupted) {
+          formattedMessage += " [Interrupted]";
+        }
+        formattedMessage += ":\n";
+        formattedMessage += message.text.content;
+      }
+
+      if (message.audio) {
+        formattedMessage += ` (${message.audio.timestamp})`;
+        formattedMessage += "\n[Audio Message]";
+      }
+
+      return formattedMessage + "\n";
+    })
+    .join("\n");
+};
+
 interface ChatProps {
   messages: Map<string, MessageBubbleProps>;
   sendTextMessage: (message: string) => void;
@@ -120,6 +149,7 @@ interface ChatProps {
 const Chat: React.FC<ChatProps> = memo(({ messages, sendTextMessage }) => {
   const { activeState } = useSession();
   const [message, setMessage] = useState("");
+  const [copySuccess, setCopySuccess] = useState(false);
 
   const scrolledManually = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -179,8 +209,27 @@ const Chat: React.FC<ChatProps> = memo(({ messages, sendTextMessage }) => {
     scrollToBottom();
   };
 
+  const handleCopyTranscript = () => {
+    const transcript = formatTranscript(messages);
+    copyToClipboard(transcript).then(() => {
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    });
+  };
+
   return (
     <div className="flex flex-col h-full">
+      <div className="flex justify-end p-2 border-b border-gray-200">
+        <Button
+          onClick={handleCopyTranscript}
+          icon={<Copy width={12} height={12} />}
+          iconClassName="mr-1"
+          className="text-xs px-2 py-2"
+          disabled={messages.size === 0}
+        >
+          {copySuccess ? "Copied!" : "Copy Transcript"}
+        </Button>
+      </div>
       <section ref={containerRef} className="overflow-auto p-4 flex flex-col gap-y-4 flex-1">
         {Array.from(messages.entries()).map(([id, message]) => (
           <MessageBubble key={id} {...message} />
