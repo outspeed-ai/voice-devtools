@@ -30,8 +30,9 @@ const tabs = [
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>(Tab.SESSION_CONFIG);
-  const { activeState, setActiveState, config, setConfig, selectedModel } = useSession();
-  const [activeSessionID, setActiveSessionID] = useState<string | null>(null);
+  const { activeState, setActiveState, config, setConfig, selectedModel, currentSession, setCurrentSession } =
+    useSession();
+
   const [events, setEvents] = useState<OaiEvent[]>([]);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dcRef = useRef<RTCDataChannel | null>(null);
@@ -178,7 +179,7 @@ export default function App() {
         });
 
         if (event.session) {
-          setActiveSessionID(event.session.id);
+          setCurrentSession(event.session);
           saveSession({ config: event.session, provider: selectedModel.provider.name.toLowerCase() }).catch((error) => {
             console.error("error: failed to save session:", error);
           });
@@ -189,6 +190,7 @@ export default function App() {
 
       case "session.updated":
         if (event.session) {
+          setCurrentSession(event.session);
           setConfig({ ...config, ...event.session });
         } else {
           console.error("error: session.update - no session found in event payload");
@@ -564,8 +566,8 @@ export default function App() {
   async function stopSession() {
     console.log("stopping session");
 
-    if (activeSessionID) {
-      updateSession(activeSessionID, { status: "completed" }).catch((error) => {
+    if (currentSession && currentSession.id) {
+      updateSession(currentSession.id, { status: "completed" }).catch((error) => {
         console.error("error: failed to update session:", error);
       });
     } else {
@@ -603,8 +605,8 @@ export default function App() {
           return newMessages;
         });
 
-        if (activeSessionID) {
-          saveSessionRecording(activeSessionID, recording);
+        if (currentSession) {
+          saveSessionRecording(currentSession.id, recording);
           toast.info("Session stopped. Storing session recording...");
         } else {
           console.error("error: session audio recorder stopped but no active session ID");
@@ -638,6 +640,7 @@ export default function App() {
 
   function cleanup() {
     setActiveState("inactive");
+    setCurrentSession(null);
     pcRef.current = null;
     dcRef.current = null;
     iAudioRecorderRef.current = null;
