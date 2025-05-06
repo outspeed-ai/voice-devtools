@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Download } from "react-feather";
 
 import { useSession } from "@/contexts/session";
 import { OaiEvent } from "@/types";
@@ -47,8 +48,25 @@ interface EventLogProps {
 }
 
 const EventLog: React.FC<EventLogProps> = ({ events, costState = null, sessionStartTime = null }) => {
-  const { activeState } = useSession();
+  const { activeState, currentSession } = useSession();
   const isLoading = activeState === "loading";
+
+  const handleDownloadEvents = () => {
+    const exportData = {
+      session: currentSession,
+      events: events,
+    };
+    const jsonData = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([jsonData], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `voice-session-${new Date().toISOString()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="h-full w-full flex flex-col gap-4 p-4">
@@ -60,6 +78,15 @@ const EventLog: React.FC<EventLogProps> = ({ events, costState = null, sessionSt
 
       {!isLoading && events.length > 0 && (
         <>
+          <div className="flex justify-end -mt-4">
+            <button
+              onClick={handleDownloadEvents}
+              className="flex items-center gap-2 px-3 py-2 text-xs bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+            >
+              <Download size={16} />
+              Download Log
+            </button>
+          </div>
           {events.map((event, index) => {
             // Generate a unique key using event.id if available, otherwise use a unique key based on type and index
             const uniqueKey = event.id || event.event_id || `${event.type}-${index}`;

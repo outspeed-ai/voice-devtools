@@ -6,6 +6,11 @@ import * as agents from "@src/agent-config";
 import { type SessionConfig } from "@src/model-config";
 import { models, providers, type Model } from "@src/settings";
 
+type ServerSession = {
+  id: string;
+  [key: string]: any;
+} | null;
+
 interface SessionContextType {
   activeState: "inactive" | "loading" | "active";
   setActiveState: (state: "inactive" | "loading" | "active") => void;
@@ -22,6 +27,13 @@ interface SessionContextType {
 
   config: SessionConfig;
   setConfig: (config: SessionConfig) => void;
+
+  /**
+   * session object received from the server on session.created
+   * and session.updated events
+   */
+  currentSession: ServerSession;
+  setCurrentSession: (session: ServerSession) => void;
 }
 
 const SessionContext = createContext<SessionContextType | null>(null);
@@ -46,6 +58,10 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({ children }) =>
   const [activeState, setActiveState] = useState<"inactive" | "loading" | "active">("inactive");
   const [selectedModel, setSelectedModel] = useState(models["Orpheus-3b"]);
   const [selectedAgent, setSelectedAgent] = useState<Agent>(agents.dentalAgent);
+  // here we'll store the session object received from the server on session.created
+  // and session.updated events
+  const [currentSession, setCurrentSession] = useState<ServerSession>(null);
+
   const durationRef = useRef(0);
 
   // initial state is the combined config of the selected model and instructions from the selected agent
@@ -84,6 +100,9 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({ children }) =>
 
         config,
         setConfig,
+
+        currentSession,
+        setCurrentSession,
       }}
     >
       {children}
