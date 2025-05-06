@@ -19,7 +19,7 @@ export type SessionConfig = {
 
   input_audio_transcription?: {
     model: string;
-  };
+  } | null;
 };
 
 type ModelValue = {
@@ -66,6 +66,7 @@ export const models: Record<ModelName, ModelValue> = {
       voice: "sage",
       instructions: "",
       tools: [],
+      input_audio_transcription: null,
       turn_detection: {
         // to use "semantic_vad", you need to send "session.update" event
         // docs: https://platform.openai.com/docs/guides/realtime-vad#semantic-vad
@@ -84,6 +85,7 @@ export const models: Record<ModelName, ModelValue> = {
       voice: "sage",
       instructions: "",
       tools: [],
+      input_audio_transcription: null,
       turn_detection: {
         type: "server_vad",
       },
