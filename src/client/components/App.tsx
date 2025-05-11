@@ -233,6 +233,7 @@ export default function App() {
         break;
 
       case "response.audio_transcript.delta":
+      case "response.text.delta":
         botStreamingTextRef.current = event.response_id;
         setMessages((prev) => {
           const newMessages = new Map(prev);
@@ -254,9 +255,11 @@ export default function App() {
         break;
 
       case "response.audio_transcript.done":
-        const { transcript } = event;
-        if (!transcript) {
-          console.error(`error: response.audio_transcript.done - transcript not found ('${transcript}')`);
+      case "response.text.done":
+        const { transcript, text } = event;
+        const content = transcript || text;
+        if (!content) {
+          console.error(`error: ${event.type} - transcript/text not found (${JSON.stringify(event)}) `);
           break;
         }
 
@@ -269,7 +272,7 @@ export default function App() {
           newMessages.set(event.response_id, {
             ...currentMessage,
             text: {
-              content: transcript,
+              content,
               timestamp: !currentMessage.text?.timestamp
                 ? new Date().toLocaleTimeString()
                 : currentMessage.text.timestamp,
