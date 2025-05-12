@@ -57,7 +57,7 @@ const getAvailableModels = () => {
 export const SessionProvider: React.FC<SessionProviderProps> = ({ children }) => {
   const [activeState, setActiveState] = useState<"inactive" | "loading" | "active">("inactive");
   const [selectedModel, setSelectedModel] = useState(models["Orpheus-3b"]);
-  const [selectedAgent, setSelectedAgent] = useState<Agent>(agents.dentalAgent);
+  const [selectedAgent, setSelectedAgent] = useState<Agent>(agents.aiGirlfriend);
   // here we'll store the session object received from the server on session.created
   // and session.updated events
   const [currentSession, setCurrentSession] = useState<ServerSession>(null);

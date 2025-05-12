@@ -35,6 +35,8 @@ const OPENAI_TRANSCRIPTION_MODELS = ["gpt-4o-transcribe", "gpt-4o-mini-transcrib
 const OUTSPEED_ORPHEUS_VOICES = ["tara", "leah", "jess", "leo", "dan", "mia", "zac", "zoe", "julia"];
 const OPENAI_VOICES = ["alloy", "ash", "ballad", "coral", "echo", "sage", "shimmer", "verse"];
 
+const MODALITIES = ["text", "audio"];
+
 export const models: Record<ModelName, ModelValue> = {
   "Orpheus-3b": {
     label: "Orpheus 3b",
@@ -42,7 +44,7 @@ export const models: Record<ModelName, ModelValue> = {
     transcriptionModels: OUTSPEED_TRANSCRIPTION_MODELS,
     sessionConfig: {
       model: "Orpheus-3b",
-      modalities: ["audio", "text"],
+      modalities: MODALITIES,
       temperature: 0.6,
       voice: "tara",
       instructions: "",
@@ -61,7 +63,7 @@ export const models: Record<ModelName, ModelValue> = {
     transcriptionModels: OPENAI_TRANSCRIPTION_MODELS,
     sessionConfig: {
       model: "gpt-4o-realtime-preview-2024-12-17",
-      modalities: ["audio", "text"],
+      modalities: MODALITIES,
       temperature: 0.6,
       voice: "sage",
       instructions: "",
@@ -80,7 +82,7 @@ export const models: Record<ModelName, ModelValue> = {
     transcriptionModels: OPENAI_TRANSCRIPTION_MODELS,
     sessionConfig: {
       model: "gpt-4o-mini-realtime-preview-2024-12-17",
-      modalities: ["audio", "text"],
+      modalities: MODALITIES,
       temperature: 0.6,
       voice: "sage",
       instructions: "",
