@@ -295,16 +295,24 @@ export default function App() {
 
         if (currentUserSpeechItemRef.current) {
           /**
+           * NOTE:
            * when semantic VAD is on, we receive multiple input_audio_buffer.speech_started event
            * before we receive a final input_audio_buffer.speech_stopped.
+           *
+           * We obviously receive only the final input_audio_buffer.speech_stopped event,
+           * BUT that item_id in speech_stopped event would be the same as the item_id in the last
+           * speech_started event.
+           *
+           * So we need to update the item_id in the speech_started event with the item_id in the
+           * speech_stopped event.
            */
-          break;
+          currentUserSpeechItemRef.current.id = event.item_id;
+        } else {
+          currentUserSpeechItemRef.current = {
+            id: event.item_id,
+            startTime: Date.now(),
+          };
         }
-
-        currentUserSpeechItemRef.current = {
-          id: event.item_id,
-          startTime: Date.now(),
-        };
         break;
 
       case "input_audio_buffer.speech_stopped": {
