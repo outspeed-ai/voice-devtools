@@ -1,5 +1,5 @@
 import { memo, useEffect, useRef, useState } from "react";
-import { AlertCircle, Copy, Send } from "react-feather";
+import { AlertCircle, Copy, Send, Tool } from "react-feather";
 
 import Button from "@/components/ui/Button";
 import { useSession } from "@/contexts/session";
@@ -35,12 +35,32 @@ export interface MessageBubbleProps {
     timestamp: string;
     processing?: boolean;
   };
+
+  /**
+   * Function call content
+   */
+  function_call?: {
+    name: string;
+    arguments: string;
+    timestamp: string;
+    streaming?: boolean;
+  };
 }
+
+const TypingIndicator: React.FC = () => {
+  return (
+    <span className={styles.typingIndicator}>
+      <span className={styles.dot}></span>
+      <span className={styles.dot}></span>
+      <span className={styles.dot}></span>
+    </span>
+  );
+};
 
 // use memo to prevent unnecessary re-renders . without memo, it re-renders all
 // messages even when the user just types each character of a new message because
 // the message state in <Chat /> gets updated every time the user types a new character
-const MessageBubble: React.FC<MessageBubbleProps> = memo(({ text, audio, interrupted, role }) => {
+const MessageBubble: React.FC<MessageBubbleProps> = memo(({ text, audio, interrupted, role, function_call }) => {
   const isUser = role !== "assistant" && role !== "custom:session-recording";
   const isSessionRecording = role === "custom:session-recording";
   const baseContainer = "flex justify-end flex-col";
@@ -90,11 +110,33 @@ const MessageBubble: React.FC<MessageBubbleProps> = memo(({ text, audio, interru
             <div className="whitespace-pre-wrap">{text.content}</div>
             {text.streaming && (
               <div className="flex mt-1">
-                <span className={styles.typingIndicator}>
-                  <span className={styles.dot}></span>
-                  <span className={styles.dot}></span>
-                  <span className={styles.dot}></span>
-                </span>
+                <TypingIndicator />
+              </div>
+            )}
+          </>
+        )}
+        {function_call && (
+          <>
+            <div className="text-xs text-gray-500 font-mono">{function_call.timestamp}</div>
+            <div className="flex items-start gap-2 mt-1">
+              <Tool size={16} className="text-gray-500 mt-0.5 flex-shrink-0" />
+              <div className="min-w-0 w-full">
+                <div className="font-semibold text-gray-700">{function_call.name}</div>
+                <pre className="mt-1 text-sm bg-gray-50 p-2 rounded overflow-x-auto whitespace-pre-wrap break-words font-mono">
+                  {(() => {
+                    try {
+                      const parsed = JSON.parse(function_call.arguments);
+                      return JSON.stringify(parsed, null, 2);
+                    } catch {
+                      return function_call.arguments;
+                    }
+                  })()}
+                </pre>
+              </div>
+            </div>
+            {function_call.streaming && (
+              <div className="flex mt-1">
+                <TypingIndicator />
               </div>
             )}
           </>
@@ -134,6 +176,13 @@ const formatTranscript = (messages: Map<string, MessageBubbleProps>): string => 
       if (message.audio) {
         formattedMessage += ` (${message.audio.timestamp})`;
         formattedMessage += "\n[Audio Message]";
+      }
+
+      if (message.function_call) {
+        formattedMessage += ` (${message.function_call.timestamp})`;
+        formattedMessage += "\n[Function Call]";
+        formattedMessage += `\nName: ${message.function_call.name}`;
+        formattedMessage += `\nArguments: ${message.function_call.arguments}`;
       }
 
       return formattedMessage + "\n";

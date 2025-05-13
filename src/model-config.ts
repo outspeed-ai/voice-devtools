@@ -1,12 +1,18 @@
 export type ModelName = "Orpheus-3b" | "gpt-4o-realtime-preview-2024-12-17" | "gpt-4o-mini-realtime-preview-2024-12-17";
 
+type FunctionDefinition = {
+  type: "function";
+  name: string;
+  description: string;
+  parameters: any;
+};
 export type SessionConfig = {
   model: string;
   modalities: string[];
   temperature: number;
   voice: string;
   instructions: string;
-  tools: string[];
+  tools: FunctionDefinition[];
 
   /**
    * to use "semantic_vad" for OpenAI Realtime API, you need to send `"session.update"` event
@@ -37,6 +43,33 @@ const OPENAI_VOICES = ["alloy", "ash", "ballad", "coral", "echo", "sage", "shimm
 
 const MODALITIES = ["text", "audio"];
 
+const TOOLS: FunctionDefinition[] = [
+  {
+    name: "get_weather",
+    type: "function",
+    description: "Retrieves the current weather information",
+    parameters: {
+      type: "object",
+      properties: {
+        location: {
+          type: "string",
+          description: "The geographic location for which to retrieve the weather",
+        },
+        units: {
+          type: "string",
+          description: "The unit of measurement for temperature, e.g., 'metric' or 'imperial'",
+          enum: ["metric", "imperial"],
+        },
+        language: {
+          type: "string",
+          description: "Language of the response, e.g., 'en' for English",
+        },
+      },
+      required: [],
+    },
+  },
+];
+
 export const models: Record<ModelName, ModelValue> = {
   "Orpheus-3b": {
     label: "Orpheus 3b",
@@ -48,7 +81,7 @@ export const models: Record<ModelName, ModelValue> = {
       temperature: 0.6,
       voice: "tara",
       instructions: "",
-      tools: [],
+      tools: TOOLS,
       turn_detection: {
         type: "server_vad",
       },
@@ -67,7 +100,7 @@ export const models: Record<ModelName, ModelValue> = {
       temperature: 0.6,
       voice: "sage",
       instructions: "",
-      tools: [],
+      tools: TOOLS,
       input_audio_transcription: null,
       turn_detection: {
         // to use "semantic_vad", you need to send "session.update" event
@@ -86,7 +119,7 @@ export const models: Record<ModelName, ModelValue> = {
       temperature: 0.6,
       voice: "sage",
       instructions: "",
-      tools: [],
+      tools: TOOLS,
       input_audio_transcription: null,
       turn_detection: {
         type: "server_vad",
