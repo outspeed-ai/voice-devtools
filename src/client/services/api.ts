@@ -3,7 +3,7 @@ import axios from "axios";
 import { env } from "@/config/env";
 import { getSupabaseAuthToken } from "@/config/supabase";
 import { OUTSPEED_API_BASE_URL } from "@/constants";
-import { type SessionConfig } from "@src/model-config";
+import { type SessionConfig } from "@package/types";
 
 // Create axios instance with base URL
 const apiClient = axios.create({ baseURL: OUTSPEED_API_BASE_URL });

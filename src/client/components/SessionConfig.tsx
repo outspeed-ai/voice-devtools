@@ -1,5 +1,5 @@
 import { useSession } from "@/contexts/session";
-import { OaiEvent } from "@/types";
+import { OaiEvent } from "@package";
 import { type Agent } from "@src/agent-config";
 
 interface SessionConfigProps {

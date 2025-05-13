@@ -1,4 +1,4 @@
-import { ModelName } from "@src/model-config";
+import { type ModelName } from "@package";
 
 type Agent = {
   id: string;
