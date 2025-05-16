@@ -1,4 +1,5 @@
 export type ModelName = "Orpheus-3b" | "gpt-4o-realtime-preview-2024-12-17" | "gpt-4o-mini-realtime-preview-2024-12-17";
+import { FunctionDefinition } from "./tools";
 
 export type SessionConfig = {
   model: string;
@@ -6,7 +7,7 @@ export type SessionConfig = {
   temperature: number;
   voice: string;
   instructions: string;
-  tools: string[];
+  tools: FunctionDefinition[];
 
   /**
    * to use "semantic_vad" for OpenAI Realtime API, you need to send `"session.update"` event

@@ -254,6 +254,51 @@ export default function App() {
         });
         break;
 
+      case "response.function_call_arguments.delta":
+        setMessages((prev) => {
+          const newMessages = new Map(prev);
+          const currentMessage = prev.get(event.response_id) || {
+            role: "assistant",
+          };
+
+          const currentFunctionCall = currentMessage.function_call || {
+            name: event.name || "",
+            arguments: "",
+            timestamp: new Date().toLocaleTimeString(),
+            streaming: true,
+          };
+
+          newMessages.set(event.response_id, {
+            ...currentMessage,
+            function_call: {
+              ...currentFunctionCall,
+              arguments: currentFunctionCall.arguments + event.delta,
+            },
+          });
+          return newMessages;
+        });
+        break;
+
+      case "response.function_call_arguments.done":
+        setMessages((prev) => {
+          const newMessages = new Map(prev);
+          const currentMessage = prev.get(event.response_id) || {
+            role: "assistant",
+          };
+
+          newMessages.set(event.response_id, {
+            ...currentMessage,
+            function_call: {
+              name: event.name,
+              arguments: event.arguments,
+              timestamp: new Date().toLocaleTimeString(),
+              streaming: false,
+            },
+          });
+          return newMessages;
+        });
+        break;
+
       case "response.audio_transcript.done":
       case "response.text.done":
         const { transcript, text } = event;

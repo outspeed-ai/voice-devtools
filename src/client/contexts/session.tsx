@@ -68,16 +68,17 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({ children }) =>
   const [config, setConfig] = useState<SessionConfig>({
     ...selectedModel.sessionConfig,
     instructions: selectedAgent.instructions,
+    tools: selectedAgent.tools
   });
 
   // update the config when the selected model changes
   useEffect(() => {
-    setConfig((prev) => ({ ...prev, ...selectedModel.sessionConfig, instructions: prev.instructions }));
+    setConfig((prev) => ({ ...prev, ...selectedModel.sessionConfig, instructions: prev.instructions, tools: prev.tools }));
   }, [selectedModel]);
 
   // update the config when the selected agent changes
   useEffect(() => {
-    setConfig((prev) => ({ ...prev, instructions: selectedAgent.instructions }));
+    setConfig((prev) => ({ ...prev, instructions: selectedAgent.instructions, tools: selectedAgent.tools }));
   }, [selectedAgent]);
 
   const availableModels = useMemo(getAvailableModels, [env.OUTSPEED_HOSTED]);
