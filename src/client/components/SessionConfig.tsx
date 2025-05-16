@@ -85,6 +85,22 @@ const SessionConfig: React.FC<SessionConfigProps> = ({ sendClientEvent }) => {
           </select>
         </div>
 
+        {config.tools && config.tools.length > 0 && (
+          <div className="flex flex-col gap-1">
+            <label>Tools:</label>
+            <div className="flex flex-wrap gap-2">
+              {config.tools.map((tool) => (
+                <span
+                  key={tool.name}
+                  className="bg-gray-200 text-gray-700 px-2 py-1 rounded-full text-sm"
+                >
+                  {tool.name}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         {config.modalities.includes("audio") && (
           <div className="flex flex-col gap-1">
             <label htmlFor="voice">Voice:</label>
