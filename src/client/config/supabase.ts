@@ -1,5 +1,4 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-
 import { env } from "./env";
 
 /**
@@ -8,9 +7,6 @@ import { env } from "./env";
 let supabase: SupabaseClient | undefined;
 
 export const getSupabase = () => {
-  if (!env.OUTSPEED_HOSTED) {
-    return;
-  }
 
   if (supabase) {
     return supabase;
@@ -25,6 +21,38 @@ export const getSupabase = () => {
 
   supabase = createClient(supabaseUrl, supabaseAnonKey);
   return supabase;
+};
+
+/**
+ * Gets the current session or signs in anonymously if no session exists.
+ * @returns The session object and Supabase client
+ */
+export const getSessionOrSignInAnonymously = async (captchaToken: string) => {
+  const supabase = getSupabase();
+  if (!supabase) {
+    throw new Error("Supabase client not initialized");
+  }
+
+  // Check if there's an existing session
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  // If no session exists, sign in anonymously
+  if (!session) {
+    const { data, error } = await supabase.auth.signInAnonymously({
+      options: {
+        captchaToken: captchaToken
+      }
+    });
+    if (error) {
+      console.error("Error signing in anonymously:", error);
+      throw error;
+    }
+    console.log("Signed in anonymously:", data);
+    return { session: data.session, supabase };
+  } else {
+    console.log("Using existing session");
+    return { session, supabase };
+  }
 };
 
 /**

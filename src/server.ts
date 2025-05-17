@@ -9,7 +9,8 @@ dotenv.config({ path: ".env", override: true });
 import express from "express";
 import { createServer as createViteServer } from "vite";
 
-import { models, providers } from "./settings.js";
+import { providers } from './package';
+import { models } from "./settings.js";
 
 // Get the directory name properly
 const __filename = fileURLToPath(import.meta.url);

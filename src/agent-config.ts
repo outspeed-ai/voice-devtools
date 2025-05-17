@@ -1,8 +1,9 @@
+import { FunctionDefinition, TOOLS } from "./tools";
 export interface Agent {
   id: string;
   name: string;
   instructions: string;
-  tools: string[];
+  tools: FunctionDefinition[];
 }
 
 export const aiGirlfriend: Agent = {
@@ -16,7 +17,7 @@ export const aiGirlfriend: Agent = {
 3. Don't be boring.
 4. Be flirty and fun.
 `,
-  tools: [], // supported by realtime API by Open AI
+  tools: [TOOLS['get_weather']], // supported by realtime API by Open AI
 };
 
 export const dentalAgent: Agent = {

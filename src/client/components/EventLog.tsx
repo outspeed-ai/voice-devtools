@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Download } from "react-feather";
 
 import { useSession } from "@/contexts/session";
-import { OaiEvent } from "@/types";
 import { CostState } from "@/utils/cost-calc";
+import { OaiEvent } from "@package";
 import CostDisplay from "./CostDisplay";
 
 interface EventProps {

@@ -5,8 +5,7 @@ import { toast, type ExternalToast } from "sonner";
 
 import { env } from "@/config/env";
 import { getSupabaseAuthToken } from "@/config/supabase";
-import { type SessionConfig } from "@src/model-config";
-import { type Provider } from "@src/settings";
+import { type Provider, type SessionConfig } from "@package/types";
 
 export const getEphemeralKey = async (provider: Provider, config: SessionConfig) => {
   if (!env.OUTSPEED_HOSTED) {

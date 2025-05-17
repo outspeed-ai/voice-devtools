@@ -2,8 +2,7 @@ import { PhoneCall, PhoneOff } from "react-feather";
 import { toast } from "sonner";
 
 import { useSession } from "@/contexts/session";
-import { type SessionConfig } from "@src/model-config";
-import { type Provider } from "@src/settings";
+import { type Provider, type SessionConfig } from "@package/types";
 import Button from "./ui/Button";
 import MuteButton from "./ui/MuteButton";
 

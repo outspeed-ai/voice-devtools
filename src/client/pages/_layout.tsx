@@ -55,6 +55,14 @@ export default function RootLayout() {
             >
               Deploy
             </NavLink>
+            <NavLink
+              to="/speechdemo"
+              className={({ isActive }) =>
+                `text-blue-600 hover:text-blue-800 ${isActive ? "font-medium border-b-2 border-blue-600" : ""}`
+              }
+            >
+              Speech Demo
+            </NavLink>
           </div>
         </div>
       </nav>

@@ -2,7 +2,7 @@ import { memo, useEffect, useRef, useState } from "react";
 
 import { useSession } from "@/contexts/session";
 import { calculateTimeCosts, CostState } from "@/utils/cost-calc";
-import { providers } from "@src/settings";
+import { providers } from "@package";
 
 interface CostDisplayProps {
   costState: CostState;

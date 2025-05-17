@@ -7,6 +7,7 @@ import Deploy from "./pages/deploy";
 import Index from "./pages/index";
 import Login from "./pages/login";
 import Sessions from "./pages/sessions";
+import SpeechDemo from "./pages/speechdemo";
 
 export default function Router() {
   return (
@@ -17,6 +18,7 @@ export default function Router() {
           <Route path="/" element={<Index />} />
           <Route path="/sessions" element={<Sessions />} />
           <Route path="/deploy" element={<Deploy />} />
+          <Route path="/speechdemo" element={<SpeechDemo />} />
         </Route>
       </Route>
 
