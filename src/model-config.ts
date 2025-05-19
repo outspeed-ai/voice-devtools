@@ -1,21 +1,19 @@
-export type ModelName = "Orpheus-3b" | "gpt-4o-realtime-preview-2024-12-17" | "gpt-4o-mini-realtime-preview-2024-12-17";
-import { type SessionConfig } from "@package";
-;
+import {
+  MODALITIES,
+  OPENAI_TRANSCRIPTION_MODELS,
+  OPENAI_VOICES,
+  OUTSPEED_ORPHEUS_VOICES,
+  OUTSPEED_TRANSCRIPTION_MODELS,
+  type ModelName,
+  type SessionConfig
+} from "@package";
 
 type ModelValue = {
   label: string;
-  voices: string[];
+  voices: readonly string[];
   sessionConfig: SessionConfig;
-  transcriptionModels: string[];
+  transcriptionModels: readonly string[];
 };
-
-const OUTSPEED_TRANSCRIPTION_MODELS = ["whisper-v3-turbo"];
-const OPENAI_TRANSCRIPTION_MODELS = ["gpt-4o-transcribe", "gpt-4o-mini-transcribe", "whisper-1"];
-
-const OUTSPEED_ORPHEUS_VOICES = ["tara", "leah", "jess", "leo", "dan", "mia", "zac", "zoe", "julia"];
-const OPENAI_VOICES = ["alloy", "ash", "ballad", "coral", "echo", "sage", "shimmer", "verse"];
-
-const MODALITIES = ["text", "audio"];
 
 export const models: Record<ModelName, ModelValue> = {
   "Orpheus-3b": {

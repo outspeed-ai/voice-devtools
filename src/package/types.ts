@@ -1,3 +1,7 @@
+import { MODEL_VOICES, OPENAI_TRANSCRIPTION_MODELS, OpenAIVoice, OUTSPEED_TRANSCRIPTION_MODELS, OutspeedOrpheusVoice } from "./constants";
+export type OutspeedTranscriptionModel = typeof OUTSPEED_TRANSCRIPTION_MODELS[number];
+export type OpenAITranscriptionModel = typeof OPENAI_TRANSCRIPTION_MODELS[number];
+
 export type ProviderName = "Outspeed" | "OpenAI";
 
 export type Provider = {
@@ -8,11 +12,7 @@ export type Provider = {
   defaultVoice: string;
 };
 
-export type ModelName =
-  "Orpheus-3b"
-  | "gpt-4o-realtime-preview-2024-12-17"
-  | "gpt-4o-mini-realtime-preview-2024-12-17";
-
+export type ModelVoices = typeof MODEL_VOICES;
 
 export type FunctionDefinition = {
   type: "function";
@@ -21,32 +21,26 @@ export type FunctionDefinition = {
   parameters: any;
 };
 
-export type SessionConfig = {
-  model: string;
-  modalities: string[];
+export type SessionConfig =
+  | ({
+      model: "Orpheus-3b";
+      voice: OutspeedOrpheusVoice;
+      input_audio_transcription: { model: OutspeedTranscriptionModel } | null;
+    } & BaseSessionConfigFields)
+  | ({
+      model: "gpt-4o-realtime-preview-2024-12-17" | "gpt-4o-mini-realtime-preview-2024-12-17";
+      voice: OpenAIVoice;
+      input_audio_transcription: { model: OpenAITranscriptionModel } | null;
+    } & BaseSessionConfigFields);
+
+type BaseSessionConfigFields = {
+  modalities: readonly string[];
   temperature: number;
-  voice: string;
   instructions: string;
   tools: FunctionDefinition[];
-
-  /**
-   * to use "semantic_vad" for OpenAI Realtime API, you need to send `"session.update"` event
-   * AFTER the session is created.
-   * docs: https://platform.openai.com/docs/guides/realtime-vad#semantic-vad
-   */
   turn_detection: {
     type: "server_vad" | "semantic_vad";
   };
-
-  input_audio_transcription?: {
-    model: string;
-  } | null;
-};
-
-export type ModelValue = {
-  label: string;
-  voices: string[];
-  sessionConfig: SessionConfig;
 };
 
 export type ConnectionConfig = {

@@ -1,4 +1,5 @@
-import { models as modelConfig, providers, type ModelName, type Provider } from "@package";
+import { providers, type ModelName, type Provider } from "@package";
+import { models as modelConfig } from './model-config';
 export interface OpenAICosts {
   input: {
     text: number;

@@ -107,7 +107,7 @@ const SessionConfig: React.FC<SessionConfigProps> = ({ sendClientEvent }) => {
             <select
               id="voice"
               value={config.voice}
-              onChange={(e) => setConfig({ ...config, voice: e.target.value })}
+              onChange={(e) => setConfig({ ...config, voice: e.target.value as any })}
               className="border p-2 rounded-md"
               disabled={!isInactive}
             >
@@ -130,7 +130,7 @@ const SessionConfig: React.FC<SessionConfigProps> = ({ sendClientEvent }) => {
                 const value = e.target.value;
                 setConfig({
                   ...config,
-                  input_audio_transcription: value === "none" ? undefined : { model: value },
+                  input_audio_transcription: value === "none" ? null : { model: value },
                 });
               }}
               className="border p-2 rounded-md"
