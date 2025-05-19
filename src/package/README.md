@@ -65,5 +65,38 @@ Follow these steps to do it:
 
 Here's a simple javascript example:
 ```js
+import { providers, startWebrtcSession } from "@package";
 
+// Assume ephemeralKey is fetched from your backend as described in Step 2
+// const ephemeralKey = "your_ephemeral_key";
+
+const sessionConfig = {
+  model: "Orpheus-3b",
+  voice: "tara", 
+  input_audio_transcription: { model: "whisper-v3-turbo" },
+  modalities: ["text", "audio"]
+  temperature: 0.7,
+  instructions: "You are a helpful assistant.",
+  tools: [], // Add any FunctionDefinition objects if needed
+  turn_detection: {
+    type: "server_vad", // or "semantic_vad"
+  },
+};
+
+const connectionConfig = {
+  provider: providers.Outspeed,
+  sessionConfig: sessionConfig,
+};
+
+async function connect() {
+  try {
+    const { pc, dc } = await startWebrtcSession(ephemeralKey, connectionConfig);
+    console.log("WebRTC session started:", webrtcSession);
+    // Handle the webrtcSession object (pc, dc)
+  } catch (error) {
+    console.error("Failed to start WebRTC session:", error);
+  }
+}
+
+connect();
 ```
