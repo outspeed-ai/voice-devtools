@@ -9,10 +9,17 @@ export type Provider = {
 };
 
 export type ModelName =
-  | "MiniCPM-o-2_6"
-  | "Orpheus-3b"
+  "Orpheus-3b"
   | "gpt-4o-realtime-preview-2024-12-17"
   | "gpt-4o-mini-realtime-preview-2024-12-17";
+
+
+export type FunctionDefinition = {
+  type: "function";
+  name: string;
+  description: string;
+  parameters: any;
+};
 
 export type SessionConfig = {
   model: string;
@@ -20,7 +27,7 @@ export type SessionConfig = {
   temperature: number;
   voice: string;
   instructions: string;
-  tools: string[];
+  tools: FunctionDefinition[];
 
   /**
    * to use "semantic_vad" for OpenAI Realtime API, you need to send `"session.update"` event
@@ -30,6 +37,10 @@ export type SessionConfig = {
   turn_detection: {
     type: "server_vad" | "semantic_vad";
   };
+
+  input_audio_transcription?: {
+    model: string;
+  } | null;
 };
 
 export type ModelValue = {

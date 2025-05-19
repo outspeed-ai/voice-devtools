@@ -5,11 +5,9 @@ import { useSession } from "@/contexts/session";
 import AudioRecorder from "@/helpers/audio-recorder";
 import { getEphemeralKey } from "@/helpers/ephemeral-key";
 import { saveSessionRecording } from "@/helpers/save-session-recording";
-import { createSession as saveSession, updateSession } from "@/services/api";
+import { createSession as saveSession, transcribeAudio, updateSession } from "@/services/api";
 import { calculateOpenAICosts, CostState, getInitialCostState, updateCumulativeCostOpenAI } from "@/utils/cost-calc";
-import { providers } from "@package/providers";
-import { type OaiEvent, type Provider, type SessionConfig } from "@package/types";
-import { startWebrtcSession } from "@package/webrtc";
+import { providers, startWebrtcSession, type OaiEvent, type Provider, type SessionConfig } from "@package";
 import Chat, { MessageBubbleProps } from "./Chat";
 import EventLog from "./EventLog";
 import SessionConfigComponent from "./SessionConfig";
@@ -114,7 +112,7 @@ export default function App() {
       const response = await fetch(browserAudioUrl);
       const audioBlob = await response.blob();
 
-      const transcriptionResult = await transcribeInputAudio(audioBlob);
+      const transcriptionResult = await transcribeAudio(audioBlob);
 
       // finally the message with both audio URL and transcription
       setMessages((prev) => {

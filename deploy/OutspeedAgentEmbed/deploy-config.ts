@@ -1,11 +1,11 @@
-import { type ModelName } from "@package";
+import { type FunctionDefinition, type ModelName } from "@package";
 
 type Agent = {
   id: string;
   name: string;
   modelName: ModelName;
   instructions: string;
-  tools: string[];
+  tools: FunctionDefinition[];
 };
 
 const agent: Agent = {

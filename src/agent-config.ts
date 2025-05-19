@@ -1,4 +1,5 @@
-import { FunctionDefinition, TOOLS } from "./tools";
+import { type FunctionDefinition } from "@package/types";
+import { TOOLS } from "./tools";
 export interface Agent {
   id: string;
   name: string;

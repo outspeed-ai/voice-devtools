@@ -1,8 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 import { env } from "@/config/env";
-import { providers } from "@package/providers";
-import { type SessionConfig } from "@package/types";
+import { providers, type SessionConfig } from "@package";
 import type { Agent } from "@src/agent-config";
 import * as agents from "@src/agent-config";
 import { models, type Model } from "@src/settings";

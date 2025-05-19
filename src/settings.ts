@@ -1,4 +1,18 @@
 import { models as modelConfig, providers, type ModelName, type Provider } from "@package";
+export interface OpenAICosts {
+  input: {
+    text: number;
+    audio: number;
+    cached: {
+      text: number;
+      audio: number;
+    };
+  };
+  output: {
+    text: number;
+    audio: number;
+  };
+} 
 
 export type Model = (typeof modelConfig)[keyof typeof modelConfig] & {
   cost: { perMinute: number } | OpenAICosts;
@@ -48,18 +62,3 @@ export const models: Record<ModelName, Model> = {
     provider: providers.OpenAI,
   },
 };
-
-export interface OpenAICosts {
-  input: {
-    text: number;
-    audio: number;
-    cached: {
-      text: number;
-      audio: number;
-    };
-  };
-  output: {
-    text: number;
-    audio: number;
-  };
-}
