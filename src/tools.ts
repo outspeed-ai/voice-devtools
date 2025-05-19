@@ -1,4 +1,4 @@
-import { type FunctionDefinition } from "@package/types";
+import { type FunctionDefinition } from "@package";
 
 export const TOOLS: Record<string, FunctionDefinition> = {
     "get_weather": {

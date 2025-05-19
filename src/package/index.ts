@@ -14,5 +14,5 @@ export {
     type Provider,
     type SessionConfig
 } from "./types";
-export { startWebrtcSession, startWebrtcSessionOutspeed } from "./webrtc";
+export { startWebrtcSession } from "./webrtc";
 

@@ -5,8 +5,7 @@ import SessionControls from "@/components/SessionControls";
 import { useSession } from "@/contexts/session";
 import AudioRecorder from "@/helpers/audio-recorder";
 import { getEphemeralKey } from "@/helpers/ephemeral-key";
-import { providers, startWebrtcSession, type OaiEvent } from "@package";
-import { type Provider, type SessionConfig } from "@package/types";
+import { providers, startWebrtcSession, type OaiEvent, type Provider, type SessionConfig } from "@package";
 import { models } from "@src/settings";
 import agent from "./deploy-config";
 
