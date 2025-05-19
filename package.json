@@ -13,7 +13,6 @@
     "deploy": "node scripts/deploy.mjs"
   },
   "dependencies": {
-    "@marsidev/react-turnstile": "^1.1.0",
     "@supabase/supabase-js": "^2.49.1",
     "@tailwindcss/vite": "^4.1.1",
     "@tanstack/react-query": "^5.66.9",
