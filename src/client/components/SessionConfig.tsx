@@ -130,7 +130,7 @@ const SessionConfig: React.FC<SessionConfigProps> = ({ sendClientEvent }) => {
                 const value = e.target.value;
                 setConfig({
                   ...config,
-                  input_audio_transcription: value === "none" ? null : { model: value },
+                  input_audio_transcription: value === "none" ? null : { model: value } as any,
                 });
               }}
               className="border p-2 rounded-md"
