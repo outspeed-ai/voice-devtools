@@ -90,10 +90,7 @@ const SessionConfig: React.FC<SessionConfigProps> = ({ sendClientEvent }) => {
             <label>Tools:</label>
             <div className="flex flex-wrap gap-2">
               {config.tools.map((tool) => (
-                <span
-                  key={tool.name}
-                  className="bg-gray-200 text-gray-700 px-2 py-1 rounded-full text-sm"
-                >
+                <span key={tool.name} className="bg-gray-200 text-gray-700 px-2 py-1 rounded-full text-sm">
                   {tool.name}
                 </span>
               ))}
@@ -130,7 +127,7 @@ const SessionConfig: React.FC<SessionConfigProps> = ({ sendClientEvent }) => {
                 const value = e.target.value;
                 setConfig({
                   ...config,
-                  input_audio_transcription: value === "none" ? null : { model: value } as any,
+                  input_audio_transcription: value === "none" ? null : { model: value as any },
                 });
               }}
               className="border p-2 rounded-md"
