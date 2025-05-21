@@ -1,11 +1,13 @@
+import { env } from "@/config/env";
 import { Provider, ProviderName } from "./types";
+
 /**
  * Provider-specific defaults
  */
 export const providers: Record<ProviderName, Provider> = {
   Outspeed: {
     name: "Outspeed",
-    url: "api.outspeed.com",
+    url: env.OUTSPEED_SERVER_DOMAIN,
     apiKeyUrl: "https://dashboard.outspeed.com/dashboard",
     costStructure: "per-minute",
     defaultVoice: "male", // Options: male, female
