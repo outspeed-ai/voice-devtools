@@ -1,5 +1,6 @@
 import { providers, type ModelName, type Provider } from "@package";
-import { models as modelConfig } from './model-config';
+import { models as modelConfig } from "./model-config";
+
 export interface OpenAICosts {
   input: {
     text: number;
@@ -13,7 +14,7 @@ export interface OpenAICosts {
     text: number;
     audio: number;
   };
-} 
+}
 
 export type Model = (typeof modelConfig)[keyof typeof modelConfig] & {
   cost: { perMinute: number } | OpenAICosts;
