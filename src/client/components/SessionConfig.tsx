@@ -1,5 +1,5 @@
 import { useSession } from "@/contexts/session";
-import { OaiEvent } from "@/types";
+import { OaiEvent } from "@package";
 import { type Agent } from "@src/agent-config";
 
 interface SessionConfigProps {
@@ -90,10 +90,7 @@ const SessionConfig: React.FC<SessionConfigProps> = ({ sendClientEvent }) => {
             <label>Tools:</label>
             <div className="flex flex-wrap gap-2">
               {config.tools.map((tool) => (
-                <span
-                  key={tool.name}
-                  className="bg-gray-200 text-gray-700 px-2 py-1 rounded-full text-sm"
-                >
+                <span key={tool.name} className="bg-gray-200 text-gray-700 px-2 py-1 rounded-full text-sm">
                   {tool.name}
                 </span>
               ))}
@@ -107,7 +104,7 @@ const SessionConfig: React.FC<SessionConfigProps> = ({ sendClientEvent }) => {
             <select
               id="voice"
               value={config.voice}
-              onChange={(e) => setConfig({ ...config, voice: e.target.value })}
+              onChange={(e) => setConfig({ ...config, voice: e.target.value as any })}
               className="border p-2 rounded-md"
               disabled={!isInactive}
             >
@@ -130,7 +127,7 @@ const SessionConfig: React.FC<SessionConfigProps> = ({ sendClientEvent }) => {
                 const value = e.target.value;
                 setConfig({
                   ...config,
-                  input_audio_transcription: value === "none" ? undefined : { model: value },
+                  input_audio_transcription: value === "none" ? null : { model: value as any },
                 });
               }}
               className="border p-2 rounded-md"

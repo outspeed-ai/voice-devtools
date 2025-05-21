@@ -1,4 +1,5 @@
-import { Model, providers } from "@src/settings";
+import { providers } from "./providers";
+import { ConnectionConfig } from "./types";
 
 const ICE_SERVERS = [{ urls: "stun:stun.l.google.com:19302" }];
 
@@ -27,11 +28,11 @@ const getPcAndDcInternal = async (): Promise<WebRTCSession> => {
   return { pc, dc };
 };
 
-export const startWebrtcSession = async (ephemeralKey: string, model: Model): Promise<WebRTCSession> => {
-  if (model.provider === providers.OpenAI) {
-    return startWebrtcSessionOpenAI(ephemeralKey, model.sessionConfig.model);
+export const startWebrtcSession = async (ephemeralKey: string, conn: ConnectionConfig): Promise<WebRTCSession> => {
+  if (conn.provider === providers.OpenAI) {
+    return startWebrtcSessionOpenAI(ephemeralKey, conn.sessionConfig.model);
   } else {
-    return startWebrtcSessionOutspeed(ephemeralKey, model.sessionConfig.model);
+    return startWebrtcSessionOutspeed(ephemeralKey, conn.sessionConfig.model);
   }
 };
 

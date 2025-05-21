@@ -2,7 +2,7 @@
   "version": "0.0.7",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch --include '.env' src/server.ts",
+    "dev": "tsx watch --tsconfig tsconfig.app.json --env-file=.env src/server.ts",
     "start": "tsx src/server.ts",
     "build": "npm run build:client && npm run build:server",
     "build:client": "tsc -b && vite build --outDir dist/client --ssrManifest",

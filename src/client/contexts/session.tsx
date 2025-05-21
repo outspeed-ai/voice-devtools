@@ -1,10 +1,10 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 import { env } from "@/config/env";
+import { providers, type SessionConfig } from "@package";
 import type { Agent } from "@src/agent-config";
 import * as agents from "@src/agent-config";
-import { type SessionConfig } from "@src/model-config";
-import { models, providers, type Model } from "@src/settings";
+import { models, type Model } from "@src/settings";
 
 type ServerSession = {
   id: string;
