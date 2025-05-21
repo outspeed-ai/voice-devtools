@@ -62,8 +62,8 @@ Follow these steps to do it:
    Here's an example of a `ConnectionConfig`
 4. Make the connection using `startWebrtcSession(ephemeralKey, connectionConfig)` where the ephemeralKey is obtained from the endpoint defined in Step 2.
 
-
 Here's a simple javascript example:
+
 ```js
 import { providers, startWebrtcSession } from "@package";
 
@@ -72,7 +72,7 @@ import { providers, startWebrtcSession } from "@package";
 
 const sessionConfig = {
   model: "Orpheus-3b",
-  voice: "tara", 
+  voice: "tara",
   input_audio_transcription: { model: "whisper-v3-turbo" },
   modalities: ["text", "audio"]
   temperature: 0.7,
@@ -90,9 +90,33 @@ const connectionConfig = {
 
 async function connect() {
   try {
+    // start a WebRtC session and get RTCPeerConnection and RTCDataChannel objects
     const { pc, dc } = await startWebrtcSession(ephemeralKey, connectionConfig);
     console.log("WebRTC session started:", webrtcSession);
-    // Handle the webrtcSession object (pc, dc)
+
+    // handle events from the data channel
+    dc.addEventListener("message", async (e) => {
+      try {
+        const event = JSON.parse(e.data);
+        console.log(event);
+
+
+        // input track will be muted so we need to unmute it
+        // this will be abstracted away soon so you won't have to worry about it
+        if (event.type === "session.created") {
+          pc.getSenders().forEach((sender) => {
+            if (!sender.track) {
+              console.error("error: session.created - No track found");
+              return;
+            }
+
+            sender.track.enabled = true;
+          });
+        }
+      } catch (error) {
+        console.error("error: data channel message:", error);
+      }
+    });
   } catch (error) {
     console.error("Failed to start WebRTC session:", error);
   }
