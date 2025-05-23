@@ -25,7 +25,8 @@ export const saveSessionRecording = async (activeSessionID: string, recording: {
       recording: s3_url,
       status: "completed",
     });
-    toast.success("Session recording saved!");
+
+    return s3_url;
   } catch (error) {
     console.error("Failed to store session recording:", error);
     toast.error("Failed to store session recording");

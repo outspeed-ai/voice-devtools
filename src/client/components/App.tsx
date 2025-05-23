@@ -79,6 +79,36 @@ export default function App() {
     };
   }, [activeState]);
 
+  /**
+   * A function to download the events and session details as a JSON file.
+   *
+   * The reason we accept an optional sessionRecordingS3Url is because we want to show a toast with a download button
+   * immediately after the recording is saved, but the currentSession state won't have the sessionRecordingS3Url yet.
+   * A call to setCurrentSession() will not update the state synchronously, so we need to pass the sessionRecordingS3Url
+   * as an optional parameter.
+   *
+   * @param sessionRecordingS3Url - optional session recording S3 URL
+   */
+  const handleDownloadEvents = (sessionRecordingS3Url?: string) => {
+    const exportData = {
+      session: {
+        ...currentSession,
+        ...(sessionRecordingS3Url && { sessionRecordingS3Url }),
+      },
+      events: events,
+    };
+    const jsonData = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([jsonData], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `voice-session-${new Date().toISOString()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const handleErrorEvent = (errorMessage: string, eventId: string, fullError: unknown) => {
     if (fullError) {
       console.error("error event:", fullError);
@@ -659,8 +689,18 @@ export default function App() {
         });
 
         if (currentSession) {
-          saveSessionRecording(currentSession.id, recording);
           toast.info("Session stopped. Storing session recording...");
+          const sessionRecordingS3Url = await saveSessionRecording(currentSession.id, recording);
+          toast.success("Session recording saved!", {
+            action: {
+              label: "Download Logs",
+              onClick: () => handleDownloadEvents(sessionRecordingS3Url),
+            },
+          });
+          setCurrentSession({
+            ...currentSession,
+            sessionRecordingS3Url,
+          });
         } else {
           console.error("error: session audio recorder stopped but no active session ID");
         }
@@ -776,6 +816,7 @@ export default function App() {
             events={events}
             costState={costState}
             sessionStartTime={sessionStartTime}
+            handleDownloadEvents={handleDownloadEvents}
           />
         </div>
       </div>
@@ -801,6 +842,7 @@ interface TabsProps {
   events: OaiEvent[];
   costState: CostState;
   sessionStartTime: number | null;
+  handleDownloadEvents: () => void;
 }
 
 const Tabs: React.FC<TabsProps> = ({
@@ -813,6 +855,7 @@ const Tabs: React.FC<TabsProps> = ({
   events,
   costState,
   sessionStartTime,
+  handleDownloadEvents,
 }) => {
   return (
     <div className="flex flex-col h-full">
@@ -841,7 +884,12 @@ const Tabs: React.FC<TabsProps> = ({
         {activeTab === Tab.MOBILE_CHAT && isMobile && <Chat messages={messages} sendTextMessage={sendTextMessage} />}
         {activeTab === Tab.SESSION_CONFIG && <SessionConfigComponent sendClientEvent={sendClientEvent} />}
         {activeTab === Tab.EVENTS && (
-          <EventLog events={events} costState={costState} sessionStartTime={sessionStartTime} />
+          <EventLog
+            events={events}
+            costState={costState}
+            sessionStartTime={sessionStartTime}
+            handleDownloadEvents={handleDownloadEvents}
+          />
         )}
       </div>
     </div>
