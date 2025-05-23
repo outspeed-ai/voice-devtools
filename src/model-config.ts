@@ -5,7 +5,7 @@ import {
   OUTSPEED_ORPHEUS_VOICES,
   OUTSPEED_TRANSCRIPTION_MODELS,
   type ModelName,
-  type SessionConfig
+  type SessionConfig,
 } from "@package";
 
 type ModelValue = {
@@ -29,6 +29,7 @@ export const models: Record<ModelName, ModelValue> = {
       tools: [],
       turn_detection: {
         type: "server_vad",
+        send_event_on_vad_state_change: false,
       },
       input_audio_transcription: {
         model: "whisper-v3-turbo",
