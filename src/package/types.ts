@@ -1,6 +1,12 @@
-import { MODEL_VOICES, OPENAI_TRANSCRIPTION_MODELS, OpenAIVoice, OUTSPEED_TRANSCRIPTION_MODELS, OutspeedOrpheusVoice } from "./constants";
-export type OutspeedTranscriptionModel = typeof OUTSPEED_TRANSCRIPTION_MODELS[number];
-export type OpenAITranscriptionModel = typeof OPENAI_TRANSCRIPTION_MODELS[number];
+import {
+  MODEL_VOICES,
+  OPENAI_TRANSCRIPTION_MODELS,
+  OpenAIVoice,
+  OUTSPEED_TRANSCRIPTION_MODELS,
+  OutspeedOrpheusVoice,
+} from "./constants";
+export type OutspeedTranscriptionModel = (typeof OUTSPEED_TRANSCRIPTION_MODELS)[number];
+export type OpenAITranscriptionModel = (typeof OPENAI_TRANSCRIPTION_MODELS)[number];
 
 export type ProviderName = "Outspeed" | "OpenAI";
 
@@ -40,6 +46,7 @@ type BaseSessionConfigFields = {
   tools: FunctionDefinition[];
   turn_detection: {
     type: "server_vad" | "semantic_vad";
+    send_event_on_vad_state_change?: boolean;
   };
 };
 
