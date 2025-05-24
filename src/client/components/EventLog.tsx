@@ -45,28 +45,17 @@ interface EventLogProps {
   events: OaiEvent[];
   costState: CostState | null;
   sessionStartTime: number | null;
+  handleDownloadEvents: () => void;
 }
 
-const EventLog: React.FC<EventLogProps> = ({ events, costState = null, sessionStartTime = null }) => {
-  const { activeState, currentSession } = useSession();
+const EventLog: React.FC<EventLogProps> = ({
+  events,
+  costState = null,
+  sessionStartTime = null,
+  handleDownloadEvents,
+}) => {
+  const { activeState } = useSession();
   const isLoading = activeState === "loading";
-
-  const handleDownloadEvents = () => {
-    const exportData = {
-      session: currentSession,
-      events: events,
-    };
-    const jsonData = JSON.stringify(exportData, null, 2);
-    const blob = new Blob([jsonData], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `voice-session-${new Date().toISOString()}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
 
   return (
     <div className="h-full w-full flex flex-col gap-4 p-4">
