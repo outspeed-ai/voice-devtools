@@ -767,6 +767,13 @@ export default function App() {
     setEvents((prev) => [event, ...prev]);
   }
 
+  function makeAiSpeak(text: string) {
+    sendClientEvent({
+      type: "outspeed.custom.speak",
+      text,
+    });
+  }
+
   function sendTextMessage(message: string) {
     const event = {
       type: "conversation.item.create",
@@ -803,7 +810,7 @@ export default function App() {
     <main className="h-full flex flex-col px-4 pb-4 gap-4">
       <div className="flex grow gap-4 overflow-hidden">
         <div className="hidden md:block flex-1 h-full min-h-0 rounded-xl bg-white overflow-y-auto">
-          <Chat messages={messages} sendTextMessage={sendTextMessage} />
+          <Chat messages={messages} sendTextMessage={sendTextMessage} makeAiSpeak={makeAiSpeak} />
         </div>
         <div className="flex-1 h-full min-h-0 rounded-xl bg-white overflow-y-auto">
           <Tabs
@@ -812,6 +819,7 @@ export default function App() {
             isMobile={isMobile}
             messages={messages}
             sendTextMessage={sendTextMessage}
+            makeAiSpeak={makeAiSpeak}
             sendClientEvent={sendClientEvent}
             events={events}
             costState={costState}
@@ -839,6 +847,7 @@ interface TabsProps {
   isMobile: boolean;
   messages: Map<string, MessageBubbleProps>;
   sendTextMessage: (message: string) => void;
+  makeAiSpeak: (text: string) => void;
   events: OaiEvent[];
   costState: CostState;
   sessionStartTime: number | null;
@@ -852,6 +861,7 @@ const Tabs: React.FC<TabsProps> = ({
   isMobile,
   messages,
   sendTextMessage,
+  makeAiSpeak,
   events,
   costState,
   sessionStartTime,
@@ -881,7 +891,9 @@ const Tabs: React.FC<TabsProps> = ({
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {activeTab === Tab.MOBILE_CHAT && isMobile && <Chat messages={messages} sendTextMessage={sendTextMessage} />}
+        {activeTab === Tab.MOBILE_CHAT && isMobile && (
+          <Chat messages={messages} sendTextMessage={sendTextMessage} makeAiSpeak={makeAiSpeak} />
+        )}
         {activeTab === Tab.SESSION_CONFIG && <SessionConfigComponent sendClientEvent={sendClientEvent} />}
         {activeTab === Tab.EVENTS && (
           <EventLog
