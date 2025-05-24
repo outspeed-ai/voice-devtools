@@ -1,5 +1,5 @@
 import { memo, useEffect, useRef, useState } from "react";
-import { AlertCircle, Copy, Send, Speaker, Tool } from "react-feather";
+import { AlertCircle, Copy, Send, Tool } from "react-feather";
 
 import Button from "@/components/ui/Button";
 import { useSession } from "@/contexts/session";
@@ -313,16 +313,19 @@ const Chat: React.FC<ChatProps> = memo(({ messages, sendTextMessage, makeAiSpeak
         <Button
           onClick={handleSendText}
           icon={<Send height={16} />}
+          title="Send message"
           className="rounded-full w-10 h-10 p-0"
           disabled={activeState !== "active"}
         />
         {makeAiSpeak && (
           <Button
             onClick={handleMakeAiSpeak}
-            icon={<Speaker height={16} />}
+            title="Make AI speak text (TTS)"
             className="rounded-full w-10 h-10 p-0"
             disabled={activeState !== "active"}
-          />
+          >
+            🗣️
+          </Button>
         )}
       </div>
     </div>

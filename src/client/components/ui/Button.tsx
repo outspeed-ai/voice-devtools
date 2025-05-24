@@ -12,6 +12,8 @@ interface ButtonProps {
    */
   iconClassName?: string;
 
+  title?: string;
+
   className?: string;
 }
 
@@ -21,6 +23,7 @@ const Button: React.FC<ButtonProps> = ({
   variant = "primary",
   disabled = false,
   icon,
+  title,
   iconClassName = "",
   className = "",
 }) => {
@@ -39,6 +42,7 @@ const Button: React.FC<ButtonProps> = ({
     <button
       className={twMerge(baseClasses, variantClasses[variant], disabled && "opacity-50 cursor-not-allowed", className)}
       onClick={onClick}
+      title={title}
       disabled={disabled}
     >
       {icon && <span className={twMerge(children ? "mr-2" : "", iconClassName)}>{icon}</span>}
