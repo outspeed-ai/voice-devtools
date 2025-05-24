@@ -193,9 +193,10 @@ const formatTranscript = (messages: Map<string, MessageBubbleProps>): string => 
 interface ChatProps {
   messages: Map<string, MessageBubbleProps>;
   sendTextMessage: (message: string) => void;
+  makeAiSpeak?: (text: string) => void;
 }
 
-const Chat: React.FC<ChatProps> = memo(({ messages, sendTextMessage }) => {
+const Chat: React.FC<ChatProps> = memo(({ messages, sendTextMessage, makeAiSpeak }) => {
   const { activeState } = useSession();
   const [message, setMessage] = useState("");
   const [copySuccess, setCopySuccess] = useState(false);
@@ -240,7 +241,7 @@ const Chat: React.FC<ChatProps> = memo(({ messages, sendTextMessage }) => {
     return () => container.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleSendText = () => {
+  const handleSend = (type: "text" | "ai-speak") => {
     if (activeState !== "active") {
       return;
     }
@@ -250,13 +251,22 @@ const Chat: React.FC<ChatProps> = memo(({ messages, sendTextMessage }) => {
       return;
     }
 
-    sendTextMessage(trimmedMessage);
+    if (type === "text") {
+      sendTextMessage(trimmedMessage);
+    } else {
+      makeAiSpeak?.(trimmedMessage);
+    }
+
     setMessage("");
 
     // Reset scroll position when sending a new message
     scrolledManually.current = false;
     scrollToBottom();
   };
+
+  const handleSendText = () => handleSend("text");
+
+  const handleMakeAiSpeak = () => handleSend("ai-speak");
 
   const handleCopyTranscript = () => {
     const transcript = formatTranscript(messages);
@@ -303,9 +313,20 @@ const Chat: React.FC<ChatProps> = memo(({ messages, sendTextMessage }) => {
         <Button
           onClick={handleSendText}
           icon={<Send height={16} />}
+          title="Send message"
           className="rounded-full w-10 h-10 p-0"
           disabled={activeState !== "active"}
         />
+        {makeAiSpeak && (
+          <Button
+            onClick={handleMakeAiSpeak}
+            title="Make AI speak text (TTS)"
+            className="rounded-full w-10 h-10 p-0"
+            disabled={activeState !== "active"}
+          >
+            🗣️
+          </Button>
+        )}
       </div>
     </div>
   );
