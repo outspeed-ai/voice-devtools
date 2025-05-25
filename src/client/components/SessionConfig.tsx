@@ -1,5 +1,5 @@
 import { useSession } from "@/contexts/session";
-import { OaiEvent } from "@package";
+import { OaiEvent, providers } from "@package";
 import { type Agent } from "@src/agent-config";
 
 interface SessionConfigProps {
@@ -84,6 +84,21 @@ const SessionConfig: React.FC<SessionConfigProps> = ({ sendClientEvent }) => {
             ))}
           </select>
         </div>
+
+        {selectedModel.provider === providers.Outspeed && (
+          <div className="flex flex-col gap-1">
+            <label htmlFor="first_message">First message:</label>
+            <textarea
+              id="first_message"
+              value={(config as any).first_message || ""}
+              onChange={(e) => setConfig({ ...config, first_message: e.target.value } as any)}
+              className="border p-2 rounded-md resize-none"
+              rows={1}
+              placeholder="Optional message for the AI to say first when the session starts"
+              disabled={!isInactive}
+            />
+          </div>
+        )}
 
         {config.tools && config.tools.length > 0 && (
           <div className="flex flex-col gap-1">
