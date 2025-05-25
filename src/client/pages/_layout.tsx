@@ -18,7 +18,7 @@ export default function RootLayout() {
         <div className="flex items-center gap-4 w-full m-4 pb-2 border-0 border-b border-solid border-gray-200">
           <Link to="/" className="inline-flex items-center gap-2">
             <img style={{ width: "24px" }} src={logo} />
-            <h1>
+            <h1 className="text-lg">
               <span className="font-semibold inline-flex items-center">
                 {env.OUTSPEED_HOSTED ? "Outspeed" : "Outspeed Voice DevTools"}
               </span>
