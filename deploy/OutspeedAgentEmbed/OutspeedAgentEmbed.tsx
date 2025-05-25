@@ -5,10 +5,8 @@ import SessionControls from "@/components/SessionControls";
 import { useSession } from "@/contexts/session";
 import AudioRecorder from "@/helpers/audio-recorder";
 import { getEphemeralKey } from "@/helpers/ephemeral-key";
-import { startWebrtcSession } from "@/helpers/webrtc";
-import { OaiEvent } from "@/types";
-import { type SessionConfig } from "@src/model-config";
-import { models, providers, type Provider } from "@src/settings";
+import { providers, startWebrtcSession, type OaiEvent, type Provider, type SessionConfig } from "@package";
+import { models } from "@src/settings";
 import agent from "./deploy-config";
 
 const OutspeedAgentEmbed = () => {

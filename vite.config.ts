@@ -19,6 +19,7 @@ export default {
     alias: {
       "@": join(__dirname, "src/client"),
       "@src": join(__dirname, "src"),
+      "@package": join(__dirname, "src/package")
     },
   },
   envPrefix: "OUTSPEED_",

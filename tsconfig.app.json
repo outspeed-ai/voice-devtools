@@ -18,7 +18,9 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/client/*"],
-      "@src/*": ["src/*"]
+      "@src/*": ["src/*"],
+      "@package/*": ["src/package/*"],
+      "@package": ["src/package/index.ts"]
     },
 
     /* Linting */

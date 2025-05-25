@@ -5,12 +5,9 @@ import { useSession } from "@/contexts/session";
 import AudioRecorder from "@/helpers/audio-recorder";
 import { getEphemeralKey } from "@/helpers/ephemeral-key";
 import { saveSessionRecording } from "@/helpers/save-session-recording";
-import { startWebrtcSession } from "@/helpers/webrtc";
 import { createSession as saveSession, transcribeAudio, updateSession } from "@/services/api";
-import { OaiEvent } from "@/types";
 import { calculateOpenAICosts, CostState, getInitialCostState, updateCumulativeCostOpenAI } from "@/utils/cost-calc";
-import { type SessionConfig } from "@src/model-config";
-import { Provider, providers } from "@src/settings";
+import { providers, startWebrtcSession, type OaiEvent, type Provider, type SessionConfig } from "@package";
 import Chat, { MessageBubbleProps } from "./Chat";
 import EventLog from "./EventLog";
 import SessionConfigComponent from "./SessionConfig";
@@ -81,6 +78,36 @@ export default function App() {
       }
     };
   }, [activeState]);
+
+  /**
+   * A function to download the events and session details as a JSON file.
+   *
+   * The reason we accept an optional sessionRecordingS3Url is because we want to show a toast with a download button
+   * immediately after the recording is saved, but the currentSession state won't have the sessionRecordingS3Url yet.
+   * A call to setCurrentSession() will not update the state synchronously, so we need to pass the sessionRecordingS3Url
+   * as an optional parameter.
+   *
+   * @param sessionRecordingS3Url - optional session recording S3 URL
+   */
+  const handleDownloadEvents = (sessionRecordingS3Url?: string) => {
+    const exportData = {
+      session: {
+        ...currentSession,
+        ...(sessionRecordingS3Url && { sessionRecordingS3Url }),
+      },
+      events: events,
+    };
+    const jsonData = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([jsonData], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `voice-session-${new Date().toISOString()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   const handleErrorEvent = (errorMessage: string, eventId: string, fullError: unknown) => {
     if (fullError) {
@@ -180,9 +207,14 @@ export default function App() {
 
         if (event.session) {
           setCurrentSession(event.session);
-          saveSession({ config: event.session, provider: selectedModel.provider.name.toLowerCase() }).catch((error) => {
-            console.error("error: failed to save session:", error);
-          });
+
+          if (selectedModel.provider === providers.OpenAI) {
+            saveSession({ config: event.session, provider: selectedModel.provider.name.toLowerCase() }).catch(
+              (error) => {
+                console.error("error: failed to save session:", error);
+              },
+            );
+          }
         } else {
           console.error("error: session.update - no session found in event payload");
         }
@@ -248,6 +280,51 @@ export default function App() {
                 ? new Date().toLocaleTimeString()
                 : currentMessage.text.timestamp,
               streaming: true,
+            },
+          });
+          return newMessages;
+        });
+        break;
+
+      case "response.function_call_arguments.delta":
+        setMessages((prev) => {
+          const newMessages = new Map(prev);
+          const currentMessage = prev.get(event.response_id) || {
+            role: "assistant",
+          };
+
+          const currentFunctionCall = currentMessage.function_call || {
+            name: event.name || "",
+            arguments: "",
+            timestamp: new Date().toLocaleTimeString(),
+            streaming: true,
+          };
+
+          newMessages.set(event.response_id, {
+            ...currentMessage,
+            function_call: {
+              ...currentFunctionCall,
+              arguments: currentFunctionCall.arguments + event.delta,
+            },
+          });
+          return newMessages;
+        });
+        break;
+
+      case "response.function_call_arguments.done":
+        setMessages((prev) => {
+          const newMessages = new Map(prev);
+          const currentMessage = prev.get(event.response_id) || {
+            role: "assistant",
+          };
+
+          newMessages.set(event.response_id, {
+            ...currentMessage,
+            function_call: {
+              name: event.name,
+              arguments: event.arguments,
+              timestamp: new Date().toLocaleTimeString(),
+              streaming: false,
             },
           });
           return newMessages;
@@ -489,7 +566,7 @@ export default function App() {
       oAudioRecorderRef.current?.dispose();
 
       // step 1. get ephemeral key
-      const ephemeralKey = await getEphemeralKey(provider, config);
+      const ephemeralKey = await getEphemeralKey(provider, config, "demo");
       if (!ephemeralKey) {
         cleanup();
         return;
@@ -577,12 +654,23 @@ export default function App() {
   async function stopSession() {
     console.log("stopping session");
 
-    if (currentSession && currentSession.id) {
+    if (dcRef.current) {
+      dcRef.current.close();
+    }
+
+    if (pcRef.current) {
+      pcRef.current.getSenders().forEach((sender) => {
+        if (sender.track) {
+          sender.track.stop();
+        }
+      });
+      pcRef.current.close();
+    }
+
+    if (currentSession?.id && selectedModel.provider === providers.OpenAI) {
       updateSession(currentSession.id, { status: "completed" }).catch((error) => {
         console.error("error: failed to update session:", error);
       });
-    } else {
-      console.error("error: session audio recorder stopped but no active session ID");
     }
 
     // Stop recording if active
@@ -617,36 +705,27 @@ export default function App() {
         });
 
         if (currentSession) {
-          saveSessionRecording(currentSession.id, recording);
           toast.info("Session stopped. Storing session recording...");
+          const sessionRecordingS3Url = await saveSessionRecording(currentSession.id, recording);
+          toast.success("Session recording saved!", {
+            action: {
+              label: "Download Logs",
+              onClick: () => handleDownloadEvents(sessionRecordingS3Url),
+            },
+          });
+          setCurrentSession({
+            ...currentSession,
+            sessionRecordingS3Url,
+          });
         } else {
           console.error("error: session audio recorder stopped but no active session ID");
         }
       }
     }
 
-    if (dcRef.current) {
-      dcRef.current.close();
-    }
-
-    if (pcRef.current) {
-      pcRef.current.getSenders().forEach((sender) => {
-        if (sender.track) {
-          sender.track.stop();
-        }
-      });
-      pcRef.current.close();
-    }
-
     cleanup();
 
     console.log("session stopped");
-
-    // if this function was called because of a connection error, don't show a toast
-    // i.e we got an error even before the session could be active
-    if (activeState !== "active") {
-      return;
-    }
   }
 
   function cleanup() {
@@ -685,6 +764,13 @@ export default function App() {
     setEvents((prev) => [event, ...prev]);
   }
 
+  function makeAiSpeak(text: string) {
+    sendClientEvent({
+      type: "outspeed.custom.speak",
+      text,
+    });
+  }
+
   function sendTextMessage(message: string) {
     const event = {
       type: "conversation.item.create",
@@ -721,7 +807,7 @@ export default function App() {
     <main className="h-full flex flex-col px-4 pb-4 gap-4">
       <div className="flex grow gap-4 overflow-hidden">
         <div className="hidden md:block flex-1 h-full min-h-0 rounded-xl bg-white overflow-y-auto">
-          <Chat messages={messages} sendTextMessage={sendTextMessage} />
+          <Chat messages={messages} sendTextMessage={sendTextMessage} makeAiSpeak={makeAiSpeak} />
         </div>
         <div className="flex-1 h-full min-h-0 rounded-xl bg-white overflow-y-auto">
           <Tabs
@@ -730,10 +816,12 @@ export default function App() {
             isMobile={isMobile}
             messages={messages}
             sendTextMessage={sendTextMessage}
+            makeAiSpeak={makeAiSpeak}
             sendClientEvent={sendClientEvent}
             events={events}
             costState={costState}
             sessionStartTime={sessionStartTime}
+            handleDownloadEvents={handleDownloadEvents}
           />
         </div>
       </div>
@@ -756,9 +844,11 @@ interface TabsProps {
   isMobile: boolean;
   messages: Map<string, MessageBubbleProps>;
   sendTextMessage: (message: string) => void;
+  makeAiSpeak: (text: string) => void;
   events: OaiEvent[];
   costState: CostState;
   sessionStartTime: number | null;
+  handleDownloadEvents: () => void;
 }
 
 const Tabs: React.FC<TabsProps> = ({
@@ -768,9 +858,11 @@ const Tabs: React.FC<TabsProps> = ({
   isMobile,
   messages,
   sendTextMessage,
+  makeAiSpeak,
   events,
   costState,
   sessionStartTime,
+  handleDownloadEvents,
 }) => {
   return (
     <div className="flex flex-col h-full">
@@ -796,10 +888,17 @@ const Tabs: React.FC<TabsProps> = ({
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {activeTab === Tab.MOBILE_CHAT && isMobile && <Chat messages={messages} sendTextMessage={sendTextMessage} />}
+        {activeTab === Tab.MOBILE_CHAT && isMobile && (
+          <Chat messages={messages} sendTextMessage={sendTextMessage} makeAiSpeak={makeAiSpeak} />
+        )}
         {activeTab === Tab.SESSION_CONFIG && <SessionConfigComponent sendClientEvent={sendClientEvent} />}
         {activeTab === Tab.EVENTS && (
-          <EventLog events={events} costState={costState} sessionStartTime={sessionStartTime} />
+          <EventLog
+            events={events}
+            costState={costState}
+            sessionStartTime={sessionStartTime}
+            handleDownloadEvents={handleDownloadEvents}
+          />
         )}
       </div>
     </div>

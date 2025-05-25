@@ -9,7 +9,8 @@ dotenv.config({ path: ".env", override: true });
 import express from "express";
 import { createServer as createViteServer } from "vite";
 
-import { models, providers } from "./settings.js";
+import { providers } from "@package";
+import { models } from "./settings.js";
 
 // Get the directory name properly
 const __filename = fileURLToPath(import.meta.url);
@@ -66,7 +67,11 @@ app.post("/token", express.json(), async (req, res) => {
       return;
     }
 
-    const url = `https://${modelData.provider.url}/v1/realtime/sessions`;
+    const url = new URL(`https://${modelData.provider.url}/v1/realtime/sessions`);
+    if (modelData.provider === providers.Outspeed) {
+      url.searchParams.set("source", "demo");
+    }
+
     console.log(`👉 using ${url} to create session...`);
     const response = await fetch(url, {
       method: "POST",

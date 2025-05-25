@@ -3,7 +3,7 @@ import axios from "axios";
 import { env } from "@/config/env";
 import { getSupabaseAuthToken } from "@/config/supabase";
 import { OUTSPEED_API_BASE_URL } from "@/constants";
-import { type SessionConfig } from "@src/model-config";
+import { type SessionConfig } from "@package";
 
 // Create axios instance with base URL
 const apiClient = axios.create({ baseURL: OUTSPEED_API_BASE_URL });
@@ -30,8 +30,44 @@ interface PaginationParams {
   pageSize?: number;
 }
 
+// API response types
+export interface ApiKeyResponse {
+  id: string;
+  label: string;
+  prefix: string;
+  created_at: string;
+  last_used: string | null;
+}
+
+export interface ApiKeyFullResponse extends ApiKeyResponse {
+  key: string;
+}
+
+export interface ApiKeysResponse {
+  api_keys: ApiKeyResponse[];
+  total: number;
+  page: number;
+  page_size: number;
+  has_next: boolean;
+}
+
+// API key endpoints
+export const apiKeys = {
+  // Get all API keys with pagination
+  getAll: async (page = 1, pageSize = 10): Promise<ApiKeysResponse> => {
+    const response = await apiClient.get<ApiKeysResponse>(`/api-keys?page=${page}&page_size=${pageSize}`);
+    return response.data;
+  },
+
+  // Delete an API key
+  delete: async (id: string): Promise<void> => {
+    await apiClient.delete(`/api-keys/${id}`);
+  },
+};
+
 export interface SessionResponse {
   sessions: Array<{
+    id: string;
     config: {
       id: string;
       created: number;
@@ -43,12 +79,20 @@ export interface SessionResponse {
       temperature: number;
       tools: string[];
       tool_choice: string;
+      turn_detection: {
+        type: "server_vad" | "semantic_vad";
+      };
     };
-    status: "in_progress" | "completed";
+    status: "created" | "in_progress" | "completed";
+    source?: string;
     recording: string | null;
     provider: string;
     created_at: string;
     created_by: string;
+    started_at?: string;
+    cost_usd?: number;
+    duration_seconds?: number;
+    ended_at?: string;
   }>;
   total: number;
   page: number;
