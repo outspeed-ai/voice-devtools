@@ -1,10 +1,10 @@
-import { Key } from "react-feather";
 import { Link, NavLink, Outlet } from "react-router";
 
 import Button from "@/components/ui/Button";
 import { useUpdateCheck } from "@/utils/update-check";
 import { version as consoleVersion } from "@src/../package.json";
 
+import GetApiKeyButton from "@/components/GetApiKeyButton";
 import logo from "/outspeed-logo.png";
 
 export default function RootLayout() {
@@ -23,17 +23,11 @@ export default function RootLayout() {
           </Link>
 
           <div className="ml-auto flex gap-4 items-center">
-            <Button
-              className="bg-blue-500 hover:bg-blue-600 transition-colors"
-              icon={<Key className="w-4 h-4" />}
-              onClick={() => window.open("https://cal.com/outspeed/early-access", "_blank")}
-            >
-              Get API Key
-            </Button>
+            <GetApiKeyButton className="mx-auto" />
             {updateInfo?.hasUpdate && (
               <Button
                 variant="outline"
-                className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 text-xs py-1"
+                className="bg-teal-50 border-teal-200 text-teal-700 hover:bg-teal-100 text-xs py-1"
                 onClick={() => window.open("https://github.com/outspeed-ai/voice-devtools", "_blank")}
               >
                 Update Available: v{updateInfo.version}
@@ -41,25 +35,25 @@ export default function RootLayout() {
             )}
             <NavLink
               to="/"
-              className={({ isActive }) =>
-                `text-blue-600 hover:text-blue-800 ${isActive ? "font-medium border-b-2 border-blue-600" : ""}`
-              }
+              className={({ isActive }) => `text-black ${isActive ? "font-medium border-b-2 border-teal-600" : ""}`}
             >
-              Home
+              Try Demo
+            </NavLink>
+            <NavLink
+              to="/api-keys"
+              className={({ isActive }) => `text-black ${isActive ? "font-medium border-b-2 border-teal-600" : ""}`}
+            >
+              API Keys
             </NavLink>
             <NavLink
               to="/sessions"
-              className={({ isActive }) =>
-                `text-blue-600 hover:text-blue-800 ${isActive ? "font-medium border-b-2 border-blue-600" : ""}`
-              }
+              className={({ isActive }) => `text-black ${isActive ? "font-medium border-b-2 border-teal-600" : ""}`}
             >
-              History
+              Sessions
             </NavLink>
             <NavLink
               to="/deploy"
-              className={({ isActive }) =>
-                `text-blue-600 hover:text-blue-800 ${isActive ? "font-medium border-b-2 border-blue-600" : ""}`
-              }
+              className={({ isActive }) => `text-black  ${isActive ? "font-medium border-b-2 border-teal-600" : ""}`}
             >
               Deploy
             </NavLink>
