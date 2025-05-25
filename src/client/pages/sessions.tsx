@@ -3,6 +3,7 @@ import { formatDistanceStrict, parseISO } from "date-fns";
 import { useState } from "react";
 
 import { Alert, Button, Card } from "@/components/ui";
+import Loader from "@/components/ui/Loader";
 import { fetchSessions, getAudioUrl, type SessionResponse } from "@/services/api";
 import { formatTimestamp } from "@/utils/date";
 import { PlayCircle } from "react-feather";
@@ -32,7 +33,7 @@ export default function Sessions() {
 
       {isLoading ? (
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+          <Loader />
         </div>
       ) : (
         <>
@@ -50,7 +51,7 @@ export default function Sessions() {
                   onClick={() => handlePageChange(1)}
                   disabled={page === 1}
                   className={`mx-1 px-3 py-2 rounded-md ${
-                    page === 1 ? "text-gray-400 cursor-not-allowed" : "text-blue-600 hover:bg-blue-50"
+                    page === 1 ? "text-gray-400 cursor-not-allowed" : "text-teal-700 hover:bg-teal-50"
                   }`}
                 >
                   First
@@ -59,7 +60,7 @@ export default function Sessions() {
                   onClick={() => handlePageChange(page - 1)}
                   disabled={page === 1}
                   className={`mx-1 px-3 py-2 rounded-md ${
-                    page === 1 ? "text-gray-400 cursor-not-allowed" : "text-blue-600 hover:bg-blue-50"
+                    page === 1 ? "text-gray-400 cursor-not-allowed" : "text-teal-660 hover:bg-teal-50"
                   }`}
                 >
                   Previous
@@ -73,7 +74,7 @@ export default function Sessions() {
                   onClick={() => handlePageChange(page + 1)}
                   disabled={page === totalPages}
                   className={`mx-1 px-3 py-2 rounded-md ${
-                    page === totalPages ? "text-gray-400 cursor-not-allowed" : "text-blue-600 hover:bg-blue-50"
+                    page === totalPages ? "text-gray-400 cursor-not-allowed" : "text-teal-700 hover:bg-teal-50"
                   }`}
                 >
                   Next
@@ -82,7 +83,7 @@ export default function Sessions() {
                   onClick={() => handlePageChange(totalPages)}
                   disabled={page === totalPages}
                   className={`mx-1 px-3 py-2 rounded-md ${
-                    page === totalPages ? "text-gray-400 cursor-not-allowed" : "text-blue-600 hover:bg-blue-50"
+                    page === totalPages ? "text-gray-400 cursor-not-allowed" : "text-teal-700 hover:bg-teal-50"
                   }`}
                 >
                   Last

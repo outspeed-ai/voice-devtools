@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import ApiKeyItem from "@/components/api-keys/ApiKeyItem";
 import GetApiKeyButton from "@/components/GetApiKeyButton";
+import { Loader } from "@/components/ui";
 import Alert from "@/components/ui/Alert";
 import { ApiKeyResponse, apiKeys } from "@/services/api";
 
@@ -58,7 +59,7 @@ export default function ApiKeys() {
 
       {isLoading ? (
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+          <Loader />
         </div>
       ) : apiKeysList.length === 0 ? (
         <div className="py-12 text-center">
