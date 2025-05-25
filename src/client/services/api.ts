@@ -90,6 +90,8 @@ export interface SessionResponse {
     created_at: string;
     created_by: string;
     started_at?: string;
+    cost_usd?: number;
+    duration_seconds?: number;
     ended_at?: string;
   }>;
   total: number;

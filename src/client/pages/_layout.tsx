@@ -41,7 +41,7 @@ export default function RootLayout() {
               </Button>
             )}
             <NavLinkItem to="/">Try Demo</NavLinkItem>
-            <NavLinkItem to="/api-keys">API Keys</NavLinkItem>
+            {env.OUTSPEED_HOSTED && <NavLinkItem to="/api-keys">API Keys</NavLinkItem>}
             <NavLinkItem to="/sessions">Sessions</NavLinkItem>
             <NavLinkItem to="/deploy">Deploy</NavLinkItem>
           </div>
