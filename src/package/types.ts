@@ -32,6 +32,14 @@ export type SessionConfig =
       model: "Orpheus-3b";
       voice: OutspeedOrpheusVoice;
       input_audio_transcription: { model: OutspeedTranscriptionModel } | null;
+
+      /**
+       * Use this setting if you want the model to say an initial message before the user speaks.
+       * This is useful for scenarios where you want to welcome the user or provide some context before the conversation starts.
+       *
+       * Note: This doesn't have any effect when passed in session.update event.
+       */
+      first_message?: string;
     } & BaseSessionConfigFields)
   | ({
       model: "gpt-4o-realtime-preview-2024-12-17" | "gpt-4o-mini-realtime-preview-2024-12-17";
