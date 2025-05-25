@@ -59,7 +59,7 @@ input,
 progress,
 select,
 textarea {
-  @apply accent-teal-600;
+  @apply accent-teal-600 outline-teal-600;
 }
 
 input:disabled,
