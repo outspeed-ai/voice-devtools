@@ -1,8 +1,8 @@
 {
-  "version": "0.0.7",
+  "version": "0.0.8",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch --tsconfig tsconfig.app.json --env-file=.env src/server.ts",
+    "dev": "tsx watch --tsconfig tsconfig.app.json --include .env  src/server.ts",
     "start": "tsx src/server.ts",
     "build": "npm run build:client && npm run build:server",
     "build:client": "tsc -b && vite build --outDir dist/client --ssrManifest",
@@ -40,6 +40,7 @@
     "@types/react-syntax-highlighter": "^15.5.13",
     "@types/semver": "^7.5.8",
     "@vitejs/plugin-react": "^4.3.4",
+    "date-fns": "^4.1.0",
     "eslint": "^9.22.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",

@@ -207,9 +207,14 @@ export default function App() {
 
         if (event.session) {
           setCurrentSession(event.session);
-          saveSession({ config: event.session, provider: selectedModel.provider.name.toLowerCase() }).catch((error) => {
-            console.error("error: failed to save session:", error);
-          });
+
+          if (selectedModel.provider === providers.OpenAI) {
+            saveSession({ config: event.session, provider: selectedModel.provider.name.toLowerCase() }).catch(
+              (error) => {
+                console.error("error: failed to save session:", error);
+              },
+            );
+          }
         } else {
           console.error("error: session.update - no session found in event payload");
         }
@@ -649,12 +654,23 @@ export default function App() {
   async function stopSession() {
     console.log("stopping session");
 
-    if (currentSession && currentSession.id) {
+    if (dcRef.current) {
+      dcRef.current.close();
+    }
+
+    if (pcRef.current) {
+      pcRef.current.getSenders().forEach((sender) => {
+        if (sender.track) {
+          sender.track.stop();
+        }
+      });
+      pcRef.current.close();
+    }
+
+    if (currentSession?.id && selectedModel.provider === providers.OpenAI) {
       updateSession(currentSession.id, { status: "completed" }).catch((error) => {
         console.error("error: failed to update session:", error);
       });
-    } else {
-      console.error("error: session audio recorder stopped but no active session ID");
     }
 
     // Stop recording if active
@@ -707,28 +723,9 @@ export default function App() {
       }
     }
 
-    if (dcRef.current) {
-      dcRef.current.close();
-    }
-
-    if (pcRef.current) {
-      pcRef.current.getSenders().forEach((sender) => {
-        if (sender.track) {
-          sender.track.stop();
-        }
-      });
-      pcRef.current.close();
-    }
-
     cleanup();
 
     console.log("session stopped");
-
-    // if this function was called because of a connection error, don't show a toast
-    // i.e we got an error even before the session could be active
-    if (activeState !== "active") {
-      return;
-    }
   }
 
   function cleanup() {

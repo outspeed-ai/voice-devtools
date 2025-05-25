@@ -90,7 +90,7 @@ const SessionConfig: React.FC<SessionConfigProps> = ({ sendClientEvent }) => {
             <label>Tools:</label>
             <div className="flex flex-wrap gap-2">
               {config.tools.map((tool) => (
-                <span key={tool.name} className="bg-gray-200 text-gray-700 px-2 py-1 rounded-full text-sm">
+                <span key={tool.name} className="border border-teal-600 text-teal-700 px-2 py-1 rounded-full text-sm">
                   {tool.name}
                 </span>
               ))}
