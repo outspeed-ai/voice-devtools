@@ -20,7 +20,9 @@ body {
   margin: 0;
   padding: 0;
   overflow: auto;
-  font-family: "Consolas", "Andale Mono", monospace;
+  /* font-family: "Consolas", "Andale Mono", monospace; */
+  font-family: "Inter", sans-serif;
+  font-optical-sizing: auto;
   font-size: 0.9rem;
   background-color: var(--color-bg);
 }
