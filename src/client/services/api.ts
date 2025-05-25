@@ -84,7 +84,7 @@ export interface SessionResponse {
       };
     };
     status: "created" | "in_progress" | "completed";
-    source?: "demo" | "swift_sdk";
+    source?: string;
     recording: string | null;
     provider: string;
     created_at: string;

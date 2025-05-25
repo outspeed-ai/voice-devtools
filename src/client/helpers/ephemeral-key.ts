@@ -1,5 +1,5 @@
 // vite-env.d.ts
-declare const __BACKEND_SERVER_URL__: string
+declare const __BACKEND_SERVER_URL__: string;
 
 import { toast, type ExternalToast } from "sonner";
 
@@ -7,7 +7,7 @@ import { env } from "@/config/env";
 import { getSupabaseAuthToken } from "@/config/supabase";
 import { type Provider, type SessionConfig } from "@package";
 
-export const getEphemeralKey = async (provider: Provider, config: SessionConfig) => {
+export const getEphemeralKey = async (provider: Provider, config: SessionConfig, source?: "demo") => {
   if (!env.OUTSPEED_HOSTED) {
     return getEphemeralKeyServer(provider, config);
   }
@@ -15,7 +15,12 @@ export const getEphemeralKey = async (provider: Provider, config: SessionConfig)
   // since it's hosted, we will use the JWT token to fetch the ephemeral key
 
   const token = await getSupabaseAuthToken();
-  const tokenResponse = await fetch(`https://${provider.url}/v1/realtime/sessions`, {
+  const url = new URL(`https://${provider.url}/v1/realtime/sessions`);
+  if (source) {
+    url.searchParams.set("source", source);
+  }
+
+  const tokenResponse = await fetch(url.toString(), {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify(config),

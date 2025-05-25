@@ -566,7 +566,7 @@ export default function App() {
       oAudioRecorderRef.current?.dispose();
 
       // step 1. get ephemeral key
-      const ephemeralKey = await getEphemeralKey(provider, config);
+      const ephemeralKey = await getEphemeralKey(provider, config, "demo");
       if (!ephemeralKey) {
         cleanup();
         return;
