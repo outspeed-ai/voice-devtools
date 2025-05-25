@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { formatDistanceStrict, parseISO } from "date-fns";
 import { useState } from "react";
 
 import { Alert, Badge, Button, Card } from "@/components/ui";
 import Loader from "@/components/ui/Loader";
 import { fetchSessions, getAudioUrl, type SessionResponse } from "@/services/api";
 import { formatTimestamp } from "@/utils/date";
+import { formatDistanceStrict, parseISO } from "date-fns";
 import { PlayCircle } from "react-feather";
 
 export default function Sessions() {
@@ -137,65 +137,65 @@ function SessionCard({ session }: SessionCardProps) {
       }
       className="mb-4"
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <p className="mb-2">
-            <strong className="text-gray-700">Created At:</strong>{" "}
-            <span className="text-gray-900">{formatTimestamp(session.created_at)}</span>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+        <p>
+          <strong className="text-gray-700">Created At:</strong>{" "}
+          <span className="text-gray-900">{formatTimestamp(session.created_at)}</span>
+        </p>
+        <p>
+          <strong className="text-gray-700">Model:</strong>{" "}
+          <span className="text-gray-900">{session.config.model}</span>
+        </p>
+        <p>
+          <strong className="text-gray-700">Modalities:</strong>{" "}
+          <span className="text-gray-900">{session.config.modalities.join(", ")}</span>
+        </p>
+        <p>
+          <strong className="text-gray-700">Voice:</strong>{" "}
+          <span className="text-gray-900">{session.config.voice}</span>
+        </p>
+        <p>
+          <strong className="text-gray-700">Turn Detection:</strong>{" "}
+          <span className="text-gray-900">{session.config.turn_detection?.type || "Not specified"}</span>
+        </p>
+        <p>
+          <strong className="text-gray-700">Status:</strong> <span className="text-gray-900">{session.status}</span>
+        </p>
+        {session.started_at && (
+          <p>
+            <strong className="text-gray-700">Started At:</strong>{" "}
+            <span className="text-gray-900">{formatTimestamp(session.started_at)}</span>
           </p>
-          <p className="mb-2">
-            <strong className="text-gray-700">Model:</strong>{" "}
-            <span className="text-gray-900">{session.config.model}</span>
+        )}
+        {session.ended_at && (
+          <p>
+            <strong className="text-gray-700">Ended At:</strong>{" "}
+            <span className="text-gray-900">{formatTimestamp(session.ended_at)}</span>
           </p>
-          <p className="mb-2">
-            <strong className="text-gray-700">Modalities:</strong>{" "}
-            <span className="text-gray-900">{session.config.modalities.join(", ")}</span>
+        )}
+        {session.started_at && session.ended_at && (
+          <p>
+            <strong className="text-gray-700">Duration:</strong>{" "}
+            <span className="text-gray-900">
+              {formatDistanceStrict(parseISO(session.started_at), parseISO(session.ended_at))}
+            </span>
           </p>
-          <p className="mb-2">
-            <strong className="text-gray-700">Voice:</strong>{" "}
-            <span className="text-gray-900">{session.config.voice}</span>
+        )}
+        {session.cost_usd && (
+          <p>
+            <strong className="text-gray-700">Cost:</strong> <span className="text-gray-900">${session.cost_usd}</span>
           </p>
-          <p className="mb-2">
-            <strong className="text-gray-700">Turn Detection:</strong>{" "}
-            <span className="text-gray-900">{session.config.turn_detection?.type || "Not specified"}</span>
-          </p>
-          <p className="mb-2">
-            <strong className="text-gray-700">Status:</strong> <span className="text-gray-900">{session.status}</span>
-          </p>
-          {session.started_at && (
-            <p className="mb-2">
-              <strong className="text-gray-700">Started At:</strong>{" "}
-              <span className="text-gray-900">{formatTimestamp(session.started_at)}</span>
-            </p>
-          )}
-          {session.ended_at && (
-            <p className="mb-2">
-              <strong className="text-gray-700">Ended At:</strong>{" "}
-              <span className="text-gray-900">{formatTimestamp(session.ended_at)}</span>
-            </p>
-          )}
-        </div>
-        <div>
-          <p className="mb-2">
-            <strong className="text-gray-700">Temperature:</strong>{" "}
-            <span className="text-gray-900">{session.config.temperature}</span>
-          </p>
-          <p className="mb-2">
-            <strong className="text-gray-700">Provider:</strong>{" "}
-            <span className="text-gray-900">{session.provider}</span>
-          </p>
-          {session.started_at && session.ended_at && (
-            <p className="mb-2">
-              <strong className="text-gray-700">Duration:</strong>{" "}
-              <span className="text-gray-900">
-                {formatDistanceStrict(parseISO(session.started_at), parseISO(session.ended_at))}
-              </span>
-            </p>
-          )}
-        </div>
+        )}
+        <p>
+          <strong className="text-gray-700">Temperature:</strong>{" "}
+          <span className="text-gray-900">{session.config.temperature}</span>
+        </p>
+        <p>
+          <strong className="text-gray-700">Provider:</strong> <span className="text-gray-900">{session.provider}</span>
+        </p>
       </div>
 
-      <div>
+      <div className="mt-2">
         <p className="mb-1">
           <strong className="text-gray-700">Instructions:</strong>
         </p>
@@ -205,7 +205,7 @@ function SessionCard({ session }: SessionCardProps) {
       </div>
 
       <div className="mt-4">
-        <p className="mb-2">
+        <p>
           <strong className="text-gray-700">Recording:</strong>{" "}
           <span className="text-gray-900">
             {!session.recording ? (
