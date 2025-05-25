@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { formatDistanceStrict, parseISO } from "date-fns";
 import { useState } from "react";
 
-import { Alert, Button, Card } from "@/components/ui";
+import { Alert, Badge, Button, Card } from "@/components/ui";
 import Loader from "@/components/ui/Loader";
 import { fetchSessions, getAudioUrl, type SessionResponse } from "@/services/api";
 import { formatTimestamp } from "@/utils/date";
@@ -128,7 +128,15 @@ function SessionCard({ session }: SessionCardProps) {
   };
 
   return (
-    <Card title={`Session ID: ${session.config.id}`} className="mb-4">
+    <Card
+      title={
+        <div className="flex items-center justify-between gap-2">
+          <span>Session ID: {session.config.id}</span>
+          {session.source && <Badge label={session.source} type="warning" />}
+        </div>
+      }
+      className="mb-4"
+    >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <p className="mb-2">
