@@ -3,6 +3,7 @@ import { Route, Routes } from "react-router";
 import { ProtectedRoutes, StrictlyPublicRoutes } from "./components/route-protection";
 import { env } from "./config/env";
 import RootLayout from "./pages/_layout";
+import ApiKeys from "./pages/api-keys";
 import Deploy from "./pages/deploy";
 import Index from "./pages/index";
 import Login from "./pages/login";
@@ -17,6 +18,7 @@ export default function Router() {
           <Route path="/" element={<Index />} />
           <Route path="/sessions" element={<Sessions />} />
           <Route path="/deploy" element={<Deploy />} />
+          <Route path="/api-keys" element={<ApiKeys />} />
         </Route>
       </Route>
 
