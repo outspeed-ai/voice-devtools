@@ -1,10 +1,12 @@
-import { Link, NavLink, Outlet } from "react-router";
+import { Link, Outlet } from "react-router";
 
+import GetApiKeyButton from "@/components/GetApiKeyButton";
+import NavLinkItem from "@/components/NavLinkItem";
 import Button from "@/components/ui/Button";
 import { useUpdateCheck } from "@/utils/update-check";
 import { version as consoleVersion } from "@src/../package.json";
 
-import GetApiKeyButton from "@/components/GetApiKeyButton";
+import { env } from "@/config/env";
 import logo from "/outspeed-logo.png";
 
 export default function RootLayout() {
@@ -17,8 +19,13 @@ export default function RootLayout() {
           <Link to="/" className="inline-flex items-center gap-2">
             <img style={{ width: "24px" }} src={logo} />
             <h1>
-              <span className="font-semibold">Outspeed Voice DevTools 🏎️ </span>
-              <span className="bg-gray-800 text-white p-1 rounded text-xs">v{consoleVersion}</span>
+              <span className="font-semibold inline-flex items-center">
+                {env.OUTSPEED_HOSTED ? "Outspeed" : "Outspeed Voice DevTools"}
+              </span>
+
+              {!env.OUTSPEED_HOSTED && (
+                <span className="ml-2 bg-gray-800 text-white p-1 rounded text-xs">v{consoleVersion}</span>
+              )}
             </h1>
           </Link>
 
@@ -33,30 +40,10 @@ export default function RootLayout() {
                 Update Available: v{updateInfo.version}
               </Button>
             )}
-            <NavLink
-              to="/"
-              className={({ isActive }) => `text-black ${isActive ? "font-medium border-b-2 border-teal-600" : ""}`}
-            >
-              Try Demo
-            </NavLink>
-            <NavLink
-              to="/api-keys"
-              className={({ isActive }) => `text-black ${isActive ? "font-medium border-b-2 border-teal-600" : ""}`}
-            >
-              API Keys
-            </NavLink>
-            <NavLink
-              to="/sessions"
-              className={({ isActive }) => `text-black ${isActive ? "font-medium border-b-2 border-teal-600" : ""}`}
-            >
-              Sessions
-            </NavLink>
-            <NavLink
-              to="/deploy"
-              className={({ isActive }) => `text-black  ${isActive ? "font-medium border-b-2 border-teal-600" : ""}`}
-            >
-              Deploy
-            </NavLink>
+            <NavLinkItem to="/">Try Demo</NavLinkItem>
+            <NavLinkItem to="/api-keys">API Keys</NavLinkItem>
+            <NavLinkItem to="/sessions">Sessions</NavLinkItem>
+            <NavLinkItem to="/deploy">Deploy</NavLinkItem>
           </div>
         </div>
       </nav>
