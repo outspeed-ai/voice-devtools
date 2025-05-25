@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { formatDistanceStrict, parseISO } from "date-fns";
 import { useState } from "react";
 
 import { Alert, Button, Card } from "@/components/ui";
@@ -38,7 +39,7 @@ export default function Sessions() {
           {sessions.length === 0 ? (
             <Alert type="info">No sessions found.</Alert>
           ) : (
-            sessions.map((session) => <SessionCard key={session.config.id} session={session} />)
+            sessions.map((session) => <SessionCard key={session.id || session.config.id} session={session} />)
           )}
 
           {/* Pagination */}
@@ -146,8 +147,24 @@ function SessionCard({ session }: SessionCardProps) {
             <span className="text-gray-900">{session.config.voice}</span>
           </p>
           <p className="mb-2">
+            <strong className="text-gray-700">Turn Detection:</strong>{" "}
+            <span className="text-gray-900">{session.config.turn_detection?.type || "Not specified"}</span>
+          </p>
+          <p className="mb-2">
             <strong className="text-gray-700">Status:</strong> <span className="text-gray-900">{session.status}</span>
           </p>
+          {session.started_at && (
+            <p className="mb-2">
+              <strong className="text-gray-700">Started At:</strong>{" "}
+              <span className="text-gray-900">{formatTimestamp(session.started_at)}</span>
+            </p>
+          )}
+          {session.ended_at && (
+            <p className="mb-2">
+              <strong className="text-gray-700">Ended At:</strong>{" "}
+              <span className="text-gray-900">{formatTimestamp(session.ended_at)}</span>
+            </p>
+          )}
         </div>
         <div>
           <p className="mb-2">
@@ -158,6 +175,14 @@ function SessionCard({ session }: SessionCardProps) {
             <strong className="text-gray-700">Provider:</strong>{" "}
             <span className="text-gray-900">{session.provider}</span>
           </p>
+          {session.started_at && session.ended_at && (
+            <p className="mb-2">
+              <strong className="text-gray-700">Duration:</strong>{" "}
+              <span className="text-gray-900">
+                {formatDistanceStrict(parseISO(session.started_at), parseISO(session.ended_at))}
+              </span>
+            </p>
+          )}
         </div>
       </div>
 
@@ -175,7 +200,7 @@ function SessionCard({ session }: SessionCardProps) {
           <strong className="text-gray-700">Recording:</strong>{" "}
           <span className="text-gray-900">
             {!session.recording ? (
-              "Not available :("
+              "Not available"
             ) : !audioUrl ? (
               <Button
                 onClick={handleLoadRecording}
