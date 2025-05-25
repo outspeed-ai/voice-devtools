@@ -69,7 +69,7 @@ const EventLog: React.FC<EventLogProps> = ({
         <>
           <div className="flex justify-end -mt-4">
             <button
-              onClick={handleDownloadEvents}
+              onClick={() => handleDownloadEvents()}
               className="flex items-center gap-2 px-3 py-2 text-xs bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
             >
               <Download size={16} />
