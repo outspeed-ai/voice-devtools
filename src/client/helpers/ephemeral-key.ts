@@ -5,9 +5,15 @@ import { toast, type ExternalToast } from "sonner";
 
 import { env } from "@/config/env";
 import { getSupabaseAuthToken } from "@/config/supabase";
-import { type Provider, type SessionConfig } from "@package";
+import { providers, type Provider, type SessionConfig } from "@package";
 
 export const getEphemeralKey = async (provider: Provider, config: SessionConfig, source?: "demo") => {
+  // first_message is only supported by Outspeed, so we need to remove it if it's not Outspeed
+  if (provider !== providers.Outspeed && "first_message" in config) {
+    config = { ...config }; // make a copy to not mutate the original
+    delete config.first_message;
+  }
+
   if (!env.OUTSPEED_HOSTED) {
     return getEphemeralKeyServer(provider, config);
   }
