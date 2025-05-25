@@ -59,12 +59,6 @@ export const apiKeys = {
     return response.data;
   },
 
-  // Create a new API key
-  create: async (label: string): Promise<ApiKeyFullResponse> => {
-    const response = await apiClient.post<ApiKeyFullResponse>("/api-keys", { label });
-    return response.data;
-  },
-
   // Delete an API key
   delete: async (id: string): Promise<void> => {
     await apiClient.delete(`/api-keys/${id}`);

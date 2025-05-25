@@ -31,6 +31,29 @@ body {
   height: 100%;
   width: 100%;
 }
+/* Webkit scrollbar customization */
+*::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+*::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+}
+
+*::-webkit-scrollbar-thumb {
+  @apply bg-teal-600 rounded-full;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  @apply bg-teal-700;
+}
+
+/* Firefox scrollbar customization */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: theme("colors.teal.600") theme("colors.gray.100");
+}
 
 input,
 progress,
