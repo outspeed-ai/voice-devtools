@@ -1,3 +1,4 @@
+import { Key } from "react-feather";
 import { Link, NavLink, Outlet } from "react-router";
 
 import Button from "@/components/ui/Button";
@@ -22,6 +23,13 @@ export default function RootLayout() {
           </Link>
 
           <div className="ml-auto flex gap-4 items-center">
+            <Button
+              className="bg-blue-500 hover:bg-blue-600 transition-colors"
+              icon={<Key className="w-4 h-4" />}
+              onClick={() => window.open("https://cal.com/outspeed/early-access", "_blank")}
+            >
+              Get API Key
+            </Button>
             {updateInfo?.hasUpdate && (
               <Button
                 variant="outline"
