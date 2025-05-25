@@ -32,6 +32,13 @@ body {
   width: 100%;
 }
 
+input,
+progress,
+select,
+textarea {
+  @apply accent-teal-600;
+}
+
 input:disabled,
 textarea:disabled,
 select:disabled {

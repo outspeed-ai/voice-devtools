@@ -180,7 +180,7 @@ const SessionConfig: React.FC<SessionConfigProps> = ({ sendClientEvent }) => {
             step="0.1"
             value={config.temperature}
             onChange={(e) => setConfig({ ...config, temperature: parseFloat(e.target.value) })}
-            className="w-full accent-teal-600"
+            className="w-full"
             disabled={!isInactive}
           />
         </div>
