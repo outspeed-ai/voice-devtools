@@ -1,5 +1,5 @@
 {
-  "version": "0.0.7",
+  "version": "0.0.8",
   "type": "module",
   "scripts": {
     "dev": "tsx watch --tsconfig tsconfig.app.json --include .env  src/server.ts",
