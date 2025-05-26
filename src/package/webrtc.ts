@@ -1,14 +1,30 @@
 import { providers } from "./providers";
 import { ConnectionConfig } from "./types";
 
-const ICE_SERVERS = [{ urls: "stun:stun.l.google.com:19302" }];
+const ICE_SERVERS = [{ urls: ["stun:stun.l.google.com:19302", "stun:stun.l.google.com:5349"] }];
 
 type WebRTCSession = {
   pc: RTCPeerConnection;
   dc: RTCDataChannel;
 };
 
-const getPcAndDcInternal = async (): Promise<WebRTCSession> => {
+const getPcAndDcInternal = async (ephemeralKey: string): Promise<WebRTCSession> => {
+  try {
+    const turnServers = await fetch(
+      `https://${providers.Outspeed.url}/v1/realtime/turn-servers?client_secret=${ephemeralKey}`,
+    );
+    const turnServersJson = await turnServers.json();
+    const turnServersArray = turnServersJson.map((server: any) => ({
+      urls: server.urls,
+      username: server?.username,
+      credential: server?.credential,
+    }));
+    console.log("turnServersArray", turnServersArray);
+    ICE_SERVERS.push(...turnServersArray);
+  } catch (error) {
+    console.error("Error fetching turn servers:", error);
+  }
+
   const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
 
   // setup to play remote audio from the model
@@ -40,7 +56,7 @@ export const startWebrtcSession = async (ephemeralKey: string, conn: ConnectionC
  * Start a WebRTC session with OpenAI.
  */
 const startWebrtcSessionOpenAI = async (ephemeralKey: string, model: string): Promise<WebRTCSession> => {
-  const { pc, dc } = await getPcAndDcInternal();
+  const { pc, dc } = await getPcAndDcInternal(ephemeralKey);
 
   // create offer
   const offer = await pc.createOffer();
@@ -71,7 +87,7 @@ const startWebrtcSessionOpenAI = async (ephemeralKey: string, model: string): Pr
  * Start a WebRTC session with Outspeed.
  */
 export const startWebrtcSessionOutspeed = async (ephemeralKey: string, model: string): Promise<WebRTCSession> => {
-  const { pc, dc } = await getPcAndDcInternal();
+  const { pc, dc } = await getPcAndDcInternal(ephemeralKey);
 
   // init connection with SDP exchange WebSocket
   // why Outspeed SDK exchange needs WebSocket?
@@ -106,6 +122,7 @@ export const startWebrtcSessionOutspeed = async (ephemeralKey: string, model: st
       return;
     }
 
+    console.log("sending candidate....", JSON.stringify(candidate, null, 2));
     ws.send(
       JSON.stringify({
         type: "candidate",
@@ -152,19 +169,20 @@ export const startWebrtcSessionOutspeed = async (ephemeralKey: string, model: st
           await pc.setLocalDescription(offer);
 
           // send offer
-          console.log("sending offer....");
+          console.log("sending offer....", pc.localDescription?.sdp);
           ws.send(JSON.stringify({ type: "offer", sdp: pc.localDescription?.sdp }));
           return;
         }
         case "answer":
           // set remote description
-          console.log("received answer. setting remote description....");
+          console.log("received answer. setting remote description....", data.sdp);
           await pc.setRemoteDescription(new RTCSessionDescription(data));
 
           // resolve the promise
           resolve({ pc, dc });
           return;
         case "candidate":
+          console.log("received candidate....", data);
           await pc.addIceCandidate(
             new RTCIceCandidate({
               candidate: data.candidate,
