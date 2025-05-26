@@ -17,14 +17,14 @@ export interface OpenAICosts {
 }
 
 export type Model = (typeof modelConfig)[keyof typeof modelConfig] & {
-  cost: { perMinute: number } | OpenAICosts;
+  cost: { perHour: number } | OpenAICosts;
   provider: Provider;
 };
 
 export const models: Record<ModelName, Model> = {
   "Orpheus-3b": {
     ...modelConfig["Orpheus-3b"],
-    cost: { perMinute: 0.01 },
+    cost: { perHour: 1.0 }, // $1/hour
     provider: providers.Outspeed,
   },
   "gpt-4o-realtime-preview-2024-12-17": {
