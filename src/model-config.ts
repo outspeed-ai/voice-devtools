@@ -34,6 +34,7 @@ export const models: Record<ModelName, ModelValue> = {
       input_audio_transcription: {
         model: "whisper-v3-turbo",
       },
+      output_audio_speed: 1.0,
     },
   },
   "gpt-4o-realtime-preview-2024-12-17": {

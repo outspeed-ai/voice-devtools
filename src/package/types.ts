@@ -56,6 +56,11 @@ type BaseSessionConfigFields = {
     type: "server_vad" | "semantic_vad";
     send_event_on_vad_state_change?: boolean;
   };
+  /**
+   * Voice speed multiplier for audio output. Range: 0.85 to 1.40, default: 1.0
+   * This parameter controls how fast or slow the AI voice speaks.
+   */
+  output_audio_speed?: number;
 };
 
 export type ConnectionConfig = {

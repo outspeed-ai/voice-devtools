@@ -40,6 +40,25 @@ const SessionConfig: React.FC<SessionConfigProps> = ({ sendClientEvent }) => {
     }
   };
 
+  const changeVoiceSpeed = (speed: number) => {
+    if (activeState === "loading") {
+      return;
+    }
+
+    if (activeState === "active") {
+      // when the session is active, we need to send a client event to the server
+      sendClientEvent({
+        type: "session.update",
+        session: {
+          output_audio_speed: speed,
+        },
+      });
+    } else {
+      // when the session is inactive, we can update the config directly in frontend
+      setConfig({ ...config, output_audio_speed: speed });
+    }
+  };
+
   const isInactive = activeState === "inactive";
 
   return (
@@ -129,6 +148,28 @@ const SessionConfig: React.FC<SessionConfigProps> = ({ sendClientEvent }) => {
                 </option>
               ))}
             </select>
+          </div>
+        )}
+
+        {config.modalities.includes("audio") && selectedModel.provider === providers.Outspeed && (
+          <div className="flex flex-col gap-1">
+            <label htmlFor="voice_speed">Voice Speed: {(config.output_audio_speed || 1.0).toFixed(2)}x</label>
+            <input
+              type="range"
+              id="voice_speed"
+              min="0.85"
+              max="1.40"
+              step="0.05"
+              value={config.output_audio_speed || 1.0}
+              onChange={(e) => changeVoiceSpeed(parseFloat(e.target.value))}
+              className="w-full"
+              disabled={activeState === "loading"}
+            />
+            <div className="relative flex text-xs text-gray-500">
+              <span className="absolute left-0">0.85x (Slower)</span>
+              <span className="absolute left-[27.3%] transform -translate-x-1/2">1.0x (Normal)</span>
+              <span className="absolute right-0">1.40x (Faster)</span>
+            </div>
           </div>
         )}
 
