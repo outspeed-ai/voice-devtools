@@ -36,16 +36,16 @@ const CostDisplay: React.FC<CostDisplayProps> = memo(({ costState, sessionStartT
   let displayData;
 
   if (isDurationBased) {
-    if (!("perMinute" in selectedModel.cost)) {
-      throw new Error("perMinute is not defined in the cost object");
+    if (!("perHour" in selectedModel.cost)) {
+      throw new Error("perHour is not defined in the cost object");
     }
 
-    const costPerMinute = selectedModel.cost.perMinute;
-    const timeCosts = calculateTimeCosts(durationInSeconds, costPerMinute);
+    const costPerHour = selectedModel.cost.perHour;
+    const timeCosts = calculateTimeCosts(durationInSeconds, costPerHour);
 
     // directly update the costState object
     costState.totalCost = timeCosts.totalCost;
-    costState.costPerMinute = costPerMinute;
+    costState.costPerHour = costPerHour;
 
     // For duration-based pricing (Outspeed)
     displayData = {
@@ -91,7 +91,7 @@ const CostDisplay: React.FC<CostDisplayProps> = memo(({ costState, sessionStartT
           // Duration-based cost display (Outspeed)
           <>
             <div className="text-gray-600">Rate:</div>
-            <div className="text-right font-medium">${costState.costPerMinute?.toFixed(2) || "0.00"}/minute</div>
+            <div className="text-right font-medium">${costState.costPerHour?.toFixed(2) || "0.00"}/hour</div>
 
             <div className="text-gray-600 font-semibold">Total Cost:</div>
             <div className={`text-right font-semibold ${displayData.totalColor}`}>

@@ -180,9 +180,9 @@ export function updateCumulativeCostOpenAI(prev: CostState, newCostData: OpenAIC
   if (prev.totalCost === 0) {
     return {
       ...newCostData,
-      // Preserve the existing durationInSeconds and costPerMinute
+      // Preserve the existing durationInSeconds and costPerHour
       durationInSeconds: prev.durationInSeconds,
-      costPerMinute: prev.costPerMinute,
+      costPerHour: prev.costPerHour,
       // Copy over tokenCounts if they exist, otherwise initialize them
       tokenCounts: newCostData.tokenCounts || {
         input: {
@@ -209,9 +209,9 @@ export function updateCumulativeCostOpenAI(prev: CostState, newCostData: OpenAIC
     inputTokens: prev.inputTokens + inputTokens,
     outputTokens: prev.outputTokens + outputTokens,
     totalCost: prev.totalCost + totalCost,
-    // Preserve the existing durationInSeconds and costPerMinute
+    // Preserve the existing durationInSeconds and costPerHour
     durationInSeconds: prev.durationInSeconds,
-    costPerMinute: prev.costPerMinute,
+    costPerHour: prev.costPerHour,
     costBreakdown: {
       input: {
         uncached: {
@@ -302,17 +302,17 @@ export function updateCumulativeCostOpenAI(prev: CostState, newCostData: OpenAIC
  * Calculate time-based costs (for providers like Outspeed)
  *
  * @param durationInSeconds - The session duration in seconds
- * @param costPerMinute - The cost per minute
+ * @param costPerHour - The cost per hour
  * @returns - The calculated cost data
  */
-export function calculateTimeCosts(durationInSeconds: number, costPerMinute: number) {
-  const durationInMinutes = durationInSeconds / 60;
-  const totalCost = durationInMinutes * costPerMinute;
+export function calculateTimeCosts(durationInSeconds: number, costPerHour: number) {
+  const durationInHours = durationInSeconds / 3600;
+  const totalCost = durationInHours * costPerHour;
 
   return {
     durationInSeconds,
-    durationInMinutes,
-    costPerMinute,
+    durationInHours,
+    costPerHour,
     totalCost,
     timestamp: new Date().toLocaleTimeString(),
   };
@@ -330,7 +330,7 @@ export function getInitialCostState() {
 
     // for time-based providers like Outspeed
     durationInSeconds: 0,
-    costPerMinute: 0,
+    costPerHour: 0,
 
     // to show when the data was last updated
     timestamp: new Date().toLocaleTimeString(),
