@@ -163,7 +163,7 @@ const SessionConfig: React.FC<SessionConfigProps> = ({ sendClientEvent }) => {
               type="range"
               id="voice_speed"
               min="0.85"
-              max="1.40"
+              max="1.15"
               step="0.05"
               value={(config as any).output_audio_speed || 1.0}
               onChange={(e) => changeVoiceSpeed(parseFloat(e.target.value))}
