@@ -7,10 +7,12 @@ import { useUpdateCheck } from "@/utils/update-check";
 import { version as consoleVersion } from "@src/../package.json";
 
 import { env } from "@/config/env";
+import { useAuth } from "@/contexts/auth";
 import logo from "/outspeed-logo.png";
 
 export default function RootLayout() {
   const { data: updateInfo } = useUpdateCheck(consoleVersion);
+  const { currentUser } = useAuth();
 
   return (
     <div className="h-full flex flex-col">
@@ -44,6 +46,7 @@ export default function RootLayout() {
             {env.OUTSPEED_HOSTED && <NavLinkItem to="/api-keys">API Keys</NavLinkItem>}
             <NavLinkItem to="/sessions">Sessions</NavLinkItem>
             <NavLinkItem to="/deploy">Deploy</NavLinkItem>
+            {env.OUTSPEED_HOSTED && currentUser && <NavLinkItem to="/profile">Profile</NavLinkItem>}
           </div>
         </div>
       </nav>
