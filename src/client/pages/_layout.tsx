@@ -3,6 +3,7 @@ import { Link, Outlet } from "react-router";
 
 import GetApiKeyButton from "@/components/GetApiKeyButton";
 import NavLinkItem from "@/components/NavLinkItem";
+import UserAvatar from "@/components/UserAvatar";
 import Button from "@/components/ui/Button";
 import { env } from "@/config/env";
 import { useAuth } from "@/contexts/auth";
@@ -37,39 +38,42 @@ export default function RootLayout() {
             </h1>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex gap-4 items-center">
-            <GetApiKeyButton className="mx-auto" />
-            {updateInfo?.hasUpdate && (
-              <Button
-                variant="outline"
-                className="bg-teal-50 border-teal-200 text-teal-700 hover:bg-teal-100 text-xs py-1"
-                onClick={() => window.open("https://github.com/outspeed-ai/voice-devtools", "_blank")}
-              >
-                Update Available: v{updateInfo.version}
-              </Button>
-            )}
-            <NavLinkItem to="/">Try Demo</NavLinkItem>
-            {env.OUTSPEED_HOSTED && <NavLinkItem to="/api-keys">API Keys</NavLinkItem>}
-            <NavLinkItem to="/sessions">Sessions</NavLinkItem>
-            <NavLinkItem to="/deploy">Deploy</NavLinkItem>
-            {env.OUTSPEED_HOSTED && currentUser && <NavLinkItem to="/profile">Profile</NavLinkItem>}
-          </div>
-
-          {/* Mobile Menu Button */}
-          <button
-            onClick={toggleMobileMenu}
-            className="md:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
-            aria-label="Toggle mobile menu"
-          >
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              {isMobileMenuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          <div className="flex gap-4 items-center">
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex gap-4 items-center">
+              <GetApiKeyButton className="mx-auto" />
+              {updateInfo?.hasUpdate && (
+                <Button
+                  variant="outline"
+                  className="bg-teal-50 border-teal-200 text-teal-700 hover:bg-teal-100 text-xs py-1"
+                  onClick={() => window.open("https://github.com/outspeed-ai/voice-devtools", "_blank")}
+                >
+                  Update Available: v{updateInfo.version}
+                </Button>
               )}
-            </svg>
-          </button>
+              <NavLinkItem to="/">Try Demo</NavLinkItem>
+              {env.OUTSPEED_HOSTED && <NavLinkItem to="/api-keys">API Keys</NavLinkItem>}
+              <NavLinkItem to="/sessions">Sessions</NavLinkItem>
+              <NavLinkItem to="/deploy">Deploy</NavLinkItem>
+            </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={toggleMobileMenu}
+              className="md:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+              aria-label="Toggle mobile menu"
+            >
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                {isMobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+
+            {env.OUTSPEED_HOSTED && currentUser && <UserAvatar />}
+          </div>
         </div>
 
         {/* Mobile Menu Dropdown */}
@@ -112,13 +116,11 @@ export default function RootLayout() {
                   Deploy
                 </NavLinkItem>
               </div>
-              {env.OUTSPEED_HOSTED && currentUser && (
-                <div className="py-2">
-                  <NavLinkItem to="/profile" onClick={() => setIsMobileMenuOpen(false)}>
-                    Profile
-                  </NavLinkItem>
+              {/* {env.OUTSPEED_HOSTED && currentUser && (
+                <div className="py-2 flex justify-center">
+                  <UserAvatar />
                 </div>
-              )}
+              )} */}
             </div>
           </div>
         )}
