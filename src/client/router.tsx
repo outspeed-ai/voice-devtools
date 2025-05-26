@@ -7,6 +7,7 @@ import ApiKeys from "./pages/api-keys";
 import Deploy from "./pages/deploy";
 import Index from "./pages/index";
 import Login from "./pages/login";
+import Profile from "./pages/profile";
 import Sessions from "./pages/sessions";
 
 export default function Router() {
@@ -19,6 +20,7 @@ export default function Router() {
           <Route path="/sessions" element={<Sessions />} />
           <Route path="/deploy" element={<Deploy />} />
           <Route path="/api-keys" element={<ApiKeys />} />
+          <Route path="/profile" element={<Profile />} />
         </Route>
       </Route>
 
