@@ -40,6 +40,13 @@ export type SessionConfig =
        * Note: This doesn't have any effect when passed in session.update event.
        */
       first_message?: string;
+
+      /**
+       * Voice speed multiplier for audio output. Range: 0.85 to 1.40, default: 1.0
+       * This parameter controls how fast or slow the AI voice speaks.
+       * Only supported by Outspeed models.
+       */
+      output_audio_speed?: number;
     } & BaseSessionConfigFields)
   | ({
       model: "gpt-4o-realtime-preview-2024-12-17" | "gpt-4o-mini-realtime-preview-2024-12-17";
@@ -56,11 +63,6 @@ type BaseSessionConfigFields = {
     type: "server_vad" | "semantic_vad";
     send_event_on_vad_state_change?: boolean;
   };
-  /**
-   * Voice speed multiplier for audio output. Range: 0.85 to 1.40, default: 1.0
-   * This parameter controls how fast or slow the AI voice speaks.
-   */
-  output_audio_speed?: number;
 };
 
 export type ConnectionConfig = {

@@ -45,6 +45,11 @@ const SessionConfig: React.FC<SessionConfigProps> = ({ sendClientEvent }) => {
       return;
     }
 
+    // Only send output_audio_speed for Outspeed models
+    if (selectedModel.provider !== providers.Outspeed) {
+      return;
+    }
+
     if (activeState === "active") {
       // when the session is active, we need to send a client event to the server
       sendClientEvent({
@@ -55,7 +60,7 @@ const SessionConfig: React.FC<SessionConfigProps> = ({ sendClientEvent }) => {
       });
     } else {
       // when the session is inactive, we can update the config directly in frontend
-      setConfig({ ...config, output_audio_speed: speed });
+      setConfig({ ...config, output_audio_speed: speed } as any);
     }
   };
 
@@ -153,14 +158,14 @@ const SessionConfig: React.FC<SessionConfigProps> = ({ sendClientEvent }) => {
 
         {config.modalities.includes("audio") && selectedModel.provider === providers.Outspeed && (
           <div className="flex flex-col gap-1">
-            <label htmlFor="voice_speed">Voice Speed: {(config.output_audio_speed || 1.0).toFixed(2)}x</label>
+            <label htmlFor="voice_speed">Voice Speed: {((config as any).output_audio_speed || 1.0).toFixed(2)}x</label>
             <input
               type="range"
               id="voice_speed"
               min="0.85"
               max="1.40"
               step="0.05"
-              value={config.output_audio_speed || 1.0}
+              value={(config as any).output_audio_speed || 1.0}
               onChange={(e) => changeVoiceSpeed(parseFloat(e.target.value))}
               className="w-full"
               disabled={activeState === "loading"}

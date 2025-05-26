@@ -8,10 +8,15 @@ import { getSupabaseAuthToken } from "@/config/supabase";
 import { providers, type Provider, type SessionConfig } from "@package";
 
 export const getEphemeralKey = async (provider: Provider, config: SessionConfig, source?: "demo") => {
-  // first_message is only supported by Outspeed, so we need to remove it if it's not Outspeed
-  if (provider !== providers.Outspeed && "first_message" in config) {
+  // first_message and output_audio_speed are only supported by Outspeed, so we need to remove them if it's not Outspeed
+  if (provider !== providers.Outspeed) {
     config = { ...config }; // make a copy to not mutate the original
-    delete config.first_message;
+    if ("first_message" in config) {
+      delete config.first_message;
+    }
+    if ("output_audio_speed" in config) {
+      delete config.output_audio_speed;
+    }
   }
 
   if (!env.OUTSPEED_HOSTED) {
