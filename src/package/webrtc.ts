@@ -106,6 +106,7 @@ export const startWebrtcSessionOutspeed = async (ephemeralKey: string, model: st
       return;
     }
 
+    console.log("sending candidate....", JSON.stringify(candidate, null, 2));
     ws.send(
       JSON.stringify({
         type: "candidate",
@@ -152,19 +153,20 @@ export const startWebrtcSessionOutspeed = async (ephemeralKey: string, model: st
           await pc.setLocalDescription(offer);
 
           // send offer
-          console.log("sending offer....");
+          console.log("sending offer....", pc.localDescription?.sdp);
           ws.send(JSON.stringify({ type: "offer", sdp: pc.localDescription?.sdp }));
           return;
         }
         case "answer":
           // set remote description
-          console.log("received answer. setting remote description....");
+          console.log("received answer. setting remote description....", data.sdp);
           await pc.setRemoteDescription(new RTCSessionDescription(data));
 
           // resolve the promise
           resolve({ pc, dc });
           return;
         case "candidate":
+          console.log("received candidate....", data);
           await pc.addIceCandidate(
             new RTCIceCandidate({
               candidate: data.candidate,
