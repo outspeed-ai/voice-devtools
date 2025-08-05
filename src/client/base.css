@@ -1,0 +1,69 @@
+/*
+@tailwind base; adds base styles to all elements:
+https://tailwindcss.com/docs/preflight
+*/
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* tailwind gray-100 color */
+  --color-bg: theme("colors.gray.100");
+
+  --color-highlight: #ff80ff;
+}
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  /* font-family: "Consolas", "Andale Mono", monospace; */
+  font-family: "Inter", sans-serif;
+  font-optical-sizing: auto;
+  font-size: 0.9rem;
+  background-color: var(--color-bg);
+}
+
+#root {
+  height: 100%;
+  width: 100%;
+}
+/* Webkit scrollbar customization */
+*::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+*::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+}
+
+*::-webkit-scrollbar-thumb {
+  @apply bg-teal-600 rounded-full;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  @apply bg-teal-700;
+}
+
+/* Firefox scrollbar customization */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: theme("colors.teal.600") theme("colors.gray.100");
+}
+
+input,
+progress,
+select,
+textarea {
+  @apply accent-teal-600 outline-teal-600;
+}
+
+input:disabled,
+textarea:disabled,
+select:disabled {
+  @apply bg-gray-50 text-gray-700 outline-none rounded;
+}

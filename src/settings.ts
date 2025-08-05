@@ -1,0 +1,66 @@
+import { providers, type ModelName, type Provider } from "@package";
+import { models as modelConfig } from "./model-config";
+
+export interface OpenAICosts {
+  input: {
+    text: number;
+    audio: number;
+    cached: {
+      text: number;
+      audio: number;
+    };
+  };
+  output: {
+    text: number;
+    audio: number;
+  };
+}
+
+export type Model = (typeof modelConfig)[keyof typeof modelConfig] & {
+  cost: { perHour: number } | OpenAICosts;
+  provider: Provider;
+};
+
+export const models: Record<ModelName, Model> = {
+  "Orpheus-3b": {
+    ...modelConfig["Orpheus-3b"],
+    cost: { perHour: 1.0 }, // $1/hour
+    provider: providers.Outspeed,
+  },
+  "gpt-4o-realtime-preview-2024-12-17": {
+    ...modelConfig["gpt-4o-realtime-preview-2024-12-17"],
+    cost: {
+      input: {
+        text: 5.0, // $ per million tokens
+        audio: 40.0, // $ per million tokens
+        cached: {
+          text: 2.5, // $ per million tokens
+          audio: 2.5, // $ per million tokens
+        },
+      },
+      output: {
+        text: 20.0, // $ per million tokens
+        audio: 80.0, // $ per million tokens
+      },
+    },
+    provider: providers.OpenAI,
+  },
+  "gpt-4o-mini-realtime-preview-2024-12-17": {
+    ...modelConfig["gpt-4o-mini-realtime-preview-2024-12-17"],
+    cost: {
+      input: {
+        text: 0.6, // $ per million tokens
+        audio: 10.0, // $ per million tokens
+        cached: {
+          text: 0.3, // $ per million tokens
+          audio: 0.3, // $ per million tokens
+        },
+      },
+      output: {
+        text: 2.4, // $ per million tokens
+        audio: 20.0, // $ per million tokens
+      },
+    },
+    provider: providers.OpenAI,
+  },
+};
